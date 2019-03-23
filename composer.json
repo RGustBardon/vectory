@@ -1,0 +1,21 @@
+{
+    "name": "rgustbardon/vectory",
+    "description": "Lean typed vectors for PHP",
+    "type": "library",
+    "require": {
+        "php": "^7.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Robert Gust-Bardon",
+            "email": "robert@gust-bardon.org"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    }
+}
