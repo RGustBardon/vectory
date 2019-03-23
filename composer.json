@@ -15,6 +15,12 @@
             "email": "robert@gust-bardon.org"
         }
     ],
+    "autoload": {
+        "psr-4": {"Vectory\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"Vectory\\Tests\\": "tests/"}
+    },
     "config": {
         "sort-packages": true
     }
