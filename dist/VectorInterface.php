@@ -15,5 +15,4 @@ namespace Vectory;
 
 interface VectorInterface
 {
-    
 }

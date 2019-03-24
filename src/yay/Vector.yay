@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vector;
+namespace Vectory;
 
-class Char$[BytesPerItem] implements VectorInterface
+class _ implements VectorInterface
 {
     __base_properties();
+    
+    __array_access_methods();
 }

@@ -1,0 +1,75 @@
+<?php
+
+$(macro :unsafe) {
+    __validate_index($(T_VARIABLE as index));
+} >> {{
+// region __validate_index($(index))
+if (!\is_int($index)) {
+    __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given');
+}
+
+if (0 === $this->elementCount) {
+    __throw(\OutOfRangeException, 'The container is empty, so index '.$index.' does not exist');
+}
+
+if ($this->elementCount <= $index) { 
+    __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+}
+// endregion
+}}
+
+$(macro) {
+    __validate_value($(T_VARIABLE as value));
+    $(_() as __validate_value_nullable)
+    $(_() as __validate_value_bool)
+    $(_() as __validate_value_int)
+    $(_() as __validate_value_string)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if ($GLOBALS['__context']['Nullable']) {
+        $append = new \Yay\Ast('__validate_value_nullable');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+    
+    $append = new \Yay\Ast('__validate_value_'.$GLOBALS['__context']['Type']);
+    $append->push(new \Yay\Ast());
+    $ast->append($append);
+} >> {{
+    // region __validate_value($(value))
+    $(__validate_value_nullable ! {{
+        $(__validate_value_bool ? {{
+            if (!\is_bool($(value))) {
+                __throw(\TypeError, 'Value must be of type bool, '.\gettype($(value)).' given');
+            }
+        }})
+        $(__validate_value_int ? {
+            if (!\is_int($(value))) {
+                __throw(\TypeError, 'Value must be of type int, '.\gettype($(value)).' given');
+            }
+        })
+        $(__validate_value_string ? {
+            if (!\is_string($(value))) {
+                __throw(\TypeError, 'Value must be of type string, '.\gettype($(value)).' given');
+            }
+        })
+    }})
+
+    $(__validate_value_nullable ? {{
+        $(__validate_value_bool ? {{
+            if (null !== $(value) && !\is_bool($(value))) {
+                __throw(\TypeError, 'Value must be of type bool or null, '.\gettype($(value)).' given');
+            }
+        }})
+        $(__validate_value_int ? {
+            if (null !== $(value) && !\is_int($(value))) {
+                __throw(\TypeError, 'Value must be of type int or null, '.\gettype($(value)).' given');
+            }
+        })
+        $(__validate_value_string ? {
+            if (null !== $(value) && !\is_string($(value))) {
+                __throw(\TypeError, 'Value must be of type string or null, '.\gettype($(value)).' given');
+            }
+        })
+    }})
+    // endregion
+}}

@@ -13,12 +13,16 @@ declare(strict_types=1);
 
 namespace Vectory\Builder;
 
+use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Yay\Engine;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Process\Process;
 
 final class BuildCommand extends Command
 {
@@ -26,6 +30,7 @@ final class BuildCommand extends Command
 
     private const DIR_DIST = self::DIR_BASE.'/dist';
     private const DIR_SRC = self::DIR_BASE.'/src';
+    private const DIR_VENDOR_BIN = self::DIR_BASE.'/vendor/bin';
     
     private const DIR_CONFIG = self::DIR_SRC.'/config';
     private const DIR_PHP = self::DIR_SRC.'/php';
@@ -54,8 +59,17 @@ final class BuildCommand extends Command
     private const PHP_PREAMBLE_REGEX = "~^<\\?php(?=\\R)~";
     
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
-
+    
+    private const PROCESS_PHP_CS_FIXER = [
+        self::DIR_VENDOR_BIN.'/php-cs-fixer',
+        'fix',
+        '--config='.self::DIR_CONFIG.'/.php_cs',
+        '--using-cache=no',
+        self::DIR_DIST,
+    ];
+    
     private /* LoggerInterface */ $logger;
+    private /* Parser */ $parser;
     private /* Engine */ $yay;
     
     protected function configure()
@@ -68,17 +82,22 @@ final class BuildCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->logger = new ConsoleLogger($output);
+        $this->parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
+        $this->prettyPrinter = new PrettyPrinter\Standard;
         $this->yay = new Engine();
         
         $this->cleanDist();
         $this->copyFiles();
         
-        $tasks = $this->loadTasks();
+        $this->loadTasks();
         
         $this->logger->debug('Processing tasks');
         foreach ($this->tasks as $task) {
             $this->processTask($task);
         }
+
+        $this->prettyPrintFiles();
+        $this->lintFiles();
     }
     
     private function cleanDist(): void
@@ -114,18 +133,21 @@ final class BuildCommand extends Command
         $target = $task[self::JSON_KEY_TARGET];
         $context = $task[self::JSON_KEY_CONTEXT];
         
+        
         $this->logger->info('Building '.$target);
         
         $contactenatedMacros = $this->concatenateMacros($macros, $context);
         $targetPath = \sprintf(self::PATH_FORMAT_PHP, $target);
         
         $this->logger->debug('Expanding to '.$target);
+        $GLOBALS['__context'] = $context;
         $expansion = $this->yay->expand(
             $contactenatedMacros,
             $targetPath,
             Engine::GC_ENGINE_DISABLED
         );
-
+        unset($GLOBALS['__context']);
+        
         $this->logger->debug('Built '.\realpath($targetPath));
         \file_put_contents($targetPath, $expansion);
     }
@@ -149,16 +171,16 @@ final class BuildCommand extends Command
         
         foreach ($context as $name => $value) {
             $concatenatedMacros[] =
-                \sprintf(self::MACRO_FORMAT_CONTEXT, $name, $value);
+                \sprintf(self::MACRO_FORMAT_CONTEXT, $name, \json_encode($value));
         }
         
         $resolvedMacros = $sharedMacros;
-        foreach ($macros as $source) {
-            $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $source)] = $source;
+        foreach ($macros as $macro) {
+            $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $macro)] = $macro;
         }
         
-        foreach ($resolvedMacros as $path => $source) {
-            $this->logger->debug('Concatenating '.$source);
+        foreach ($resolvedMacros as $path => $macro) {
+            $this->logger->debug('Concatenating '.$macro);
             $macroContents = \file_get_contents($path);
             $macroContentsSansPhpPreamble =
                 \preg_replace(self::PHP_PREAMBLE_REGEX, '', $macroContents, 1);
@@ -166,5 +188,23 @@ final class BuildCommand extends Command
         }
         
         return \implode("\n", $concatenatedMacros)."\n";
+    }
+    
+    private function prettyPrintFiles(): void
+    {
+        $this->logger->info('Pretty-printing');
+        foreach (\glob(self::GLOB_DIST) as $file) {
+            $this->logger->debug('Pretty-printing '.\realpath($file));
+            $code = \file_get_contents($file);
+            $ast = $this->parser->parse($code);
+            $code = $this->prettyPrinter->prettyPrintFile($ast);
+            \file_put_contents($file, $code);
+        }
+    }
+    
+    private function lintFiles(): void
+    {
+        $this->logger->info('Linting');
+        (new Process(self::PROCESS_PHP_CS_FIXER))->run();
     }
 }

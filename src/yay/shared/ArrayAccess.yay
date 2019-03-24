@@ -1,0 +1,16 @@
+<?php
+
+$(macro :unsafe) {
+    __array_access_methods();
+} >> {
+    public function offsetGet($index)
+    {
+        __validate_index($index);
+    }
+    
+    public function offsetSet($index, $value)
+    {
+        __validate_index($index);
+        __validate_value($value);
+    }
+}
