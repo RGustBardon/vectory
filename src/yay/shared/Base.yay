@@ -1,0 +1,7 @@
+<?php
+
+$(macro :unsafe) {
+    __base_properties();
+} >> {
+    private /* string */ $source = '';
+}

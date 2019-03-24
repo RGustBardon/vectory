@@ -1,0 +1,256 @@
+[
+    {
+        "macros": ["Vector"],
+        "target": "BoolVector",
+        "context": {
+            "Nullable": false,
+            "Type": "bool"
+        }
+    },
+    
+    {
+        "macros": ["Vector"],
+        "target": "NullableBoolVector",
+        "context": {
+            "BytesPerItem": 1,
+            "Nullable": true,
+            "Type": "bool"
+        }
+    },
+
+    {
+        "macros": ["Vector"],
+        "target": "Char1Vector",
+        "context": {
+            "BytesPerItem": 1,
+            "Nullable": false,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Char2Vector",
+        "context": {
+            "BytesPerItem": 2,
+            "Nullable": false,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Char3Vector",
+        "context": {
+            "BytesPerItem": 3,
+            "Nullable": false,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Char4Vector",
+        "context": {
+            "BytesPerItem": 2,
+            "Nullable": false,
+            "Type": "string"
+        }
+    },
+
+    {
+        "macros": ["Vector"],
+        "target": "NullableChar1Vector",
+        "context": {
+            "BytesPerItem": 1,
+            "Nullable": true,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableChar2Vector",
+        "context": {
+            "BytesPerItem": 2,
+            "Nullable": true,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableChar3Vector",
+        "context": {
+            "BytesPerItem": 3,
+            "Nullable": true,
+            "Type": "string"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableChar4Vector",
+        "context": {
+            "BytesPerItem": 4,
+            "Nullable": true,
+            "Type": "string"
+        }
+    },
+
+    {
+        "macros": ["Vector"],
+        "target": "Uint8Vector",
+        "context": {
+            "BytesPerItem": 1,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint16Vector",
+        "context": {
+            "BytesPerItem": 2,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint24Vector",
+        "context": {
+            "BytesPerItem": 3,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint32Vector",
+        "context": {
+            "BytesPerItem": 4,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint40Vector",
+        "context": {
+            "BytesPerItem": 5,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint48Vector",
+        "context": {
+            "BytesPerItem": 6,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint56Vector",
+        "context": {
+            "BytesPerItem": 7,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "Uint64Vector",
+        "context": {
+            "BytesPerItem": 8,
+            "Nullable": false,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint8Vector",
+        "context": {
+            "BytesPerItem": 1,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint16Vector",
+        "context": {
+            "BytesPerItem": 2,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint24Vector",
+        "context": {
+            "BytesPerItem": 3,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint32Vector",
+        "context": {
+            "BytesPerItem": 4,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint40Vector",
+        "context": {
+            "BytesPerItem": 5,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint48Vector",
+        "context": {
+            "BytesPerItem": 6,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint56Vector",
+        "context": {
+            "BytesPerItem": 7,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    },
+    {
+        "macros": ["Vector"],
+        "target": "NullableUint64Vector",
+        "context": {
+            "BytesPerItem": 8,
+            "Nullable": true,
+            "Signed": false,
+            "Type": "int"
+        }
+    }
+]
