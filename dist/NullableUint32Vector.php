@@ -20,24 +20,9 @@ class NullableUint32Vector implements VectorInterface
 
     public function offsetGet($index)
     {
-        // region __validate_index($(index))
+        // region __validate_index
         if (!\is_int($index)) {
             throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-        }
-        if (0 === $this->elementCount) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
-        }
-        if ($this->elementCount <= $index) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
-        }
-        // endregion
-    }
-
-    public function offsetSet($index, $value)
-    {
-        // region __validate_index($(index))
-        if (!\is_int($index)) {
-            __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             __throw(\OutOfRangeException, 'The container is empty, so index '.$index.' does not exist');
@@ -46,9 +31,26 @@ class NullableUint32Vector implements VectorInterface
             __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
-        // region __validate_value($(value))
-        if (null !== $value && !\is_int($value)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type int or null, '.\gettype($value).' given');
+    }
+
+    public function offsetSet($index, $value)
+    {
+        // region __validate_index
+        if (!\is_int($index)) {
+            __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given');
+        }
+        if (0 === $this->elementCount) {
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
+        }
+        if ($this->elementCount <= $index) {
+            __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+        }
+        // endregion
+        // region __validate_value
+        if (null !== $value) {
+            if (!\is_int($value)) {
+                throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type int or null, '.\gettype($value).' given');
+            }
         }
         // endregion
     }
