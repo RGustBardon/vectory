@@ -27,10 +27,6 @@ $(macro :unsafe) {
     $(_() as __validate_value_int)
     $(_() as __validate_value_string)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if (isset($GLOBALS['__context']['BytesPerElement'])) {
-        $token = new \Yay\Token(\T_LNUMBER, (string) $GLOBALS['__context']['BytesPerElement']);
-        $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
-    }
     if ($GLOBALS['__context']['Nullable']) {
         $append = new \Yay\Ast('__context_Nullable');
         $append->push(new \Yay\Ast());
@@ -81,8 +77,8 @@ $(macro :unsafe) {
                     $$(expand(__throw(\TypeError, 'Value must be of type string or null, '.\gettype($(value)).' given')))
                 }
                 
-                if (\strlen($(value)) !== $(__context_BytesPerElement)) {
-                    $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $(__context_BytesPerElement), \strlen($(value))))))
+                if (\strlen($(value)) !== $[BytesPerElement]) {
+                    $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $[BytesPerElement], \strlen($(value))))))
                 }
             })
         }

@@ -70,7 +70,6 @@ final class BuildCommand extends Command
     
     private /* LoggerInterface */ $logger;
     private /* Parser */ $parser;
-    private /* Engine */ $yay;
     
     protected function configure()
     {
@@ -84,7 +83,6 @@ final class BuildCommand extends Command
         $this->logger = new ConsoleLogger($output);
         $this->parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
         $this->prettyPrinter = new PrettyPrinter\Standard;
-        $this->yay = new Engine();
         
         $this->cleanDist();
         $this->copyFiles();
@@ -141,7 +139,7 @@ final class BuildCommand extends Command
         
         $this->logger->debug('Expanding to '.$target);
         $GLOBALS['__context'] = $context;
-        $expansion = $this->yay->expand(
+        $expansion = (new Engine())->expand(
             $contactenatedMacros,
             $targetPath,
             Engine::GC_ENGINE_DISABLED
