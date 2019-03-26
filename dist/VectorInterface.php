@@ -13,6 +13,6 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-interface VectorInterface
+interface VectorInterface extends \ArrayAccess
 {
 }

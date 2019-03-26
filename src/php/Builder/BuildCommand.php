@@ -54,6 +54,15 @@ final class BuildCommand extends Command
     private const JSON_KEY_MACROS = 'macros';
     private const JSON_KEY_TARGET = 'target';
     private const JSON_KEY_CONTEXT = 'context';
+    private const JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT = 'BytesPerElement';
+    private const JSON_KEY_CONTEXT_DEFAULT_VALUE = 'DefaultValue';
+    private const JSON_KEY_CONTEXT_NULLABLE = 'Nullable';
+    private const JSON_KEY_CONTEXT_SIGNED = 'Signed';
+    private const JSON_KEY_CONTEXT_TYPE = 'Type';
+    
+    private const TYPE_BOOLEAN = 'bool';
+    private const TYPE_INTEGER = 'int';
+    private const TYPE_STRING = 'string';
     
     private const PHP_PREAMBLE = "<?php\n";
     private const PHP_PREAMBLE_REGEX = "~^<\\?php(?=\\R)~";
@@ -129,8 +138,7 @@ final class BuildCommand extends Command
     {
         $macros = $task[self::JSON_KEY_MACROS];
         $target = $task[self::JSON_KEY_TARGET];
-        $context = $task[self::JSON_KEY_CONTEXT];
-        
+        $context = self::getContext($task[self::JSON_KEY_CONTEXT]);
         
         $this->logger->info('Building '.$target);
         
@@ -204,5 +212,29 @@ final class BuildCommand extends Command
     {
         $this->logger->info('Linting');
         (new Process(self::PROCESS_PHP_CS_FIXER))->run();
+    }
+    
+    private static function getContext(array $context): array
+    {
+        switch ($context[self::JSON_KEY_CONTEXT_TYPE]) {
+            case self::TYPE_BOOLEAN:
+                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] = false;
+                break;
+            
+            case self::TYPE_INTEGER:
+                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] = 0;
+                break;
+            
+            case self::TYPE_STRING:
+                $bytesPerElement = $context[self::JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT];
+                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] =
+                    \str_repeat("\x0", $bytesPerElement);
+                break;
+            
+            default:
+                throw new \DomainException('Unsupported type: '.$context['Type']);
+        }
+        
+        return $context;
     }
 }

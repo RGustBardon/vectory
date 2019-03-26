@@ -18,3 +18,9 @@ $(macro :unsafe) {
 } >> {{
     throw new $(ns)(self::EXCEPTION_PREFIX.$(message));
 }}
+
+$(macro :unsafe) {
+    __default_value
+} >> {
+    
+}

@@ -18,9 +18,14 @@ class NullableChar3Vector implements VectorInterface
     private $elementCount = 0;
     private $source = [];
 
+    public function offsetExists($index)
+    {
+        return \is_int($index) && $index >= 0 && $index < $this->elementCount;
+    }
+
     public function offsetGet($index)
     {
-        // region __validate_index
+        // region __ensure_index
         if (!\is_int($index)) {
             throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
@@ -31,11 +36,12 @@ class NullableChar3Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
+        return $this->source[$index] ?? '\\u0000\\u0000\\u0000';
     }
 
     public function offsetSet($index, $value)
     {
-        // region __validate_index
+        // region __ensure_index
         if (!\is_int($index)) {
             throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
@@ -46,7 +52,7 @@ class NullableChar3Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
-        // region __validate_value
+        // region __ensure_value
         if (null !== $value) {
             if (!\is_string($value)) {
                 throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type string or null, '.\gettype($value).' given');
@@ -56,5 +62,13 @@ class NullableChar3Vector implements VectorInterface
             }
         }
         // endregion
+        $this->source[$index] = $value;
+    }
+
+    public function offsetUnset($index)
+    {
+        if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
+            unset($this->source[$index]);
+        }
     }
 }

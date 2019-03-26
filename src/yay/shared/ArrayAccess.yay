@@ -3,14 +3,30 @@
 $(macro :unsafe) {
     __array_access_methods()
 } >> {
+    public function offsetExists($index)
+    {
+        return __expr_is_index($index);
+    }
+    
     public function offsetGet($index)
     {
-        __validate_index($index);
+        __ensure_index($index);
+        
+        return $this->source[$index] ?? $[DefaultValue];
     }
     
     public function offsetSet($index, $value)
     {
-        __validate_index($index);
-        __validate_value($value);
+        __ensure_index($index);
+        __ensure_value($value);
+        
+        $this->source[$index] = $value;
+    }
+    
+    public function offsetUnset($index)
+    {
+        if (__expr_is_index($index)) {
+            unset($this->source[$index]);
+        }
     }
 }
