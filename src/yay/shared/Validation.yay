@@ -5,15 +5,15 @@ $(macro :unsafe) {
 } >> {{
 // region __validate_index
 if (!\is_int($index)) {
-    __throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given');
+    $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given')))
 }
 
 if (0 === $this->elementCount) {
-    __throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist');
+    $$(expand(__throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist')))
 }
 
 if ($this->elementCount <= $index) { 
-    __throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1));
+    $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
 }
 // endregion
 }}
@@ -49,17 +49,17 @@ $(macro :unsafe) {
     $(__context_Nullable ! {{
         $(__validate_value_bool ? {{
             if (!\is_bool($(value))) {
-                __throw(\TypeError, 'Value must be of type bool, '.\gettype($(value)).' given');
+                $$(expand(__throw(\TypeError, 'Value must be of type bool, '.\gettype($(value)).' given')))
             }
         }})
         $(__validate_value_int ? {
             if (!\is_int($(value))) {
-                __throw(\TypeError, 'Value must be of type int, '.\gettype($(value)).' given');
+                $$(expand(__throw(\TypeError, 'Value must be of type int, '.\gettype($(value)).' given')))
             }
         })
         $(__validate_value_string ? {
             if (!\is_string($(value))) {
-                __throw(\TypeError, 'Value must be of type string, '.\gettype($(value)).' given');
+                $$(expand(__throw(\TypeError, 'Value must be of type string, '.\gettype($(value)).' given')))
             }
         })
     }})
@@ -68,21 +68,21 @@ $(macro :unsafe) {
         if (null !== $value) {
             $(__validate_value_bool ? {{
                 if (!\is_bool($(value))) {
-                    __throw(\TypeError, 'Value must be of type bool or null, '.\gettype($(value)).' given');
+                    $$(expand(__throw(\TypeError, 'Value must be of type bool or null, '.\gettype($(value)).' given')))
                 }
             }})
             $(__validate_value_int ? {
                 if (!\is_int($(value))) {
-                    __throw(\TypeError, 'Value must be of type int or null, '.\gettype($(value)).' given');
+                    $$(expand(__throw(\TypeError, 'Value must be of type int or null, '.\gettype($(value)).' given')))
                 }
             })
             $(__validate_value_string ? {
                 if (!\is_string($(value))) {
-                    __throw(\TypeError, 'Value must be of type string or null, '.\gettype($(value)).' given');
+                    $$(expand(__throw(\TypeError, 'Value must be of type string or null, '.\gettype($(value)).' given')))
                 }
                 
                 if (\strlen($(value)) !== $(__context_BytesPerElement)) {
-                    __throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $(__context_BytesPerElement), \strlen($(value))));
+                    $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $(__context_BytesPerElement), \strlen($(value))))))
                 }
             })
         }

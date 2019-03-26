@@ -25,10 +25,10 @@ class NullableChar3Vector implements VectorInterface
             throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
-            __throw(\OutOfRangeException, 'The container is empty, so index '.$index.' does not exist');
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
         if ($this->elementCount <= $index) {
-            __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
     }
@@ -37,13 +37,13 @@ class NullableChar3Vector implements VectorInterface
     {
         // region __validate_index
         if (!\is_int($index)) {
-            __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given');
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
         if ($this->elementCount <= $index) {
-            __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
         // region __validate_value
@@ -52,7 +52,7 @@ class NullableChar3Vector implements VectorInterface
                 throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type string or null, '.\gettype($value).' given');
             }
             if (3 !== \strlen($value)) {
-                __throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', 3, \strlen($value)));
+                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 3, \strlen($value)));
             }
         }
         // endregion

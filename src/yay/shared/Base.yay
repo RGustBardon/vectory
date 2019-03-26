@@ -1,20 +1,20 @@
 <?php
 
 $(macro :unsafe) {
-    __base_constants();
+    __base_constants()
 } >> {
     private const EXCEPTION_PREFIX = 'Vectory: ';
 }
 
 $(macro :unsafe) {
-    __base_properties();
+    __base_properties()
 } >> {
     private /* int */ $elementCount = 0;
     private /* array */ $source = [];
 }
 
 $(macro :unsafe) {
-    __throw($(ns() as ns), $(... as message));
+    __throw($(ns() as ns), $(... as message))
 } >> {{
     throw new $(ns)(self::EXCEPTION_PREFIX.$(message));
 }}

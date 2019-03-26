@@ -25,10 +25,10 @@ class Uint16Vector implements VectorInterface
             throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
-            __throw(\OutOfRangeException, 'The container is empty, so index '.$index.' does not exist');
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
         if ($this->elementCount <= $index) {
-            __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
     }
@@ -37,13 +37,13 @@ class Uint16Vector implements VectorInterface
     {
         // region __validate_index
         if (!\is_int($index)) {
-            __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given');
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
         if ($this->elementCount <= $index) {
-            __throw(\OutOfRangeException, 'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
         // region __validate_value

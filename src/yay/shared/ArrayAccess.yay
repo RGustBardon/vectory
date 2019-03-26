@@ -1,7 +1,7 @@
 <?php
 
 $(macro :unsafe) {
-    __array_access_methods();
+    __array_access_methods()
 } >> {
     public function offsetGet($index)
     {
