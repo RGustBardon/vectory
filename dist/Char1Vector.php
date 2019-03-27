@@ -54,7 +54,10 @@ class Char1Vector implements VectorInterface
         // endregion
         // region __ensure_value
         if (!\is_string($value)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type string, '.\gettype($value).' given');
+            throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', '', \gettype($value)));
+        }
+        if (1 !== \strlen($value)) {
+            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 1, \strlen($value)));
         }
         // endregion
         $this->source[$index] = $value;

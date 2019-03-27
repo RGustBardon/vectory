@@ -162,16 +162,6 @@
             "Type": "int"
         }
     },
-    {
-        "macros": ["Vector"],
-        "target": "Uint64Vector",
-        "context": {
-            "BytesPerElement": 8,
-            "Nullable": false,
-            "Signed": false,
-            "Type": "int"
-        }
-    },
 
     {
         "macros": ["Vector"],
@@ -238,16 +228,6 @@
         "target": "NullableUint56Vector",
         "context": {
             "BytesPerElement": 7,
-            "Nullable": true,
-            "Signed": false,
-            "Type": "int"
-        }
-    },
-    {
-        "macros": ["Vector"],
-        "target": "NullableUint64Vector",
-        "context": {
-            "BytesPerElement": 8,
             "Nullable": true,
             "Signed": false,
             "Type": "int"

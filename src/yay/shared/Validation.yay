@@ -9,84 +9,105 @@ $(macro :unsafe) {
 $(macro :unsafe) {
     __ensure_index($(T_VARIABLE as index))
 } >> {{
-// region __ensure_index
-if (!\is_int($(index))) {
-    $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given')))
-}
-
-if (0 === $this->elementCount) {
-    $$(expand(__throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist')))
-}
-
-if ($this->elementCount <= $(index)) { 
-    $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
-}
-// endregion
+    // region __ensure_index
+    if (!\is_int($(index))) {
+        $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given')))
+    }
+    
+    if (0 === $this->elementCount) {
+        $$(expand(__throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist')))
+    }
+    
+    if ($this->elementCount <= $(index)) { 
+        $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
+    }
+    // endregion
 }}
 
 $(macro :unsafe) {
-    __ensure_value($(T_VARIABLE as value));
-    $(_() as __context_Nullable)
-    $(_() as __context_Signed)
+    __throw_unexpected_value_type($(T_VARIABLE as value))
+    $(_() as __context_NullableSuffix)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, $GLOBALS['__context']['Nullable'] ? '" or null"': '""');
+    $ast->append(new \Yay\Ast('__context_NullableSuffix', $token));
+} >> {
+    $$(expand(
+        __throw(
+            \TypeError,
+            \sprintf(
+                'Value must be of type %s%s, %s given',
+                $[Type],
+                $(__context_NullableSuffix),
+                \gettype($(value))
+            )
+        )
+    ))
+}
+
+$(macro :unsafe) {
+    __do_ensure_value($(T_VARIABLE as value))
+    $(_() as __context_HasMinimumMaximum)
     $(_() as __ensure_value_bool)
     $(_() as __ensure_value_int)
     $(_() as __ensure_value_string)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if ('int' === $GLOBALS['__context']['Type'] && $GLOBALS['__context']['BytesPerElement'] < 8) {
+        $append = new \Yay\Ast('__context_HasMinimumMaximum');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+    
+    $append = new \Yay\Ast('__ensure_value_'.$GLOBALS['__context']['Type']);
+    $append->push(new \Yay\Ast());
+    $ast->append($append);
+} >> {
+    $(__ensure_value_bool ? {
+        if (!\is_bool($(value))) {
+            $$(expand(__throw_unexpected_value_type($(value))))
+        }
+    })
+    $(__ensure_value_int ? {
+        if (!\is_int($(value))) {
+            $$(expand(__throw_unexpected_value_type($(value))))
+        }
+        
+        $(__context_HasMinimumMaximum ? {
+            if ($(value) < $[MinimumValue] || $(value) > $[MaximumValue]) {
+                $$(expand(__throw(\OutOfRangeException, 'Value out of range: '.$(value).', expected '.($[MinimumValue]).' <= x <= '.($[MaximumValue]))))
+            }
+        })
+    })
+    $(__ensure_value_string ? {
+        if (!\is_string($(value))) {
+            $$(expand(__throw_unexpected_value_type($(value))))
+        }
+        
+        if (\strlen($(value)) !== $[BytesPerElement]) {
+            $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $[BytesPerElement], \strlen($(value))))))
+        }
+    })
+}
+    
+$(macro :unsafe) {
+    __ensure_value($(T_VARIABLE as value))
+    $(_() as __context_Nullable)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
     if ($GLOBALS['__context']['Nullable']) {
         $append = new \Yay\Ast('__context_Nullable');
         $append->push(new \Yay\Ast());
         $ast->append($append);
     }
-    if ($GLOBALS['__context']['Signed'] ?? false) {
-        $append = new \Yay\Ast('__context_Signed');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
-    }
-    $append = new \Yay\Ast('__ensure_value_'.$GLOBALS['__context']['Type']);
-    $append->push(new \Yay\Ast());
-    $ast->append($append);
 } >> {{
     // region __ensure_value
-    $(__context_Nullable ! {{
-        $(__ensure_value_bool ? {{
-            if (!\is_bool($(value))) {
-                $$(expand(__throw(\TypeError, 'Value must be of type bool, '.\gettype($(value)).' given')))
-            }
-        }})
-        $(__ensure_value_int ? {
-            if (!\is_int($(value))) {
-                $$(expand(__throw(\TypeError, 'Value must be of type int, '.\gettype($(value)).' given')))
-            }
-        })
-        $(__ensure_value_string ? {
-            if (!\is_string($(value))) {
-                $$(expand(__throw(\TypeError, 'Value must be of type string, '.\gettype($(value)).' given')))
-            }
-        })
-    }})
-
-    $(__context_Nullable ? {{
+    $(__context_Nullable ! {
+        $$(expand(__do_ensure_value($(value))))
+    })
+    
+    $(__context_Nullable ? {
         if (null !== $value) {
-            $(__ensure_value_bool ? {{
-                if (!\is_bool($(value))) {
-                    $$(expand(__throw(\TypeError, 'Value must be of type bool or null, '.\gettype($(value)).' given')))
-                }
-            }})
-            $(__ensure_value_int ? {
-                if (!\is_int($(value))) {
-                    $$(expand(__throw(\TypeError, 'Value must be of type int or null, '.\gettype($(value)).' given')))
-                }
-            })
-            $(__ensure_value_string ? {
-                if (!\is_string($(value))) {
-                    $$(expand(__throw(\TypeError, 'Value must be of type string or null, '.\gettype($(value)).' given')))
-                }
-                
-                if (\strlen($(value)) !== $[BytesPerElement]) {
-                    $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $[BytesPerElement], \strlen($(value))))))
-                }
-            })
+            $$(expand(__do_ensure_value($(value))))
         }
-    }})
+    })
     // endregion
 }}
+

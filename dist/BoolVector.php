@@ -54,7 +54,7 @@ class BoolVector implements VectorInterface
         // endregion
         // region __ensure_value
         if (!\is_bool($value)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type bool, '.\gettype($value).' given');
+            throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'bool', '', \gettype($value)));
         }
         // endregion
         $this->source[$index] = $value;

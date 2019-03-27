@@ -10,15 +10,15 @@ $(macro :unsafe) {
     
     public function offsetGet($index)
     {
-        __ensure_index($index);
+        __ensure_index($index)
         
         return $this->source[$index] ?? $[DefaultValue];
     }
     
     public function offsetSet($index, $value)
     {
-        __ensure_index($index);
-        __ensure_value($value);
+        __ensure_index($index)
+        __ensure_value($value)
         
         $this->source[$index] = $value;
     }

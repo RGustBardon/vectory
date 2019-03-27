@@ -55,7 +55,7 @@ class NullableBoolVector implements VectorInterface
         // region __ensure_value
         if (null !== $value) {
             if (!\is_bool($value)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type bool or null, '.\gettype($value).' given');
+                throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'bool', ' or null', \gettype($value)));
             }
         }
         // endregion

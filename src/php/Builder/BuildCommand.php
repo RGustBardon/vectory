@@ -55,6 +55,8 @@ final class BuildCommand extends Command
     private const JSON_KEY_CONTEXT = 'context';
     private const JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT = 'BytesPerElement';
     private const JSON_KEY_CONTEXT_DEFAULT_VALUE = 'DefaultValue';
+    private const JSON_KEY_CONTEXT_MINIMUM_VALUE = 'MinimumValue';
+    private const JSON_KEY_CONTEXT_MAXIMUM_VALUE = 'MaximumValue';
     private const JSON_KEY_CONTEXT_NULLABLE = 'Nullable';
     private const JSON_KEY_CONTEXT_SIGNED = 'Signed';
     private const JSON_KEY_CONTEXT_TYPE = 'Type';
@@ -244,7 +246,17 @@ final class BuildCommand extends Command
 
                 break;
             case self::TYPE_INTEGER:
+                $bytesPerElement = $context[self::JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT];
                 $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] = 0;
+                if ($context[self::JSON_KEY_CONTEXT_SIGNED]) {
+                    $context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] =
+                        \hexdec('7f'.\str_repeat('ff', $bytesPerElement - 1));
+                    $context[self::JSON_KEY_CONTEXT_MINIMUM_VALUE] =
+                        -$context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] - 1;
+                } else {
+                    $context[self::JSON_KEY_CONTEXT_MINIMUM_VALUE] = 0;
+                    $context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] = 256 ** $bytesPerElement - 1;
+                }
 
                 break;
             case self::TYPE_STRING:

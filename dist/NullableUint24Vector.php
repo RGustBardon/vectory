@@ -55,7 +55,10 @@ class NullableUint24Vector implements VectorInterface
         // region __ensure_value
         if (null !== $value) {
             if (!\is_int($value)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type int or null, '.\gettype($value).' given');
+                throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', ' or null', \gettype($value)));
+            }
+            if ($value < 0 || $value > 16777215) {
+                throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$value.', expected '. 0 .' <= x <= '. 16777215);
             }
         }
         // endregion

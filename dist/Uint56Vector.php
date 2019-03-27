@@ -54,7 +54,10 @@ class Uint56Vector implements VectorInterface
         // endregion
         // region __ensure_value
         if (!\is_int($value)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Value must be of type int, '.\gettype($value).' given');
+            throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', '', \gettype($value)));
+        }
+        if ($value < 0 || $value > 72057594037927935) {
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$value.', expected '. 0 .' <= x <= '. 72057594037927935);
         }
         // endregion
         $this->source[$index] = $value;
