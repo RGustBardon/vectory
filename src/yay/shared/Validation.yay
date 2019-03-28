@@ -9,8 +9,7 @@ $(macro :unsafe) {
 $(macro :unsafe) {
     __ensure_index($(T_VARIABLE as index))
     $(optional(token(';')))
-} >> {{
-    // region __ensure_index
+} >> {
     if (!\is_int($(index))) {
         $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given')))
     }
@@ -22,8 +21,7 @@ $(macro :unsafe) {
     if ($(index) < 0 || $(index) >= $this->elementCount) { 
         $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
     }
-    // endregion
-}}
+}
 
 $(macro :unsafe) {
     __throw_unexpected_value_type($(T_VARIABLE as value))
@@ -102,7 +100,6 @@ $(macro :unsafe) {
         $ast->append($append);
     }
 } >> {{
-    // region __ensure_value
     $(__context_Nullable ! {
         $$(expand(__do_ensure_value($(value))))
     })
@@ -112,6 +109,5 @@ $(macro :unsafe) {
             $$(expand(__do_ensure_value($(value))))
         }
     })
-    // endregion
 }}
 

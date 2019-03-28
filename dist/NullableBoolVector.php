@@ -26,9 +26,12 @@ class NullableBoolVector implements VectorInterface
 
     public function offsetGet($index)
     {
-        // region __ensure_index
-        if (!\is_int($index)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else {
+            if (!\is_int($index)) {
+                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+            }
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
@@ -36,15 +39,18 @@ class NullableBoolVector implements VectorInterface
         if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
-        // endregion
+
         return $this->source[$index] ?? false;
     }
 
     public function offsetSet($index, $value)
     {
-        // region __ensure_index
-        if (!\is_int($index)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else {
+            if (!\is_int($index)) {
+                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+            }
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
@@ -52,21 +58,40 @@ class NullableBoolVector implements VectorInterface
         if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
-        // endregion
-        // region __ensure_value
         if (null !== $value) {
             if (!\is_bool($value)) {
                 throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'bool', ' or null', \gettype($value)));
             }
         }
-        // endregion
         $this->source[$index] = $value;
+        if ($this->elementCount < $index + 1) {
+            $this->elementCount = $index + 1;
+        }
     }
 
     public function offsetUnset($index)
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
-            unset($this->source[$index]);
+            if ($this->elementCount - 1 === $index) {
+                --$this->elementCount;
+                unset($this->source[$index]);
+            } else {
+                $this->fillAndSort();
+                \array_splice($this->source, $index, 1);
+                $this->source = \array_diff($this->source, [false]);
+                --$this->elementCount;
+                if (!isset($this->source[$this->elementCount - 1])) {
+                    $this->source[$this->elementCount - 1] = false;
+                }
+            }
         }
+    }
+
+    protected function fillAndSort(): void
+    {
+        if (\count($this->source) !== $this->elementCount) {
+            $this->source += \array_fill(0, $this->elementCount, false);
+        }
+        \ksort($this->source, \SORT_NUMERIC);
     }
 }

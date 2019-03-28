@@ -12,13 +12,27 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     $(source)->source[$(index)] = $(value);
+    if ($(source)->elementCount < $(index) + 1) {
+        $(source)->elementCount = $(index) + 1;
+    }
 }
 
 $(macro :unsafe) {
     __unset_value($(T_VARIABLE as source), $(T_VARIABLE as index))
     $(optional(token(';')))
 } >> {
-    unset($(source)->source[$(index)]);
+    if ($(source)->elementCount - 1 === $index) {
+        --$(source)->elementCount;
+        unset($(source)->source[$(index)]);
+    } else {
+        $(source)->fillAndSort();
+        \array_splice($(source)->source, $(index), 1);
+        $(source)->source = \array_diff($(source)->source, [$[DefaultValue]]);
+        --$(source)->elementCount;
+        if (!isset($(source)->source[$(source)->elementCount - 1])) {
+            $(source)->source[$(source)->elementCount - 1] = $[DefaultValue];
+        }
+    }
 }
 
 $(macro :unsafe) {
@@ -31,7 +45,9 @@ $(macro :unsafe) {
     
     public function offsetGet($index)
     {
-        __ensure_index($index);
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else __ensure_index($index);
         
         __get_value($this, $index, $value);
         return $value;
@@ -39,7 +55,9 @@ $(macro :unsafe) {
     
     public function offsetSet($index, $value)
     {
-        __ensure_index($index);
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else __ensure_index($index);
         __ensure_value($value);
         
         __set_value($this, $index, $value);
@@ -48,7 +66,15 @@ $(macro :unsafe) {
     public function offsetUnset($index)
     {
         if (__expr_is_index($index)) {
-            unset($this->source[$index]);
+            __unset_value($this, $index);
         }
+    }
+    
+    protected function fillAndSort(): void
+    {
+        if (\count($this->source) !== $this->elementCount) {
+            $this->source += \array_fill(0, $this->elementCount, $[DefaultValue]);
+        }
+        \ksort($this->source, \SORT_NUMERIC);
     }
 }
