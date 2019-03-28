@@ -6,6 +6,7 @@ namespace Vectory;
 
 class _ implements VectorInterface
 {
+    __base_constants()
     __base_properties()
     
     __array_access_methods()

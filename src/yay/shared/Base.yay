@@ -15,12 +15,7 @@ $(macro :unsafe) {
 
 $(macro :unsafe) {
     __throw($(ns() as ns), $(... as message))
+    $(optional(token(';')))
 } >> {
     throw new $(ns)(self::EXCEPTION_PREFIX.$(message));
-}
-
-$(macro :unsafe) {
-    __default_value
-} >> {
-    
 }

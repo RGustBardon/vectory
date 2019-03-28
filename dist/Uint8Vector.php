@@ -15,6 +15,7 @@ namespace Vectory;
 
 class Uint8Vector implements VectorInterface
 {
+    private const EXCEPTION_PREFIX = 'Vectory: ';
     private $elementCount = 0;
     private $source = [];
 
@@ -32,7 +33,7 @@ class Uint8Vector implements VectorInterface
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
-        if ($this->elementCount <= $index) {
+        if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion
@@ -48,7 +49,7 @@ class Uint8Vector implements VectorInterface
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
         }
-        if ($this->elementCount <= $index) {
+        if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
         // endregion

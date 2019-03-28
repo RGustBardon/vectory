@@ -8,6 +8,7 @@ $(macro :unsafe) {
 
 $(macro :unsafe) {
     __ensure_index($(T_VARIABLE as index))
+    $(optional(token(';')))
 } >> {{
     // region __ensure_index
     if (!\is_int($(index))) {
@@ -18,7 +19,7 @@ $(macro :unsafe) {
         $$(expand(__throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist')))
     }
     
-    if ($this->elementCount <= $(index)) { 
+    if ($(index) < 0 || $(index) >= $this->elementCount) { 
         $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
     }
     // endregion
@@ -26,6 +27,7 @@ $(macro :unsafe) {
 
 $(macro :unsafe) {
     __throw_unexpected_value_type($(T_VARIABLE as value))
+    $(optional(token(';')))
     $(_() as __context_NullableSuffix)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
     $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, $GLOBALS['__context']['Nullable'] ? '" or null"': '""');
@@ -46,6 +48,7 @@ $(macro :unsafe) {
 
 $(macro :unsafe) {
     __do_ensure_value($(T_VARIABLE as value))
+    $(optional(token(';')))
     $(_() as __context_HasMinimumMaximum)
     $(_() as __ensure_value_bool)
     $(_() as __ensure_value_int)
@@ -90,6 +93,7 @@ $(macro :unsafe) {
     
 $(macro :unsafe) {
     __ensure_value($(T_VARIABLE as value))
+    $(optional(token(';')))
     $(_() as __context_Nullable)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
     if ($GLOBALS['__context']['Nullable']) {

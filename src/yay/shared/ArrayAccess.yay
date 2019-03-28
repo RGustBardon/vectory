@@ -1,6 +1,27 @@
 <?php
 
 $(macro :unsafe) {
+    __get_value($(T_VARIABLE as source), $(T_VARIABLE as index), $(T_VARIABLE as result))
+    $(optional(token(';')))
+} >> {
+    $(result) = $(source)->source[$(index)] ?? $[DefaultValue];
+}
+
+$(macro :unsafe) {
+    __set_value($(T_VARIABLE as source), $(T_VARIABLE as index), $(T_VARIABLE as value))
+    $(optional(token(';')))
+} >> {
+    $(source)->source[$(index)] = $(value);
+}
+
+$(macro :unsafe) {
+    __unset_value($(T_VARIABLE as source), $(T_VARIABLE as index))
+    $(optional(token(';')))
+} >> {
+    unset($(source)->source[$(index)]);
+}
+
+$(macro :unsafe) {
     __array_access_methods()
 } >> {
     public function offsetExists($index)
@@ -10,17 +31,18 @@ $(macro :unsafe) {
     
     public function offsetGet($index)
     {
-        __ensure_index($index)
+        __ensure_index($index);
         
-        return $this->source[$index] ?? $[DefaultValue];
+        __get_value($this, $index, $value);
+        return $value;
     }
     
     public function offsetSet($index, $value)
     {
-        __ensure_index($index)
-        __ensure_value($value)
+        __ensure_index($index);
+        __ensure_value($value);
         
-        $this->source[$index] = $value;
+        __set_value($this, $index, $value);
     }
     
     public function offsetUnset($index)
