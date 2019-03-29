@@ -1,0 +1,11 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Vectory;
+
+use PHPUnit\Framework\TestCase;
+
+final class _ extends TestCase
+{
+}
