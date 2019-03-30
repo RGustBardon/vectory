@@ -23,8 +23,7 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
         bool $nullable,
         ?bool $signed,
         string $type
-    ): VectorDefinitionInterface
-    {
+    ): VectorDefinitionInterface {
         return new VectorDefinition($bytesPerElement, $nullable, $signed, $type);
     }
 }

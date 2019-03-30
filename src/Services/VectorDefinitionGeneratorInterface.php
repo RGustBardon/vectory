@@ -18,8 +18,8 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
 interface VectorDefinitionGeneratorInterface
 {
     /**
-     * @return \Generator|VectorDefinitionInterface[] A generator of the
-     *     definitions of all the vectors that are to be built.
+     * @return \Generator|VectorDefinitionInterface[] a generator of the
+     *                                                definitions of all the vectors that are to be built
      */
     public function generate(): \Generator;
 }

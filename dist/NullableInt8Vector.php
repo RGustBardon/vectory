@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-class Char4Vector implements VectorInterface
+class NullableInt8Vector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private $elementCount = 0;
@@ -40,7 +40,7 @@ class Char4Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
 
-        return $this->source[$index] ?? '\\u0000\\u0000\\u0000\\u0000';
+        return $this->source[$index] ?? 0;
     }
 
     public function offsetSet($index, $value)
@@ -58,11 +58,13 @@ class Char4Vector implements VectorInterface
         if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
-        if (!\is_string($value)) {
-            throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', '', \gettype($value)));
-        }
-        if (4 !== \strlen($value)) {
-            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 4, \strlen($value)));
+        if (null !== $value) {
+            if (!\is_int($value)) {
+                throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', ' or null', \gettype($value)));
+            }
+            if ($value < -128 || $value > 127) {
+                throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$value.', expected '.-128 .' <= x <= '. 127);
+            }
         }
         $this->source[$index] = $value;
         if ($this->elementCount < $index + 1) {
@@ -79,10 +81,10 @@ class Char4Vector implements VectorInterface
             } else {
                 $this->fillAndSort();
                 \array_splice($this->source, $index, 1);
-                $this->source = \array_diff($this->source, ['\\u0000\\u0000\\u0000\\u0000']);
+                $this->source = \array_diff($this->source, [0]);
                 --$this->elementCount;
                 if (!isset($this->source[$this->elementCount - 1])) {
-                    $this->source[$this->elementCount - 1] = '\\u0000\\u0000\\u0000\\u0000';
+                    $this->source[$this->elementCount - 1] = 0;
                 }
             }
         }
@@ -91,7 +93,7 @@ class Char4Vector implements VectorInterface
     protected function fillAndSort(): void
     {
         if (\count($this->source) !== $this->elementCount) {
-            $this->source += \array_fill(0, $this->elementCount, '\\u0000\\u0000\\u0000\\u0000');
+            $this->source += \array_fill(0, $this->elementCount, 0);
         }
         \ksort($this->source, \SORT_NUMERIC);
     }

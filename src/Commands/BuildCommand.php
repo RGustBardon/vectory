@@ -21,11 +21,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
-use Yay\Engine;
 use Vectory;
-use Vectory\Services\VectorDefinitionGenerator;
 use Vectory\Services\VectorDefinitionGeneratorInterface;
 use Vectory\ValueObjects\VectorDefinitionInterface;
+use Yay\Engine;
 
 final class BuildCommand extends Command
 {
@@ -48,13 +47,13 @@ final class BuildCommand extends Command
 
     private const PATH_FORMAT_YAY = self::DIR_YAY.'/%s'.self::FILE_EXTENSION_YAY;
     private const PATH_FORMAT_DIST = self::DIR_DIST.'/%s'.self::FILE_EXTENSION_PHP;
-    private const PATH_FORMAT_TESTS = self::DIR_TESTS.'/%s'.self::FILE_EXTENSION_PHP;
-    
+    private const PATH_FORMAT_TESTS = self::DIR_TESTS.'/%sTest'.self::FILE_EXTENSION_PHP;
+
     private const PHP_PREAMBLE = "<?php\n";
     private const PHP_PREAMBLE_REGEX = '~^<\\?php(?=\\R)~';
 
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
-    
+
     private const MAIN_MACRO_DIST = 'Vector';
     private const MAIN_MACRO_TESTS = 'VectorTest';
 
@@ -67,29 +66,18 @@ final class BuildCommand extends Command
         self::DIR_TESTS,
     ];
 
-    private const PROCESS_PHPSTAN = [
-        self::DIR_VENDOR_BIN.'/phpstan',
-        'analyse',
-        '--configuration='.self::DIR_BASE.'/phpstan.neon',
-        '--level=max',
-        '--no-progress',
-        self::DIR_DIST,
-        self::DIR_TESTS,
-    ];
-
     private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
     private /* LoggerInterface */ $logger;
     private /* Parser */ $parser;
     private /* PrettyPrinter */ $prettyPrinter;
     private /* array */ $tasks = [];
-    
+
     public function __construct(
         VectorDefinitionGeneratorInterface $vectorDefinitionGenerator,
         string $name = null
-    )
-    {
+    ) {
         parent::__construct($name);
-        
+
         $this->vectorDefinitionGenerator = $vectorDefinitionGenerator;
     }
 
@@ -116,12 +104,11 @@ final class BuildCommand extends Command
 
         $this->prettyPrintFiles();
         $this->lintFiles();
-        $this->analyzeFiles();
     }
 
     private function cleanDist(): void
     {
-        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path)  {
+        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path) {
             $this->logger->debug('Cleaning '.\realpath($path));
             \array_map('\\unlink', \glob($path.'/*'));
         }
@@ -137,6 +124,7 @@ final class BuildCommand extends Command
             \FilesystemIterator::KEY_AS_FILENAME
         );
         foreach ($globIterator as $key => $item) {
+            \assert($item instanceof \SplFileInfo);
             \copy($item->getPathname(), self::DIR_DIST.'/'.$key);
         }
     }
@@ -144,31 +132,30 @@ final class BuildCommand extends Command
     private function processTask(VectorDefinitionInterface $vectorDefinition): void
     {
         Vectory::setDefinition($vectorDefinition);
-
         $target = $vectorDefinition->getClassName();
         $this->logger->info('Building '.$target);
-        
+
         foreach ([
             self::MAIN_MACRO_DIST => self::PATH_FORMAT_DIST,
             self::MAIN_MACRO_TESTS => self::PATH_FORMAT_TESTS,
         ] as $mainMacro => $pathFormat) {
             $contactenatedMacros =
-                $this->concatenateMacros($mainMacro, $vectorDefinition);
+                $this->concatenateMacros($vectorDefinition->export(), $mainMacro);
             $targetPath = \sprintf($pathFormat, $target);
-    
+
             $this->logger->debug('Expanding to '.$target);
             $expansion = (new Engine())->expand(
                 $contactenatedMacros,
                 $targetPath,
                 Engine::GC_ENGINE_DISABLED
             );
-    
+
             $this->logger->debug('Built '.\realpath($targetPath));
             \file_put_contents($targetPath, $expansion);
         }
     }
 
-    private function concatenateMacros(string $mainMacro): string
+    private function concatenateMacros(array $definition, string $mainMacro): string
     {
         static $sharedMacros = [];
 
@@ -178,20 +165,28 @@ final class BuildCommand extends Command
                 \FilesystemIterator::KEY_AS_FILENAME
             );
             foreach ($globIterator as $key => $item) {
+                \assert($item instanceof \SplFileInfo);
                 $sharedMacros[$item->getPathname()] =
                     \substr($key, 0, -\strlen(self::FILE_EXTENSION_YAY));
             }
         }
 
         $concatenatedMacros = [self::PHP_PREAMBLE];
+        foreach ($definition as $name => $value) {
+            $concatenatedMacros[] =
+                \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), \json_encode($value));
+        }
+
         $resolvedMacros = $sharedMacros;
         $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $mainMacro)] = $mainMacro;
 
         foreach ($resolvedMacros as $path => $macro) {
             $this->logger->debug('Concatenating '.$macro);
             $macroContents = \file_get_contents($path);
+            \assert(\is_string($macroContents));
             $macroContentsSansPhpPreamble =
                 \preg_replace(self::PHP_PREAMBLE_REGEX, '', $macroContents, 1);
+            \assert(\is_string($macroContentsSansPhpPreamble));
             $concatenatedMacros[] = \trim($macroContentsSansPhpPreamble);
         }
 
@@ -216,16 +211,5 @@ final class BuildCommand extends Command
     {
         $this->logger->info('Linting');
         (new Process(self::PROCESS_PHP_CS_FIXER))->run();
-    }
-
-    private function analyzeFiles(): void
-    {
-        $this->logger->info('Analyzing');
-        $process = (new Process(self::PROCESS_PHPSTAN));
-        $process->run();
-        $output = \trim($process->getOutput());
-        if ('' !== $output) {
-            echo $output, "\n";
-        }
     }
 }

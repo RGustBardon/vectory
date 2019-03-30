@@ -16,12 +16,12 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
 /* final */ class Vectory
 {
     private static $vectorDefinition;
-    
-    public static function __callstatic($name, $arguments)
+
+    public static function __callStatic($name, $arguments)
     {
-        return self::$vectorDefinition->$name(...$arguments);
+        return self::$vectorDefinition->{$name}(...$arguments);
     }
-    
+
     public static function setDefinition(VectorDefinitionInterface $vectorDefinition)
     {
         self::$vectorDefinition = $vectorDefinition;

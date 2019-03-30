@@ -28,7 +28,7 @@ $(macro :unsafe) {
     $(optional(token(';')))
     $(_() as __context_NullableSuffix)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, $GLOBALS['__context']['Nullable'] ? '" or null"': '""');
+    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, Vectory::isNullable() ? '" or null"': '""');
     $ast->append(new \Yay\Ast('__context_NullableSuffix', $token));
 } >> {
     $$(expand(
@@ -52,13 +52,13 @@ $(macro :unsafe) {
     $(_() as __ensure_value_int)
     $(_() as __ensure_value_string)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if ('int' === $GLOBALS['__context']['Type'] && $GLOBALS['__context']['BytesPerElement'] < 8) {
+    if ('int' === Vectory::getType() && Vectory::getBytesPerElement() < 8) {
         $append = new \Yay\Ast('__context_HasMinimumMaximum');
         $append->push(new \Yay\Ast());
         $ast->append($append);
     }
     
-    $append = new \Yay\Ast('__ensure_value_'.$GLOBALS['__context']['Type']);
+    $append = new \Yay\Ast('__ensure_value_'.Vectory::getType());
     $append->push(new \Yay\Ast());
     $ast->append($append);
 } >> {
@@ -94,7 +94,7 @@ $(macro :unsafe) {
     $(optional(token(';')))
     $(_() as __context_Nullable)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if ($GLOBALS['__context']['Nullable']) {
+    if (Vectory::isNullable()) {
         $append = new \Yay\Ast('__context_Nullable');
         $append->push(new \Yay\Ast());
         $ast->append($append);

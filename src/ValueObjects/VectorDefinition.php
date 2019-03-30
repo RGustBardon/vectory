@@ -17,12 +17,19 @@ namespace Vectory\ValueObjects;
 {
     private const BYTES_PER_ELEMENT_MAXIMUM_SIGNED = 8;
     private const BYTES_PER_ELEMENT_MAXIMUM_UNSIGNED = 7;
-    
+
+    private const NAME_TOKEN_NULLABLE = 'Nullable';
+    private const NAME_TOKEN_BOOLEAN = 'Bool';
+    private const NAME_TOKEN_SIGNED_INTEGER = 'Int';
+    private const NAME_TOKEN_UNSIGNED_INTEGER = 'Uint';
+    private const NAME_TOKEN_STRING = 'Char';
+    private const NAME_TOKEN_SUFFIX = 'Vector';
+
     private /* ?int */ $bytesPerElement;
     private /* bool */ $nullable;
     private /* ?bool */ $signed;
     private /* string */ $type;
-    
+
     private $defaultValue;
     private /* ?int */ $minimumValue;
     private /* ?int */ $maximumValue;
@@ -33,108 +40,112 @@ namespace Vectory\ValueObjects;
         bool $nullable,
         ?bool $signed,
         string $type
-    )
-    {
+    ) {
         $this->bytesPerElement = $bytesPerElement;
         $this->nullable = $nullable;
         $this->signed = $signed;
         $this->type = $type;
-        
+
         $this->assertValidParameters();
         $this->deriveProperties();
     }
-    
+
+    public function export(): array
+    {
+        $properties = [];
+        $class = new \ReflectionClass($this);
+        foreach ($class->getProperties() as $property) {
+            $property->setAccessible(true);
+            $properties[$property->getName()] = $property->getValue($this);
+            $property->setAccessible(false);
+        }
+
+        return $properties;
+    }
+
     public function getBytesPerElement(): int
     {
         return $this->bytesPerElement;
     }
-    
+
     public function isNullable(): bool
     {
         return $this->nullable;
     }
-    
+
     public function isSigned(): bool
     {
         return $this->signed;
     }
-    
+
     public function isBoolean(): bool
     {
         return self::TYPE_BOOLEAN === $this->type;
     }
-    
+
     public function isInteger(): bool
     {
         return self::TYPE_INTEGER === $this->type;
     }
-    
+
     public function isString(): bool
     {
         return self::TYPE_STRING === $this->type;
     }
-    
+
     public function getType(): string
     {
         return $this->type;
     }
-    
+
     public function getDefaultValue()
     {
         return $this->defaultValue;
     }
-    
+
     public function getMinimumValue(): int
     {
         return $this->minimumValue;
     }
-    
+
     public function getMaximumValue(): int
     {
         return $this->maximumValue;
     }
-    
+
     public function getClassName(): string
     {
         return $this->className;
     }
-    
+
     private function assertValidParameters(): void
     {
         switch ($this->type) {
             case self::TYPE_BOOLEAN:
                 \assert(null === $this->bytesPerElement);
                 \assert(null === $this->signed);
+
                 break;
-                
             case self::TYPE_INTEGER:
                 \assert($this->bytesPerElement > 0);
                 \assert(\is_bool($this->signed));
                 if ($this->signed) {
-                    \assert($this->bytesPerElement < self::BYTES_PER_ELEMENT_MAXIMUM_SIGNED);
+                    \assert($this->bytesPerElement <= self::BYTES_PER_ELEMENT_MAXIMUM_SIGNED);
                 } else {
-                    \assert($this->bytesPerElement < self::BYTES_PER_ELEMENT_MAXIMUM_UNSIGNED);
+                    \assert($this->bytesPerElement <= self::BYTES_PER_ELEMENT_MAXIMUM_UNSIGNED);
                 }
-                
+
                 break;
-            
             case self::TYPE_STRING:
                 \assert($this->bytesPerElement > 0);
                 \assert(null === $this->signed);
+
                 break;
-                
             default:
                 throw new \DomainException('Invalid element type: '.$this->type);
         }
     }
-    
-    private const NAME_TOKEN_NULLABLE = 'Nullable';
-    private const NAME_TOKEN_BOOLEAN = 'Bool';
-    private const NAME_TOKEN_SIGNED_INTEGER = 'Int';
-    private const NAME_TOKEN_UNSIGNED_INTEGER = 'Uint';
-    private const NAME_TOKEN_STRING = 'Char';
-    private const NAME_TOKEN_SUFFIX = 'Vector';
-    
+
     private function deriveProperties(): void
     {
         $this->className = '';

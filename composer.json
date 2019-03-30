@@ -28,7 +28,9 @@
         }
     ],
     "autoload": {
-        "Vectory\\": "dist/"
+        "psr-4": {
+            "Vectory\\": "dist/"
+        }
     },
     "autoload-dev": {
         "files": [
@@ -46,6 +48,11 @@
         "sort-packages": true
     },
     "scripts": {
-        "build": ["php bin/build -v"]
+        "build": [
+            "php bin/build -v",
+            "@composer dumpautoload",
+            "phpstan analyse --level=max dist tests",
+            "phpunit tests"
+        ]
     }
 }
