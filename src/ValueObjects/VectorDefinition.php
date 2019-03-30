@@ -26,6 +26,7 @@ namespace Vectory\ValueObjects;
     private $defaultValue;
     private /* ?int */ $minimumValue;
     private /* ?int */ $maximumValue;
+    private $className;
 
     public function __construct(
         ?int $bytesPerElement,
@@ -93,6 +94,11 @@ namespace Vectory\ValueObjects;
         return $this->maximumValue;
     }
     
+    public function getClassName(): string
+    {
+        return $this->className;
+    }
+    
     private function assertValidParameters(): void
     {
         switch ($this->type) {
@@ -122,23 +128,41 @@ namespace Vectory\ValueObjects;
         }
     }
     
+    private const NAME_TOKEN_NULLABLE = 'Nullable';
+    private const NAME_TOKEN_BOOLEAN = 'Bool';
+    private const NAME_TOKEN_SIGNED_INTEGER = 'Int';
+    private const NAME_TOKEN_UNSIGNED_INTEGER = 'Uint';
+    private const NAME_TOKEN_STRING = 'Char';
+    private const NAME_TOKEN_SUFFIX = 'Vector';
+    
     private function deriveProperties(): void
     {
+        $this->className = '';
+        if ($this->nullable) {
+            $this->className .= self::NAME_TOKEN_NULLABLE;
+        }
+
         if ($this->isBoolean()) {
             $this->defaultValue = false;
+            $this->className .= self::NAME_TOKEN_BOOLEAN;
         } elseif ($this->isInteger()) {
             $this->defaultValue = 0;
             if ($this->isSigned()) {
                 $this->maximumValue =
                     \hexdec('7f'.\str_repeat('ff', $this->bytesPerElement - 1));
                 $this->minimumValue = -$this->maximumValue - 1;
+                $this->className .= self::NAME_TOKEN_SIGNED_INTEGER;
             } else {
                 $this->minimumValue = 0;
                 $this->maximumValue = 256 ** $this->bytesPerElement - 1;
-                
+                $this->className .= self::NAME_TOKEN_UNSIGNED_INTEGER;
             }
+            $this->className .= 8 * $this->bytesPerElement;
         } elseif ($this->isString()) {
             $this->defaultValue = \str_repeat("\x0", $this->bytesPerElement);
+            $this->className .= self::NAME_TOKEN_STRING.$this->bytesPerElement;
         }
+
+        $this->className .= self::NAME_TOKEN_SUFFIX;
     }
 }

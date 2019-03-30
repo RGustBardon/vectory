@@ -31,12 +31,15 @@
         "Vectory\\": "dist/"
     },
     "autoload-dev": {
+        "files": [
+            "src/Singletons/Vectory.php"
+        ],
         "psr-4": {
             "Vectory\\Commands\\": "src/Commands/",
             "Vectory\\Factories\\": "src/Factories/",
             "Vectory\\Services\\": "src/Services/",
             "Vectory\\Tests\\": "tests/",
-            "Vectory\\ValuesObjects\\": "src/ValueObjects/"
+            "Vectory\\ValueObjects\\": "src/ValueObjects/"
         }
     },
     "config": {

@@ -15,12 +15,17 @@ declare(strict_types=1);
 namespace Vectory;
 
 use Symfony\Component\Console\Application;
+use Vectory\Commands\BuildCommand;
+use Vectory\Factories\VectorDefinitionFactory;
+use Vectory\Services\VectorDefinitionGenerator;
 
 require_once __DIR__.'/../vendor/autoload.php';
 
 \error_reporting(\E_ALL);
 
-$command = new BuildCommand();
+$vectorDefinitionFactory = new VectorDefinitionFactory();
+$vectorDefinitionGenerator = new VectorDefinitionGenerator($vectorDefinitionFactory);
+$command = new BuildCommand($vectorDefinitionGenerator);
 
 $application = new Application();
 $application->add($command);

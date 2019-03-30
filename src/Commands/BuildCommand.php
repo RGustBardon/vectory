@@ -22,75 +22,76 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Yay\Engine;
+use Vectory;
+use Vectory\Services\VectorDefinitionGenerator;
+use Vectory\Services\VectorDefinitionGeneratorInterface;
+use Vectory\ValueObjects\VectorDefinitionInterface;
 
 final class BuildCommand extends Command
 {
-    private const DIR_BASE = __DIR__.'/../../..';
+    private const DIR_BASE = __DIR__.'/../..';
 
     private const DIR_DIST = self::DIR_BASE.'/dist';
     private const DIR_SRC = self::DIR_BASE.'/src';
+    private const DIR_TESTS = self::DIR_BASE.'/tests';
     private const DIR_VENDOR_BIN = self::DIR_BASE.'/vendor/bin';
 
-    private const DIR_CONFIG = self::DIR_SRC.'/config';
-    private const DIR_PHP = self::DIR_SRC.'/php';
-    private const DIR_YAY = self::DIR_SRC.'/yay';
+    private const DIR_YAY = self::DIR_SRC.'/Macros';
 
-    private const DIR_SHARED_MACROS = self::DIR_YAY.'/shared';
-    private const DIR_COPIED_VERBATIM = self::DIR_PHP.'/CopiedVerbatim';
-
-    private const FILE_BUILD = self::DIR_CONFIG.'/build.json';
+    private const DIR_SHARED_MACROS = self::DIR_YAY.'/Includes';
+    private const DIR_DELIVERABLES = self::DIR_SRC.'/Deliverables';
 
     private const FILE_EXTENSION_YAY = '.yay';
     private const FILE_EXTENSION_PHP = '.php';
 
-    private const GLOB_COPIED_VERBATIM = self::DIR_COPIED_VERBATIM.'/*';
-    private const GLOB_DIST = self::DIR_DIST.'/*';
     private const GLOB_SHARED_MACROS = self::DIR_SHARED_MACROS.'/*'.self::FILE_EXTENSION_YAY;
 
     private const PATH_FORMAT_YAY = self::DIR_YAY.'/%s'.self::FILE_EXTENSION_YAY;
-    private const PATH_FORMAT_PHP = self::DIR_DIST.'/%s'.self::FILE_EXTENSION_PHP;
-
-    private const JSON_KEY_MACROS = 'macros';
-    private const JSON_KEY_TARGET = 'target';
-    private const JSON_KEY_CONTEXT = 'context';
-    private const JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT = 'BytesPerElement';
-    private const JSON_KEY_CONTEXT_DEFAULT_VALUE = 'DefaultValue';
-    private const JSON_KEY_CONTEXT_MINIMUM_VALUE = 'MinimumValue';
-    private const JSON_KEY_CONTEXT_MAXIMUM_VALUE = 'MaximumValue';
-    private const JSON_KEY_CONTEXT_NULLABLE = 'Nullable';
-    private const JSON_KEY_CONTEXT_SIGNED = 'Signed';
-    private const JSON_KEY_CONTEXT_TYPE = 'Type';
-
-    private const TYPE_BOOLEAN = 'bool';
-    private const TYPE_INTEGER = 'int';
-    private const TYPE_STRING = 'string';
-
+    private const PATH_FORMAT_DIST = self::DIR_DIST.'/%s'.self::FILE_EXTENSION_PHP;
+    private const PATH_FORMAT_TESTS = self::DIR_TESTS.'/%s'.self::FILE_EXTENSION_PHP;
+    
     private const PHP_PREAMBLE = "<?php\n";
     private const PHP_PREAMBLE_REGEX = '~^<\\?php(?=\\R)~';
 
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
+    
+    private const MAIN_MACRO_DIST = 'Vector';
+    private const MAIN_MACRO_TESTS = 'VectorTest';
 
     private const PROCESS_PHP_CS_FIXER = [
         self::DIR_VENDOR_BIN.'/php-cs-fixer',
         'fix',
-        '--config='.self::DIR_CONFIG.'/.php_cs',
+        '--config='.self::DIR_BASE.'/.php_cs',
         '--using-cache=no',
         self::DIR_DIST,
+        self::DIR_TESTS,
     ];
 
     private const PROCESS_PHPSTAN = [
         self::DIR_VENDOR_BIN.'/phpstan',
         'analyse',
-        '--configuration=../../'.self::DIR_CONFIG.'/phpstan.neon',
+        '--configuration='.self::DIR_BASE.'/phpstan.neon',
         '--level=max',
         '--no-progress',
         self::DIR_DIST,
+        self::DIR_TESTS,
     ];
 
+    private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
     private /* LoggerInterface */ $logger;
     private /* Parser */ $parser;
     private /* PrettyPrinter */ $prettyPrinter;
     private /* array */ $tasks = [];
+    
+    public function __construct(
+        VectorDefinitionGeneratorInterface $vectorDefinitionGenerator,
+        string $name = null
+    )
+    {
+        parent::__construct($name);
+        
+        $this->vectorDefinitionGenerator = $vectorDefinitionGenerator;
+    }
 
     protected function configure()
     {
@@ -106,13 +107,11 @@ final class BuildCommand extends Command
         $this->prettyPrinter = new PrettyPrinter\Standard();
 
         $this->cleanDist();
-        $this->copyFiles();
+        $this->copyDeliverables();
 
-        $this->loadTasks();
-
-        $this->logger->debug('Processing tasks');
-        foreach ($this->tasks as $task) {
-            $this->processTask($task);
+        $this->logger->debug('Processing definitions');
+        foreach ($this->vectorDefinitionGenerator->generate() as $vectorDefinition) {
+            $this->processTask($vectorDefinition);
         }
 
         $this->prettyPrintFiles();
@@ -122,17 +121,19 @@ final class BuildCommand extends Command
 
     private function cleanDist(): void
     {
-        $this->logger->debug('Cleaning '.\realpath(self::DIR_DIST));
-        \array_map('\\unlink', \glob(self::GLOB_DIST));
+        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path)  {
+            $this->logger->debug('Cleaning '.\realpath($path));
+            \array_map('\\unlink', \glob($path.'/*'));
+        }
     }
 
-    private function copyFiles(): void
+    private function copyDeliverables(): void
     {
         $this->logger->info(
-            'Copying files from '.\realpath(self::DIR_COPIED_VERBATIM)
+            'Copying deliverables from '.\realpath(self::DIR_DELIVERABLES)
         );
         $globIterator = new \GlobIterator(
-            self::GLOB_COPIED_VERBATIM,
+            self::DIR_DELIVERABLES.'/*',
             \FilesystemIterator::KEY_AS_FILENAME
         );
         foreach ($globIterator as $key => $item) {
@@ -140,38 +141,34 @@ final class BuildCommand extends Command
         }
     }
 
-    private function loadTasks(): void
+    private function processTask(VectorDefinitionInterface $vectorDefinition): void
     {
-        $this->logger->debug('Loading tasks from '.\realpath(self::FILE_BUILD));
-        $json = \file_get_contents(self::FILE_BUILD);
-        $this->tasks = \json_decode($json, true);
-    }
+        Vectory::setDefinition($vectorDefinition);
 
-    private function processTask(array $task): void
-    {
-        $macros = $task[self::JSON_KEY_MACROS];
-        $target = $task[self::JSON_KEY_TARGET];
-        $context = self::getContext($task[self::JSON_KEY_CONTEXT]);
-
+        $target = $vectorDefinition->getClassName();
         $this->logger->info('Building '.$target);
-
-        $contactenatedMacros = $this->concatenateMacros($macros, $context);
-        $targetPath = \sprintf(self::PATH_FORMAT_PHP, $target);
-
-        $this->logger->debug('Expanding to '.$target);
-        $GLOBALS['__context'] = $context;
-        $expansion = (new Engine())->expand(
-            $contactenatedMacros,
-            $targetPath,
-            Engine::GC_ENGINE_DISABLED
-        );
-        unset($GLOBALS['__context']);
-
-        $this->logger->debug('Built '.\realpath($targetPath));
-        \file_put_contents($targetPath, $expansion);
+        
+        foreach ([
+            self::MAIN_MACRO_DIST => self::PATH_FORMAT_DIST,
+            self::MAIN_MACRO_TESTS => self::PATH_FORMAT_TESTS,
+        ] as $mainMacro => $pathFormat) {
+            $contactenatedMacros =
+                $this->concatenateMacros($mainMacro, $vectorDefinition);
+            $targetPath = \sprintf($pathFormat, $target);
+    
+            $this->logger->debug('Expanding to '.$target);
+            $expansion = (new Engine())->expand(
+                $contactenatedMacros,
+                $targetPath,
+                Engine::GC_ENGINE_DISABLED
+            );
+    
+            $this->logger->debug('Built '.\realpath($targetPath));
+            \file_put_contents($targetPath, $expansion);
+        }
     }
 
-    private function concatenateMacros(array $macros, array $context): string
+    private function concatenateMacros(string $mainMacro): string
     {
         static $sharedMacros = [];
 
@@ -187,16 +184,8 @@ final class BuildCommand extends Command
         }
 
         $concatenatedMacros = [self::PHP_PREAMBLE];
-
-        foreach ($context as $name => $value) {
-            $concatenatedMacros[] =
-                \sprintf(self::MACRO_FORMAT_CONTEXT, $name, \json_encode($value));
-        }
-
         $resolvedMacros = $sharedMacros;
-        foreach ($macros as $macro) {
-            $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $macro)] = $macro;
-        }
+        $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $mainMacro)] = $mainMacro;
 
         foreach ($resolvedMacros as $path => $macro) {
             $this->logger->debug('Concatenating '.$macro);
@@ -212,12 +201,14 @@ final class BuildCommand extends Command
     private function prettyPrintFiles(): void
     {
         $this->logger->info('Pretty-printing');
-        foreach (\glob(self::GLOB_DIST) as $file) {
-            $this->logger->debug('Pretty-printing '.\realpath($file));
-            $code = \file_get_contents($file);
-            $ast = $this->parser->parse($code);
-            $code = $this->prettyPrinter->prettyPrintFile($ast);
-            \file_put_contents($file, $code);
+        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path) {
+            foreach (\glob($path.'/*') as $file) {
+                $this->logger->debug('Pretty-printing '.\realpath($file));
+                $code = \file_get_contents($file);
+                $ast = $this->parser->parse($code);
+                $code = $this->prettyPrinter->prettyPrintFile($ast);
+                \file_put_contents($file, $code);
+            }
         }
     }
 
@@ -236,39 +227,5 @@ final class BuildCommand extends Command
         if ('' !== $output) {
             echo $output, "\n";
         }
-    }
-
-    private static function getContext(array $context): array
-    {
-        switch ($context[self::JSON_KEY_CONTEXT_TYPE]) {
-            case self::TYPE_BOOLEAN:
-                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] = false;
-
-                break;
-            case self::TYPE_INTEGER:
-                $bytesPerElement = $context[self::JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT];
-                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] = 0;
-                if ($context[self::JSON_KEY_CONTEXT_SIGNED]) {
-                    $context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] =
-                        \hexdec('7f'.\str_repeat('ff', $bytesPerElement - 1));
-                    $context[self::JSON_KEY_CONTEXT_MINIMUM_VALUE] =
-                        -$context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] - 1;
-                } else {
-                    $context[self::JSON_KEY_CONTEXT_MINIMUM_VALUE] = 0;
-                    $context[self::JSON_KEY_CONTEXT_MAXIMUM_VALUE] = 256 ** $bytesPerElement - 1;
-                }
-
-                break;
-            case self::TYPE_STRING:
-                $bytesPerElement = $context[self::JSON_KEY_CONTEXT_BYTES_PER_ELEMEENT];
-                $context[self::JSON_KEY_CONTEXT_DEFAULT_VALUE] =
-                    \str_repeat("\x0", $bytesPerElement);
-
-                break;
-            default:
-                throw new \DomainException('Unsupported type: '.$context['Type']);
-        }
-
-        return $context;
     }
 }

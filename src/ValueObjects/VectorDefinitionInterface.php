@@ -33,4 +33,6 @@ interface VectorDefinitionInterface
     public function getDefaultValue();
     public function getMinimumValue(): int;
     public function getMaximumValue(): int;
+    
+    public function getClassName(): string;
 }
