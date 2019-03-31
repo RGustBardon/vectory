@@ -45,15 +45,13 @@ final class BuildCommand extends Command
     private const FILE_EXTENSION_YAY = '.yay';
     private const FILE_EXTENSION_PHP = '.php';
 
-    private const GLOB_SHARED_MACROS = self::DIR_SHARED_MACROS.'/*'.self::FILE_EXTENSION_YAY;
-
     private const PATH_FORMAT_YAY = self::DIR_YAY.'/%s'.self::FILE_EXTENSION_YAY;
     private const PATH_FORMAT_DIST = self::DIR_DIST.'/%s'.self::FILE_EXTENSION_PHP;
     private const PATH_FORMAT_PHPUNIT = self::DIR_PHPUNIT.'/%sTest'.self::FILE_EXTENSION_PHP;
     private const PATH_FORMAT_PHPBENCH = self::DIR_PHPBENCH.'/%sBench'.self::FILE_EXTENSION_PHP;
 
     private const PHP_PREAMBLE = "<?php\n";
-    private const PHP_PREAMBLE_REGEX = '~^<\\?php(?=\\R)~';
+    private const PHP_PREAMBLE_REGEX = '~^<\\?php\\s+~';
 
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
 
@@ -115,7 +113,9 @@ final class BuildCommand extends Command
     {
         foreach ([self::DIR_DIST, self::DIR_PHPUNIT, self::DIR_PHPBENCH] as $path) {
             $this->logger->debug('Cleaning '.\realpath($path));
-            \array_map('\\unlink', \glob($path.'/*'));
+            foreach (self::generateFiles($path) as $pathname) {
+                \unlink($pathname);
+            }
         }
     }
 
@@ -124,13 +124,8 @@ final class BuildCommand extends Command
         $this->logger->info(
             'Copying deliverables from '.\realpath(self::DIR_DELIVERABLES)
         );
-        $globIterator = new \GlobIterator(
-            self::DIR_DELIVERABLES.'/*',
-            \FilesystemIterator::KEY_AS_FILENAME
-        );
-        foreach ($globIterator as $key => $item) {
-            \assert($item instanceof \SplFileInfo);
-            \copy($item->getPathname(), self::DIR_DIST.'/'.$key);
+        foreach (self::generateFiles(self::DIR_DELIVERABLES) as $filename => $pathname) {
+            \copy($pathname, self::DIR_DIST.'/'.$filename);
         }
     }
 
@@ -145,13 +140,13 @@ final class BuildCommand extends Command
             self::MAIN_MACRO_PHPUNIT => self::PATH_FORMAT_PHPUNIT,
             self::MAIN_MACRO_PHPBENCH => self::PATH_FORMAT_PHPBENCH,
         ] as $mainMacro => $pathFormat) {
-            $contactenatedMacros =
+            $concatenatedMacros =
                 $this->concatenateMacros($vectorDefinition->export(), $mainMacro);
             $targetPath = \sprintf($pathFormat, $target);
 
             $this->logger->debug('Expanding to '.$target);
             $expansion = (new Engine())->expand(
-                $contactenatedMacros,
+                $concatenatedMacros,
                 $targetPath,
                 Engine::GC_ENGINE_DISABLED
             );
@@ -166,18 +161,13 @@ final class BuildCommand extends Command
         static $sharedMacros = [];
 
         if (!$sharedMacros) {
-            $globIterator = new \GlobIterator(
-                self::GLOB_SHARED_MACROS,
-                \FilesystemIterator::KEY_AS_FILENAME
-            );
-            foreach ($globIterator as $key => $item) {
-                \assert($item instanceof \SplFileInfo);
-                $sharedMacros[$item->getPathname()] =
-                    \substr($key, 0, -\strlen(self::FILE_EXTENSION_YAY));
+            foreach (self::generateFiles(self::DIR_SHARED_MACROS) as $filename => $pathname) {
+                $sharedMacros[$pathname] =
+                    \substr($filename, 0, -\strlen(self::FILE_EXTENSION_YAY));
             }
         }
 
-        $concatenatedMacros = [self::PHP_PREAMBLE];
+        $concatenatedMacros = [];
         foreach ($definition as $name => $value) {
             $concatenatedMacros[] =
                 \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), \json_encode($value));
@@ -196,19 +186,19 @@ final class BuildCommand extends Command
             $concatenatedMacros[] = \trim($macroContentsSansPhpPreamble);
         }
 
-        return \implode("\n", $concatenatedMacros)."\n";
+        return self::PHP_PREAMBLE."\n".\implode("\n", $concatenatedMacros)."\n";
     }
 
     private function prettyPrintFiles(): void
     {
         $this->logger->info('Pretty-printing');
         foreach ([self::DIR_DIST, self::DIR_PHPUNIT] as $path) {
-            foreach (\glob($path.'/*') as $file) {
-                $this->logger->debug('Pretty-printing '.\realpath($file));
-                $code = \file_get_contents($file);
+            foreach (self::generateFiles($path) as $filename => $pathname) {
+                $this->logger->debug('Pretty-printing '.$filename);
+                $code = \file_get_contents($pathname);
                 $ast = $this->parser->parse($code);
                 $code = $this->prettyPrinter->prettyPrintFile($ast);
-                \file_put_contents($file, $code);
+                \file_put_contents($pathname, $code);
             }
         }
     }
@@ -217,5 +207,16 @@ final class BuildCommand extends Command
     {
         $this->logger->info('Linting');
         (new Process(self::PROCESS_PHP_CS_FIXER))->run();
+    }
+
+    private static function generateFiles(string $directory): iterable
+    {
+        $directoryIterator = new \RecursiveDirectoryIterator($directory);
+        foreach (new \RecursiveIteratorIterator($directoryIterator) as $fileInfo) {
+            \assert($fileInfo instanceof \SplFileInfo);
+            if ($fileInfo->isFile()) {
+                yield $fileInfo->getFilename() => $fileInfo->getPathname();
+            }
+        }
     }
 }

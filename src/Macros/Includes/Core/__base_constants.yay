@@ -1,0 +1,7 @@
+<?php
+
+$(macro :unsafe) {
+    __base_constants()
+} >> {
+    private const EXCEPTION_PREFIX = 'Vectory: ';
+}

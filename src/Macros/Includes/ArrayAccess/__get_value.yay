@@ -1,0 +1,52 @@
+<?php
+
+$(macro :unsafe) {
+    __do_get_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(T_VARIABLE as result)
+        )
+        $(optional(token(';')))
+        $(_() as __context_DefaultValue)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'nullability' === (string) $ast->{'prefix'}) {
+        $token = new \Yay\Token(\T_STRING, 'false');
+        $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
+    }
+} >> {
+    $(result) =
+        $(vector)->$(prefix)Source[$(index)] ??
+            $(__context_DefaultValue ?! {$[DefaultValue]});
+}
+
+
+$(macro :unsafe) {
+    __get_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(T_VARIABLE as result)
+    )
+    $(optional(token(';')))
+    $(_() as __context_Nullable)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'primary' === (string) $ast->{'prefix'}) {
+        $append = new \Yay\Ast('__context_Nullable');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+} >> {
+    $(__context_Nullable ? {
+        $$(expand(__do_get_value($(vector), nullability, $(index), $isNull)));
+        if ($isNull) {
+            $(result) = null;
+        } else {
+            $$(expand(__do_get_value($(vector), $(prefix), $(index), $(result))));
+        }
+    });
+
+    $(__context_Nullable ! {
+        $$(expand(__do_get_value($(vector), $(prefix), $(index), $(result))));
+    });
+}

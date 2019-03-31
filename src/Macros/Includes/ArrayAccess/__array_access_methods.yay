@@ -1,0 +1,37 @@
+<?php
+
+$(macro :unsafe) {
+    __array_access_methods()
+} >> {
+    public function offsetExists($index)
+    {
+        return __is_index($index);
+    }
+    
+    public function offsetGet($index)
+    {
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else __ensure_index($index);
+        
+        __get_value($this, primary, $index, $value);
+        return $value;
+    }
+    
+    public function offsetSet($index, $value)
+    {
+        if (null === $index) {
+            $index = $this->elementCount;
+        } else __ensure_index($index);
+        __ensure_value($value);
+        
+        __set_value($this, primary, $index, $value);
+    }
+    
+    public function offsetUnset($index)
+    {
+        if (__is_index($index)) {
+            __unset_value($this, primary, $index);
+        }
+    }
+}

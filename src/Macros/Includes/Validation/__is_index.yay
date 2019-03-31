@@ -1,0 +1,7 @@
+<?php
+
+$(macro :unsafe) {
+    __is_index($(T_VARIABLE as index))
+} >> {
+    \is_int($(index)) && $(index) >= 0 && $(index) < $this->elementCount
+}

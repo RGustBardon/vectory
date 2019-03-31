@@ -1,0 +1,92 @@
+<?php
+
+$(macro :unsafe) {
+    __fill_and_sort(
+        $(T_VARIABLE as vector),
+        $(label() as prefix)
+    )
+    $(optional(token(';')))
+    $(_() as __context_DefaultValue)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'nullability' === (string) $ast->{'prefix'}) {
+        $token = new \Yay\Token(\T_STRING, 'false');
+        $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
+    }
+} >> {
+    if (\count($(vector)->$(prefix)Source) !== $(vector)->elementCount) {
+        $(vector)->$(prefix)Source +=
+            \array_fill(
+                0,
+                $(vector)->elementCount,
+                $(__context_DefaultValue ?! {$[DefaultValue]})
+            );
+    }
+    \ksort($(vector)->$(prefix)Source, \SORT_NUMERIC);
+}
+
+$(macro :unsafe) {
+    __do_unset_value_at_tail(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index)
+    )
+    $(optional(token(';')))
+} >> {
+    unset($(vector)->$(prefix)Source[$(index)]);
+}
+    
+$(macro :unsafe) {
+    __do_unset_value_before_tail(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index)
+    )
+    $(optional(token(';')))
+    $(_() as __context_DefaultValue)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'nullability' === (string) $ast->{'prefix'}) {
+        $token = new \Yay\Token(\T_STRING, 'false');
+        $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
+    }
+} >> {
+    __fill_and_sort($(vector), $(prefix));
+    \array_splice($(vector)->$(prefix)Source, $(index), 1);
+    $(vector)->$(prefix)Source =
+        \array_diff(
+            $(vector)->$(prefix)Source,
+            [$(__context_DefaultValue ?! {$[DefaultValue]})]
+        );
+    if (!isset($(vector)->$(prefix)Source[$(vector)->elementCount - 1])) {
+        $(vector)->$(prefix)Source[$(vector)->elementCount - 1] =
+            $(__context_DefaultValue ?! {$[DefaultValue]});
+    }
+}
+
+$(macro :unsafe) {
+    __unset_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index)
+    )
+    $(optional(token(';')))
+    $(_() as __context_Nullable)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'primary' === (string) $ast->{'prefix'}) {
+        $append = new \Yay\Ast('__context_Nullable');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+} >> {
+    --$(vector)->elementCount;
+    if ($(vector)->elementCount === $index) {
+        __do_unset_value_at_tail($(vector), $(prefix), $(index));
+        $(__context_Nullable ? {
+            $$(expand(__do_unset_value_at_tail($(vector), nullability, $(index))))
+        })
+    } else {
+        __do_unset_value_before_tail($(vector), $(prefix), $(index));
+        $(__context_Nullable ? {
+            $$(expand(__do_unset_value_before_tail($(vector), nullability, $(index))))
+        })
+    }
+}

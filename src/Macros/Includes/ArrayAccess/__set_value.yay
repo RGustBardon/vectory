@@ -1,0 +1,46 @@
+<?php
+
+$(macro :unsafe) {
+    __do_set_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+    )
+} >> {
+    $(vector)->$(prefix)Source[$(index)] = $(value);
+}
+
+$(macro :unsafe) {
+    __set_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+    )
+    $(optional(token(';')))
+    $(_() as __context_Nullable)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isNullable() && 'primary' === (string) $ast->{'prefix'}) {
+        $append = new \Yay\Ast('__context_Nullable');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+} >> {
+    $(__context_Nullable ? {
+        if (null === $(value)) {
+            $$(expand(__do_set_value($(vector), nullability, $(index), true)));
+        } else {
+            $$(expand(__do_set_value($(vector), nullability, $(index), false)));
+            $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
+        }
+    });
+    
+    $(__context_Nullable ! {
+        $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
+    });
+    
+    if ($(vector)->elementCount < $(index) + 1) {
+        $(vector)->elementCount = $(index) + 1;
+    }
+}

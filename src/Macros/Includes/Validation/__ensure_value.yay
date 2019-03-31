@@ -1,29 +1,6 @@
 <?php
 
 $(macro :unsafe) {
-    __expr_is_index($(T_VARIABLE as index))
-} >> {
-    \is_int($(index)) && $(index) >= 0 && $(index) < $this->elementCount
-}
-
-$(macro :unsafe) {
-    __ensure_index($(T_VARIABLE as index))
-    $(optional(token(';')))
-} >> {
-    if (!\is_int($(index))) {
-        $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($(index)).' given')))
-    }
-    
-    if (0 === $this->elementCount) {
-        $$(expand(__throw(\OutOfRangeException, 'The container is empty, so index '.$(index).' does not exist')))
-    }
-    
-    if ($(index) < 0 || $(index) >= $this->elementCount) { 
-        $$(expand(__throw(\OutOfRangeException, 'Index out of range: '.$(index).', expected 0 <= x <= '.($this->elementCount - 1))))
-    }
-}
-
-$(macro :unsafe) {
     __throw_unexpected_value_type($(T_VARIABLE as value))
     $(optional(token(';')))
     $(_() as __context_NullableSuffix)
@@ -39,11 +16,11 @@ $(macro :unsafe) {
                 $[Type],
                 $(__context_NullableSuffix),
                 \gettype($(value))
+                )
             )
-        )
-    ))
+        ))
 }
-
+    
 $(macro :unsafe) {
     __do_ensure_value($(T_VARIABLE as value))
     $(optional(token(';')))
@@ -88,7 +65,7 @@ $(macro :unsafe) {
         }
     })
 }
-    
+
 $(macro :unsafe) {
     __ensure_value($(T_VARIABLE as value))
     $(optional(token(';')))
@@ -99,7 +76,7 @@ $(macro :unsafe) {
         $append->push(new \Yay\Ast());
         $ast->append($append);
     }
-} >> {{
+} >> {
     $(__context_Nullable ! {
         $$(expand(__do_ensure_value($(value))))
     })
@@ -109,5 +86,4 @@ $(macro :unsafe) {
             $$(expand(__do_ensure_value($(value))))
         }
     })
-}}
-
+}
