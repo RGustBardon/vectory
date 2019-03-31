@@ -33,6 +33,8 @@ final class BuildCommand extends Command
     private const DIR_DIST = self::DIR_BASE.'/dist';
     private const DIR_SRC = self::DIR_BASE.'/src';
     private const DIR_TESTS = self::DIR_BASE.'/tests';
+    private const DIR_PHPUNIT = self::DIR_TESTS.'/PhpUnit';
+    private const DIR_PHPBENCH = self::DIR_TESTS.'/PhpBench';
     private const DIR_VENDOR_BIN = self::DIR_BASE.'/vendor/bin';
 
     private const DIR_YAY = self::DIR_SRC.'/Macros';
@@ -47,7 +49,8 @@ final class BuildCommand extends Command
 
     private const PATH_FORMAT_YAY = self::DIR_YAY.'/%s'.self::FILE_EXTENSION_YAY;
     private const PATH_FORMAT_DIST = self::DIR_DIST.'/%s'.self::FILE_EXTENSION_PHP;
-    private const PATH_FORMAT_TESTS = self::DIR_TESTS.'/%sTest'.self::FILE_EXTENSION_PHP;
+    private const PATH_FORMAT_PHPUNIT = self::DIR_PHPUNIT.'/%sTest'.self::FILE_EXTENSION_PHP;
+    private const PATH_FORMAT_PHPBENCH = self::DIR_PHPBENCH.'/%sBench'.self::FILE_EXTENSION_PHP;
 
     private const PHP_PREAMBLE = "<?php\n";
     private const PHP_PREAMBLE_REGEX = '~^<\\?php(?=\\R)~';
@@ -55,7 +58,8 @@ final class BuildCommand extends Command
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
 
     private const MAIN_MACRO_DIST = 'Vector';
-    private const MAIN_MACRO_TESTS = 'VectorTest';
+    private const MAIN_MACRO_PHPUNIT = 'VectorTest';
+    private const MAIN_MACRO_PHPBENCH = 'VectorBench';
 
     private const PROCESS_PHP_CS_FIXER = [
         self::DIR_VENDOR_BIN.'/php-cs-fixer',
@@ -63,7 +67,8 @@ final class BuildCommand extends Command
         '--config='.self::DIR_BASE.'/.php_cs',
         '--using-cache=no',
         self::DIR_DIST,
-        self::DIR_TESTS,
+        self::DIR_PHPUNIT,
+        self::DIR_PHPBENCH,
     ];
 
     private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
@@ -108,7 +113,7 @@ final class BuildCommand extends Command
 
     private function cleanDist(): void
     {
-        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path) {
+        foreach ([self::DIR_DIST, self::DIR_PHPUNIT, self::DIR_PHPBENCH] as $path) {
             $this->logger->debug('Cleaning '.\realpath($path));
             \array_map('\\unlink', \glob($path.'/*'));
         }
@@ -137,7 +142,8 @@ final class BuildCommand extends Command
 
         foreach ([
             self::MAIN_MACRO_DIST => self::PATH_FORMAT_DIST,
-            self::MAIN_MACRO_TESTS => self::PATH_FORMAT_TESTS,
+            self::MAIN_MACRO_PHPUNIT => self::PATH_FORMAT_PHPUNIT,
+            self::MAIN_MACRO_PHPBENCH => self::PATH_FORMAT_PHPBENCH,
         ] as $mainMacro => $pathFormat) {
             $contactenatedMacros =
                 $this->concatenateMacros($vectorDefinition->export(), $mainMacro);
@@ -196,7 +202,7 @@ final class BuildCommand extends Command
     private function prettyPrintFiles(): void
     {
         $this->logger->info('Pretty-printing');
-        foreach ([self::DIR_DIST, self::DIR_TESTS] as $path) {
+        foreach ([self::DIR_DIST, self::DIR_PHPUNIT] as $path) {
             foreach (\glob($path.'/*') as $file) {
                 $this->logger->debug('Pretty-printing '.\realpath($file));
                 $code = \file_get_contents($file);

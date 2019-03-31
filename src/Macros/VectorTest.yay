@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Vectory\Tests;
+namespace Vectory\Tests\PhpUnit;
 
 use PHPUnit\Framework\TestCase;
 

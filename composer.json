@@ -10,6 +10,7 @@
         "php-64bit": "^7.2",
         "friendsofphp/php-cs-fixer": "^2.14",
         "nikic/php-parser": "^4.2",
+        "phpbench/phpbench": "@dev",
         "phpstan/phpstan": "^0.11.5",
         "phpstan/phpstan-phpunit": "^0.11.0",
         "phpunit/phpunit": "^8",
@@ -52,7 +53,10 @@
             "php bin/build -v",
             "@composer dumpautoload",
             "phpstan analyse --level=max dist tests",
-            "phpunit tests"
+            "phpunit tests/PhpUnit"
+        ],
+        "bench": [
+            "phpbench run tests/PhpBench"
         ]
     }
 }
