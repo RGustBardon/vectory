@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpUnit;
 
 use PHPUnit\Framework\TestCase;
+use Vectory\VectorInterface;
 
 final class _ extends TestCase
 {
+    __array_access_methods_test()
+    __test_methods()
 }

@@ -167,7 +167,9 @@ final class BuildCommand extends Command
             }
         }
 
-        $concatenatedMacros = [];
+        $concatenatedMacros = [
+            \sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', '\\Vectory\\'.$definition['className']),
+        ];
         foreach ($definition as $name => $value) {
             $concatenatedMacros[] =
                 \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), \json_encode($value));

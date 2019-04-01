@@ -14,11 +14,53 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpUnit;
 
 use PHPUnit\Framework\TestCase;
+use Vectory\VectorInterface;
 
 /**
  * @internal
- * @coversNothing
  */
 final class BoolVectorTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function testThrowsIfIndexOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        self::getInstance()[false];
+    }
+
+    public function testThrowsIfIndexOfEmptyContainer(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        self::getInstance()[0];
+    }
+
+    public function testThrowsIfIndexIsNegative(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = false;
+        $vector[-1];
+    }
+
+    public function testThrowsIfIndexIsOutOfRange(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = false;
+        $vector[1];
+    }
+
+    private static function getInstance(): VectorInterface
+    {
+        return new \Vectory\BoolVector();
+    }
+
+    private static function getRandomValue()
+    {
+        return [false, true][\mt_rand(0, 1)];
+    }
 }

@@ -25,9 +25,9 @@ $(macro :unsafe) {
     __do_ensure_value($(T_VARIABLE as value))
     $(optional(token(';')))
     $(_() as __context_HasMinimumMaximum)
-    $(_() as __ensure_value_bool)
-    $(_() as __ensure_value_int)
-    $(_() as __ensure_value_string)
+    $(_() as __context_Type_bool)
+    $(_() as __context_Type_int)
+    $(_() as __context_Type_string)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
     if ('int' === Vectory::getType() && Vectory::getBytesPerElement() < 8) {
         $append = new \Yay\Ast('__context_HasMinimumMaximum');
@@ -35,16 +35,16 @@ $(macro :unsafe) {
         $ast->append($append);
     }
     
-    $append = new \Yay\Ast('__ensure_value_'.Vectory::getType());
+    $append = new \Yay\Ast('__context_Type_'.Vectory::getType());
     $append->push(new \Yay\Ast());
     $ast->append($append);
 } >> {
-    $(__ensure_value_bool ? {
+    $(__context_Type_bool ? {
         if (!\is_bool($(value))) {
             $$(expand(__throw_unexpected_value_type($(value))))
         }
     })
-    $(__ensure_value_int ? {
+    $(__context_Type_int ? {
         if (!\is_int($(value))) {
             $$(expand(__throw_unexpected_value_type($(value))))
         }
@@ -55,7 +55,7 @@ $(macro :unsafe) {
             }
         })
     })
-    $(__ensure_value_string ? {
+    $(__context_Type_string ? {
         if (!\is_string($(value))) {
             $$(expand(__throw_unexpected_value_type($(value))))
         }

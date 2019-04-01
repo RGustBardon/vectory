@@ -17,7 +17,7 @@ class Uint16Vector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private $elementCount = 0;
-    private $source = [];
+    private $primarySource = [];
 
     public function offsetExists($index)
     {
@@ -40,7 +40,7 @@ class Uint16Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
 
-        return $this->source[$index] ?? 0;
+        return $this->primarySource[$index] ?? 0;
     }
 
     public function offsetSet($index, $value)
@@ -64,7 +64,7 @@ class Uint16Vector implements VectorInterface
         if ($value < 0 || $value > 65535) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$value.', expected '. 0 .' <= x <= '. 65535);
         }
-        $this->source[$index] = $value;
+        $this->primarySource[$index] = $value;
         if ($this->elementCount < $index + 1) {
             $this->elementCount = $index + 1;
         }
@@ -73,26 +73,20 @@ class Uint16Vector implements VectorInterface
     public function offsetUnset($index)
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
-            if ($this->elementCount - 1 === $index) {
-                --$this->elementCount;
-                unset($this->source[$index]);
+            --$this->elementCount;
+            if ($this->elementCount === $index) {
+                unset($this->primarySource[$index]);
             } else {
-                $this->fillAndSort();
-                \array_splice($this->source, $index, 1);
-                $this->source = \array_diff($this->source, [0]);
-                --$this->elementCount;
-                if (!isset($this->source[$this->elementCount - 1])) {
-                    $this->source[$this->elementCount - 1] = 0;
+                if (\count($this->primarySource) !== $this->elementCount) {
+                    $this->primarySource += \array_fill(0, $this->elementCount, 0);
+                }
+                \ksort($this->primarySource, \SORT_NUMERIC);
+                \array_splice($this->primarySource, $index, 1);
+                $this->primarySource = \array_diff($this->primarySource, [0]);
+                if (!isset($this->primarySource[$this->elementCount - 1])) {
+                    $this->primarySource[$this->elementCount - 1] = 0;
                 }
             }
         }
-    }
-
-    protected function fillAndSort(): void
-    {
-        if (\count($this->source) !== $this->elementCount) {
-            $this->source += \array_fill(0, $this->elementCount, 0);
-        }
-        \ksort($this->source, \SORT_NUMERIC);
     }
 }

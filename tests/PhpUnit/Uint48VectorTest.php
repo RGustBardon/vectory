@@ -14,11 +14,58 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpUnit;
 
 use PHPUnit\Framework\TestCase;
+use Vectory\VectorInterface;
 
 /**
  * @internal
- * @coversNothing
  */
 final class Uint48VectorTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function testThrowsIfIndexOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        self::getInstance()[false];
+    }
+
+    public function testThrowsIfIndexOfEmptyContainer(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        self::getInstance()[0];
+    }
+
+    public function testThrowsIfIndexIsNegative(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = 0;
+        $vector[-1];
+    }
+
+    public function testThrowsIfIndexIsOutOfRange(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = 0;
+        $vector[1];
+    }
+
+    private static function getInstance(): VectorInterface
+    {
+        return new \Vectory\Uint48Vector();
+    }
+
+    private static function getRandomValue()
+    {
+        $value = \dechex(\mt_rand(0x0, 0xff));
+        for ($i = 1; $i < 6; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+
+        return \hexdec($value);
+    }
 }

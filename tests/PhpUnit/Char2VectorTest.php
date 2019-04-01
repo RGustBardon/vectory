@@ -14,11 +14,58 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpUnit;
 
 use PHPUnit\Framework\TestCase;
+use Vectory\VectorInterface;
 
 /**
  * @internal
- * @coversNothing
  */
 final class Char2VectorTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function testThrowsIfIndexOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        self::getInstance()[false];
+    }
+
+    public function testThrowsIfIndexOfEmptyContainer(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        self::getInstance()[0];
+    }
+
+    public function testThrowsIfIndexIsNegative(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = '\\u0000\\u0000';
+        $vector[-1];
+    }
+
+    public function testThrowsIfIndexIsOutOfRange(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = '\\u0000\\u0000';
+        $vector[1];
+    }
+
+    private static function getInstance(): VectorInterface
+    {
+        return new \Vectory\Char2Vector();
+    }
+
+    private static function getRandomValue()
+    {
+        $value = '';
+        for ($i = 0; $i < 2; ++$i) {
+            $value .= \chr(\mt_rand(0x0, 0xff));
+        }
+
+        return $value;
+    }
 }

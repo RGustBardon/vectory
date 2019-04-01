@@ -17,7 +17,8 @@ class NullableInt8Vector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private $elementCount = 0;
-    private $source = [];
+    private $primarySource = [];
+    private $nullabilitySource = [];
 
     public function offsetExists($index)
     {
@@ -39,8 +40,14 @@ class NullableInt8Vector implements VectorInterface
         if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
+        $isNull = $this->nullabilitySource[$index] ?? false;
+        if ($isNull) {
+            $value = null;
+        } else {
+            $value = $this->primarySource[$index] ?? 0;
+        }
 
-        return $this->source[$index] ?? 0;
+        return $value;
     }
 
     public function offsetSet($index, $value)
@@ -66,7 +73,12 @@ class NullableInt8Vector implements VectorInterface
                 throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$value.', expected '.-128 .' <= x <= '. 127);
             }
         }
-        $this->source[$index] = $value;
+        if (null === $value) {
+            $this->nullabilitySource[$index] = true;
+        } else {
+            $this->nullabilitySource[$index] = false;
+            $this->primarySource[$index] = $value;
+        }
         if ($this->elementCount < $index + 1) {
             $this->elementCount = $index + 1;
         }
@@ -75,26 +87,30 @@ class NullableInt8Vector implements VectorInterface
     public function offsetUnset($index)
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
-            if ($this->elementCount - 1 === $index) {
-                --$this->elementCount;
-                unset($this->source[$index]);
+            --$this->elementCount;
+            if ($this->elementCount === $index) {
+                unset($this->primarySource[$index]);
+                unset($this->nullabilitySource[$index]);
             } else {
-                $this->fillAndSort();
-                \array_splice($this->source, $index, 1);
-                $this->source = \array_diff($this->source, [0]);
-                --$this->elementCount;
-                if (!isset($this->source[$this->elementCount - 1])) {
-                    $this->source[$this->elementCount - 1] = 0;
+                if (\count($this->primarySource) !== $this->elementCount) {
+                    $this->primarySource += \array_fill(0, $this->elementCount, 0);
+                }
+                \ksort($this->primarySource, \SORT_NUMERIC);
+                \array_splice($this->primarySource, $index, 1);
+                $this->primarySource = \array_diff($this->primarySource, [0]);
+                if (!isset($this->primarySource[$this->elementCount - 1])) {
+                    $this->primarySource[$this->elementCount - 1] = 0;
+                }
+                if (\count($this->nullabilitySource) !== $this->elementCount) {
+                    $this->nullabilitySource += \array_fill(0, $this->elementCount, false);
+                }
+                \ksort($this->nullabilitySource, \SORT_NUMERIC);
+                \array_splice($this->nullabilitySource, $index, 1);
+                $this->nullabilitySource = \array_diff($this->nullabilitySource, [false]);
+                if (!isset($this->nullabilitySource[$this->elementCount - 1])) {
+                    $this->nullabilitySource[$this->elementCount - 1] = false;
                 }
             }
         }
-    }
-
-    protected function fillAndSort(): void
-    {
-        if (\count($this->source) !== $this->elementCount) {
-            $this->source += \array_fill(0, $this->elementCount, 0);
-        }
-        \ksort($this->source, \SORT_NUMERIC);
     }
 }
