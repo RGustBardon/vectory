@@ -25,6 +25,7 @@ use Vectory;
 use Vectory\Services\VectorDefinitionGeneratorInterface;
 use Vectory\ValueObjects\VectorDefinitionInterface;
 use Yay\Engine;
+use Vectory\ValueObjects\VectorDefinition;
 
 final class BuildCommand extends Command
 {
@@ -54,7 +55,9 @@ final class BuildCommand extends Command
     private const PHP_PREAMBLE_REGEX = '~^<\\?php\\s+~';
 
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
-
+    private const MACRO_FORMAT_DISABLE = '$(macro) { @%s{ layer() } } >> { }';
+    private const MACRO_FORMAT_ENABLE = '$(macro) { @%s{ layer() as body } } >> { $(body) }';
+    
     private const MAIN_MACRO_DIST = 'Vector';
     private const MAIN_MACRO_PHPUNIT = 'VectorTest';
     private const MAIN_MACRO_PHPBENCH = 'VectorBench';
@@ -141,7 +144,7 @@ final class BuildCommand extends Command
             self::MAIN_MACRO_PHPBENCH => self::PATH_FORMAT_PHPBENCH,
         ] as $mainMacro => $pathFormat) {
             $concatenatedMacros =
-                $this->concatenateMacros($vectorDefinition->export(), $mainMacro);
+                $this->concatenateMacros($vectorDefinition, $mainMacro);
             $targetPath = \sprintf($pathFormat, $target);
 
             $this->logger->debug('Expanding to '.$target);
@@ -156,7 +159,10 @@ final class BuildCommand extends Command
         }
     }
 
-    private function concatenateMacros(array $definition, string $mainMacro): string
+    private function concatenateMacros(
+        VectorDefinitionInterface $vectorDefinition,
+        string $mainMacro
+    ): string
     {
         static $sharedMacros = [];
 
@@ -167,14 +173,33 @@ final class BuildCommand extends Command
             }
         }
 
-        $concatenatedMacros = [
-            \sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', '\\Vectory\\'.$definition['className']),
-        ];
-        foreach ($definition as $name => $value) {
+        $fqn = '\\Vectory\\'.$vectorDefinition->getClassName();
+        $concatenatedMacros = [\sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', $fqn)];
+        foreach ($vectorDefinition->export() as $name => $value) {
             $concatenatedMacros[] =
                 \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), \json_encode($value));
         }
 
+        foreach (
+            \array_filter(
+                [
+                    'HasMinimumMaximum' =>
+                    $vectorDefinition->isInteger() &&
+                    $vectorDefinition->getBytesPerElement() < 8,
+                    'Nullable' => $vectorDefinition->isNullable(),
+                    'Signed' =>
+                    $vectorDefinition->isInteger() &&
+                    $vectorDefinition->isSigned(),
+                    'Boolean' => $vectorDefinition->isBoolean(),
+                    'Integer' => $vectorDefinition->isInteger(),
+                    'String' => $vectorDefinition->isString(),
+                ]
+            ) as $name => $isEnabled
+        ) {
+            $format = $isEnabled ? self::MACRO_FORMAT_ENABLE : self::MACRO_FORMAT_IGNORE;
+            $concatenatedMacros[] = \sprintf($format, '__context_'.$name, true);
+        }
+        
         $resolvedMacros = $sharedMacros;
         $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $mainMacro)] = $mainMacro;
 
