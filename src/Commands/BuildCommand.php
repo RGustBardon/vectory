@@ -25,7 +25,6 @@ use Vectory;
 use Vectory\Services\VectorDefinitionGeneratorInterface;
 use Vectory\ValueObjects\VectorDefinitionInterface;
 use Yay\Engine;
-use Vectory\ValueObjects\VectorDefinition;
 
 final class BuildCommand extends Command
 {
@@ -55,8 +54,32 @@ final class BuildCommand extends Command
     private const PHP_PREAMBLE_REGEX = '~^<\\?php\\s+~';
 
     private const MACRO_FORMAT_CONTEXT = '$(macro) { $[%s] } >> { %s }';
-    private const MACRO_FORMAT_DISABLE = '$(macro) { @%s{ layer() } } >> { }';
-    private const MACRO_FORMAT_ENABLE = '$(macro) { @%s{ layer() as body } } >> { $(body) }';
+    private const MACRO_FORMAT_ENABLE =
+        <<<'YAY'
+$(macro) { $<%1$s> $({...} as body) } >> { $(body) }
+$(macro) {
+  $<!%1$s> $({...} as body)
+  $(_() as __context_Nop)
+} >> function (\Yay\Ast $ast) {
+    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, ' ');
+    $ast->append(new \Yay\Ast('__context_Nop', $token));
+} >> {
+    $(__context_Nop)
+}
+YAY;
+    private const MACRO_FORMAT_IGNORE =
+        <<<'YAY'
+$(macro) { $<!%1$s> $({...} as body) } >> { $(body) }
+$(macro) {
+  $<%1$s> $({...} as body)
+  $(_() as __context_Nop)
+} >> function (\Yay\Ast $ast) {
+    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, ' ');
+    $ast->append(new \Yay\Ast('__context_Nop', $token));
+} >> {
+    $(__context_Nop)
+}
+YAY;
     
     private const MAIN_MACRO_DIST = 'Vector';
     private const MAIN_MACRO_PHPUNIT = 'VectorTest';
@@ -181,25 +204,23 @@ final class BuildCommand extends Command
         }
 
         foreach (
-            \array_filter(
-                [
-                    'HasMinimumMaximum' =>
+            [
+                'HasMinimumMaximum' =>
                     $vectorDefinition->isInteger() &&
-                    $vectorDefinition->getBytesPerElement() < 8,
-                    'Nullable' => $vectorDefinition->isNullable(),
-                    'Signed' =>
+                        $vectorDefinition->getBytesPerElement() < 8,
+                'Nullable' => $vectorDefinition->isNullable(),
+                'Signed' =>
                     $vectorDefinition->isInteger() &&
-                    $vectorDefinition->isSigned(),
-                    'Boolean' => $vectorDefinition->isBoolean(),
-                    'Integer' => $vectorDefinition->isInteger(),
-                    'String' => $vectorDefinition->isString(),
-                ]
-            ) as $name => $isEnabled
+                        $vectorDefinition->isSigned(),
+                'Boolean' => $vectorDefinition->isBoolean(),
+                'Integer' => $vectorDefinition->isInteger(),
+                'String' => $vectorDefinition->isString(),
+            ] as $name => $isEnabled
         ) {
             $format = $isEnabled ? self::MACRO_FORMAT_ENABLE : self::MACRO_FORMAT_IGNORE;
-            $concatenatedMacros[] = \sprintf($format, '__context_'.$name, true);
+            $concatenatedMacros[] = \sprintf($format, $name, true);
         }
-        
+
         $resolvedMacros = $sharedMacros;
         $resolvedMacros[\sprintf(self::PATH_FORMAT_YAY, $mainMacro)] = $mainMacro;
 

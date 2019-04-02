@@ -3,10 +3,6 @@
 $(macro :unsafe) {
     __throw_unexpected_value_type($(T_VARIABLE as value))
     $(optional(token(';')))
-    $(_() as __context_NullableSuffix)
-} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, Vectory::isNullable() ? '" or null"': '""');
-    $ast->append(new \Yay\Ast('__context_NullableSuffix', $token));
 } >> {
     $$(expand(
         __throw(
@@ -14,76 +10,58 @@ $(macro :unsafe) {
             \sprintf(
                 'Value must be of type %s%s, %s given',
                 $[Type],
-                $(__context_NullableSuffix),
+                $<Nullable>{ ' or null' } $<!Nullable>{ '' },
                 \gettype($(value))
                 )
             )
-        ))
+        )
+    )
 }
     
 $(macro :unsafe) {
     __do_ensure_value($(T_VARIABLE as value))
     $(optional(token(';')))
-    $(_() as __context_HasMinimumMaximum)
-    $(_() as __context_Type_bool)
-    $(_() as __context_Type_int)
-    $(_() as __context_Type_string)
-} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if ('int' === Vectory::getType() && Vectory::getBytesPerElement() < 8) {
-        $append = new \Yay\Ast('__context_HasMinimumMaximum');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
-    }
-    
-    $append = new \Yay\Ast('__context_Type_'.Vectory::getType());
-    $append->push(new \Yay\Ast());
-    $ast->append($append);
 } >> {
-    $(__context_Type_bool ? {
-        if (!\is_bool($(value))) {
-            $$(expand(__throw_unexpected_value_type($(value))))
-        }
-    })
-    $(__context_Type_int ? {
-        if (!\is_int($(value))) {
-            $$(expand(__throw_unexpected_value_type($(value))))
-        }
-        
-        $(__context_HasMinimumMaximum ? {
-            if ($(value) < $[MinimumValue] || $(value) > $[MaximumValue]) {
-                $$(expand(__throw(\OutOfRangeException, 'Value out of range: '.$(value).', expected '.($[MinimumValue]).' <= x <= '.($[MaximumValue]))))
+    $$(expand(
+        $<Boolean>{
+            if (!\is_bool($(value))) {
+                __throw_unexpected_value_type($(value))
             }
-        })
-    })
-    $(__context_Type_string ? {
-        if (!\is_string($(value))) {
-            $$(expand(__throw_unexpected_value_type($(value))))
         }
-        
-        if (\strlen($(value)) !== $[BytesPerElement]) {
-            $$(expand(__throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $[BytesPerElement], \strlen($(value))))))
+        $<Integer>{
+            if (!\is_int($(value))) {
+                __throw_unexpected_value_type($(value))
+            }
+            
+            $<HasMinimumMaximum>{
+                if ($(value) < $[MinimumValue] || $(value) > $[MaximumValue]) {
+                    __throw(\OutOfRangeException, 'Value out of range: '.$(value).', expected '.($[MinimumValue]).' <= x <= '.($[MaximumValue]))
+                }
+            }
         }
-    })
+        $<String>{
+            if (!\is_string($(value))) {
+                __throw_unexpected_value_type($(value))
+            }
+    
+            if (\strlen($(value)) !== $[BytesPerElement]) {
+                __throw(\LengthException, \sprintf('Value must be exactly %d bytes, %d given', $[BytesPerElement], \strlen($(value))))
+            }
+        }
+    ))
 }
 
 $(macro :unsafe) {
     __ensure_value($(T_VARIABLE as value))
     $(optional(token(';')))
-    $(_() as __context_Nullable)
-} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if (Vectory::isNullable()) {
-        $append = new \Yay\Ast('__context_Nullable');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
-    }
 } >> {
-    $(__context_Nullable ! {
-        $$(expand(__do_ensure_value($(value))))
-    })
-    
-    $(__context_Nullable ? {
+    $$(expand($<Nullable>{
         if (null !== $value) {
             $$(expand(__do_ensure_value($(value))))
         }
-    })
+    }))
+
+    $$(expand($<!Nullable>{
+        $$(expand(__do_ensure_value($(value))))
+    }))
 }

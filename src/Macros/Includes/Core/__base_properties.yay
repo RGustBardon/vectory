@@ -2,17 +2,12 @@
 
 $(macro :unsafe) {
     __base_properties()
-    $(_() as __context_Nullable)
-} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if (Vectory::isNullable()) {
-        $append = new \Yay\Ast('__context_Nullable');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
-    }
 } >> {
-    private /* int */ $elementCount = 0;
-    private /* array */ $primarySource = [];
-    $(__context_Nullable ? {
-        private /* array */ $nullabilitySource = [];
-    })
+    $$(expand(
+        private /* int */ $elementCount = 0;
+        private /* array */ $primarySource = [];
+        $<Nullable>{
+            private /* array */ $nullabilitySource = [];
+        }
+    ))
 }
