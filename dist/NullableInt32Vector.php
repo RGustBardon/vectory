@@ -54,16 +54,8 @@ class NullableInt32Vector implements VectorInterface
     {
         if (null === $index) {
             $index = $this->elementCount;
-        } else {
-            if (!\is_int($index)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-            }
-        }
-        if (0 === $this->elementCount) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
-        }
-        if ($index < 0 || $index >= $this->elementCount) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+        } elseif ($index < 0) {
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Negative index: '.$index);
         }
         if (null !== $value) {
             if (!\is_int($value)) {

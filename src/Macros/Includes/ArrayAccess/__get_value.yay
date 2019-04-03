@@ -6,9 +6,9 @@ $(macro :unsafe) {
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
-        )
-        $(optional(token(';')))
-        $(_() as __context_DefaultValue)
+    )
+    $(optional(token(';')))
+    $(_() as __context_DefaultValue)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
     if (Vectory::isNullable() && 'nullability' === (string) $ast->{'prefix'}) {
         $token = new \Yay\Token(\T_STRING, 'false');
@@ -48,5 +48,5 @@ $(macro :unsafe) {
 
     $(__context_Nullable ! {
         $$(expand(__do_get_value($(vector), $(prefix), $(index), $(result))));
-    });
+    })
 }

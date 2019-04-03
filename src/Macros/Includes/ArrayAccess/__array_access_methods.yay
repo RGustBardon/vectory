@@ -22,7 +22,9 @@ $(macro :unsafe) {
     {
         if (null === $index) {
             $index = $this->elementCount;
-        } else __ensure_index($index);
+        } elseif ($index < 0) {
+            __throw(\OutOfRangeException, 'Negative index: '.$index);
+        }
         __ensure_value($value);
         
         __set_value($this, primary, $index, $value);

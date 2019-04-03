@@ -3,6 +3,11 @@
 $(macro :unsafe) {
     __test_methods()
 } >> {
+    private const INVALID_VALUE = $$(expand(
+        $<Integer>{ '0' }
+        $<!Integer>{ 0 }
+    ));
+    
     protected function setUp(): void
     {
         \mt_srand(0);

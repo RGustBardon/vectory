@@ -21,6 +21,8 @@ use Vectory\VectorInterface;
  */
 final class NullableInt64VectorTest extends TestCase
 {
+    private const INVALID_VALUE = '0';
+
     protected function setUp(): void
     {
         \mt_srand(0);
@@ -52,6 +54,13 @@ final class NullableInt64VectorTest extends TestCase
         $vector = self::getInstance();
         $vector[0] = 0;
         $vector[1];
+    }
+
+    public function testThrowsIfValueOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector[0] = self::INVALID_VALUE;
     }
 
     private static function getInstance(): VectorInterface

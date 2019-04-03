@@ -40,23 +40,15 @@ class Char3Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
 
-        return $this->primarySource[$index] ?? '\\u0000\\u0000\\u0000';
+        return $this->primarySource[$index] ?? "\0\0\0";
     }
 
     public function offsetSet($index, $value)
     {
         if (null === $index) {
             $index = $this->elementCount;
-        } else {
-            if (!\is_int($index)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-            }
-        }
-        if (0 === $this->elementCount) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
-        }
-        if ($index < 0 || $index >= $this->elementCount) {
-            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+        } elseif ($index < 0) {
+            throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Negative index: '.$index);
         }
         if (!\is_string($value)) {
             throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', '', \gettype($value)));
@@ -78,13 +70,13 @@ class Char3Vector implements VectorInterface
                 unset($this->primarySource[$index]);
             } else {
                 if (\count($this->primarySource) !== $this->elementCount) {
-                    $this->primarySource += \array_fill(0, $this->elementCount, '\\u0000\\u0000\\u0000');
+                    $this->primarySource += \array_fill(0, $this->elementCount, "\0\0\0");
                 }
                 \ksort($this->primarySource, \SORT_NUMERIC);
                 \array_splice($this->primarySource, $index, 1);
-                $this->primarySource = \array_diff($this->primarySource, ['\\u0000\\u0000\\u0000']);
+                $this->primarySource = \array_diff($this->primarySource, ["\0\0\0"]);
                 if (!isset($this->primarySource[$this->elementCount - 1])) {
-                    $this->primarySource[$this->elementCount - 1] = '\\u0000\\u0000\\u0000';
+                    $this->primarySource[$this->elementCount - 1] = "\0\0\0";
                 }
             }
         }

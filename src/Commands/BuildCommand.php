@@ -80,7 +80,7 @@ $(macro) {
     $(__context_Nop)
 }
 YAY;
-    
+
     private const MAIN_MACRO_DIST = 'Vector';
     private const MAIN_MACRO_PHPUNIT = 'VectorTest';
     private const MAIN_MACRO_PHPBENCH = 'VectorBench';
@@ -185,8 +185,7 @@ YAY;
     private function concatenateMacros(
         VectorDefinitionInterface $vectorDefinition,
         string $mainMacro
-    ): string
-    {
+    ): string {
         static $sharedMacros = [];
 
         if (!$sharedMacros) {
@@ -199,19 +198,32 @@ YAY;
         $fqn = '\\Vectory\\'.$vectorDefinition->getClassName();
         $concatenatedMacros = [\sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', $fqn)];
         foreach ($vectorDefinition->export() as $name => $value) {
+            if (\is_string($value)) {
+                $encodedValue = '';
+                for ($i = 0; $i < \strlen($value); ++$i) {
+                    $chr = $value[$i];
+                    $ord = \ord($chr);
+                    if ('\\' === $chr || $ord >= 0x20 && $ord <= 0x7f) {
+                        $encodedValue .= $chr;
+                    } else {
+                        $encodedValue .= '\\x'.\dechex(\ord($chr));
+                    }
+                }
+                $encodedValue = '"'.$encodedValue.'"';
+            } else {
+                $encodedValue = \json_encode($value);
+            }
             $concatenatedMacros[] =
-                \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), \json_encode($value));
+                \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), $encodedValue);
         }
 
         foreach (
             [
-                'HasMinimumMaximum' =>
-                    $vectorDefinition->isInteger() &&
-                        $vectorDefinition->getBytesPerElement() < 8,
+                'HasMinimumMaximum' => $vectorDefinition->isInteger() &&
+                $vectorDefinition->getBytesPerElement() < 8,
                 'Nullable' => $vectorDefinition->isNullable(),
-                'Signed' =>
-                    $vectorDefinition->isInteger() &&
-                        $vectorDefinition->isSigned(),
+                'Signed' => $vectorDefinition->isInteger() &&
+                $vectorDefinition->isSigned(),
                 'Boolean' => $vectorDefinition->isBoolean(),
                 'Integer' => $vectorDefinition->isInteger(),
                 'String' => $vectorDefinition->isString(),

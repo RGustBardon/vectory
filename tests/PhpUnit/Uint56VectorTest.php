@@ -21,6 +21,8 @@ use Vectory\VectorInterface;
  */
 final class Uint56VectorTest extends TestCase
 {
+    private const INVALID_VALUE = '0';
+
     protected function setUp(): void
     {
         \mt_srand(0);
@@ -52,6 +54,27 @@ final class Uint56VectorTest extends TestCase
         $vector = self::getInstance();
         $vector[0] = 0;
         $vector[1];
+    }
+
+    public function testThrowsIfValueOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector[0] = self::INVALID_VALUE;
+    }
+
+    public function testThrowsIfValueIsLowerThanMinimum(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = 0 - 1;
+    }
+
+    public function testThrowsIfValueIsGreaterThanMaximum(): void
+    {
+        $this->expectException(\OutOfRangeException::class);
+        $vector = self::getInstance();
+        $vector[0] = 72057594037927935 + 1;
     }
 
     private static function getInstance(): VectorInterface

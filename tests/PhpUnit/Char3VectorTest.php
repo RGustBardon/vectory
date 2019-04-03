@@ -21,6 +21,8 @@ use Vectory\VectorInterface;
  */
 final class Char3VectorTest extends TestCase
 {
+    private const INVALID_VALUE = 0;
+
     protected function setUp(): void
     {
         \mt_srand(0);
@@ -42,7 +44,7 @@ final class Char3VectorTest extends TestCase
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[0] = '\\u0000\\u0000\\u0000';
+        $vector[0] = "\0\0\0";
         $vector[-1];
     }
 
@@ -50,8 +52,29 @@ final class Char3VectorTest extends TestCase
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[0] = '\\u0000\\u0000\\u0000';
+        $vector[0] = "\0\0\0";
         $vector[1];
+    }
+
+    public function testThrowsIfValueOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector[0] = self::INVALID_VALUE;
+    }
+
+    public function testThrowsIfValueIsTooShort(): void
+    {
+        $this->expectException(\LengthException::class);
+        $vector = self::getInstance();
+        $vector[0] = \substr("\0\0\0", 0, -1);
+    }
+
+    public function testThrowsIfValueIsTooLong(): void
+    {
+        $this->expectException(\LengthException::class);
+        $vector = self::getInstance();
+        $vector[0] = "\0\0\0"."\0";
     }
 
     private static function getInstance(): VectorInterface
