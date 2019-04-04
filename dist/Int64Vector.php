@@ -62,8 +62,8 @@ class Int64Vector implements VectorInterface
     public function offsetUnset($index)
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
-            --$this->elementCount;
             if ($this->elementCount === $index) {
+                --$this->elementCount;
                 unset($this->primarySource[$index]);
             } else {
                 if (\count($this->primarySource) !== $this->elementCount) {
@@ -72,9 +72,10 @@ class Int64Vector implements VectorInterface
                 \ksort($this->primarySource, \SORT_NUMERIC);
                 \array_splice($this->primarySource, $index, 1);
                 $this->primarySource = \array_diff($this->primarySource, [0]);
-                if (!isset($this->primarySource[$this->elementCount - 1])) {
-                    $this->primarySource[$this->elementCount - 1] = 0;
+                if (!isset($this->primarySource[$this->elementCount - 2])) {
+                    $this->primarySource[$this->elementCount - 2] = 0;
                 }
+                --$this->elementCount;
             }
         }
     }

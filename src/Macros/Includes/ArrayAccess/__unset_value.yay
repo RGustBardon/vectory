@@ -56,8 +56,8 @@ $(macro :unsafe) {
             $(vector)->$(prefix)Source,
             [$(__context_DefaultValue ?! {$[DefaultValue]})]
         );
-    if (!isset($(vector)->$(prefix)Source[$(vector)->elementCount - 1])) {
-        $(vector)->$(prefix)Source[$(vector)->elementCount - 1] =
+    if (!isset($(vector)->$(prefix)Source[$(vector)->elementCount - 2])) {
+        $(vector)->$(prefix)Source[$(vector)->elementCount - 2] =
             $(__context_DefaultValue ?! {$[DefaultValue]});
     }
 }
@@ -77,8 +77,8 @@ $(macro :unsafe) {
         $ast->append($append);
     }
 } >> {
-    --$(vector)->elementCount;
     if ($(vector)->elementCount === $index) {
+        --$(vector)->elementCount;
         __do_unset_value_at_tail($(vector), $(prefix), $(index));
         $(__context_Nullable ? {
             $$(expand(__do_unset_value_at_tail($(vector), nullability, $(index))))
@@ -88,5 +88,6 @@ $(macro :unsafe) {
         $(__context_Nullable ? {
             $$(expand(__do_unset_value_before_tail($(vector), nullability, $(index))))
         })
+        --$(vector)->elementCount;
     }
 }

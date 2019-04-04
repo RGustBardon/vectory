@@ -77,6 +77,76 @@ final class Int24VectorTest extends TestCase
         $vector[0] = 8388607 + 1;
     }
 
+    public function testArrayAccess(): void
+    {
+        $vector = self::getInstance();
+        self::assertFalse(isset($vector[0]));
+        $vector[0] = 0;
+        self::assertTrue(isset($vector[0]));
+        self::assertFalse(isset($vector[1]));
+        self::assertSame(0, $vector[0]);
+        $value = self::getRandomValue();
+        $vector[2] = $value;
+        self::assertTrue(isset($vector[0]));
+        self::assertTrue(isset($vector[1]));
+        self::assertTrue(isset($vector[2]));
+        self::assertFalse(isset($vector[3]));
+        self::assertSame(0, $vector[0]);
+        self::assertSame(0, $vector[1]);
+        self::assertSame($value, $vector[2]);
+        do {
+            $otherValue = self::getRandomValue();
+        } while ($value === $otherValue);
+        $vector[2] = $otherValue;
+        self::assertTrue(isset($vector[0]));
+        self::assertTrue(isset($vector[1]));
+        self::assertTrue(isset($vector[2]));
+        self::assertFalse(isset($vector[3]));
+        self::assertSame(0, $vector[0]);
+        self::assertSame(0, $vector[1]);
+        self::assertSame($otherValue, $vector[2]);
+        $vector[0] = $value;
+        unset($vector[1]);
+        self::assertTrue(isset($vector[0]));
+        self::assertTrue(isset($vector[1]));
+        self::assertFalse(isset($vector[2]));
+        self::assertSame($value, $vector[0]);
+        self::assertSame($otherValue, $vector[1]);
+    }
+
+    /**
+     * @depends testArrayAccess
+     */
+    public function testOffsetSetWithNullIndex(): void
+    {
+        $vector = self::getInstance();
+        $value0 = self::getRandomValue();
+        $vector[] = $value0;
+        $value2 = self::getRandomValue();
+        $vector[2] = $value2;
+        $value3 = self::getRandomValue();
+        $vector[] = $value3;
+        self::assertTrue(isset($vector[0]));
+        self::assertTrue(isset($vector[1]));
+        self::assertTrue(isset($vector[2]));
+        self::assertTrue(isset($vector[3]));
+        self::assertFalse(isset($vector[4]));
+        self::assertSame($value0, $vector[0]);
+        self::assertSame(0, $vector[1]);
+        self::assertSame($value2, $vector[2]);
+        self::assertSame($value3, $vector[3]);
+    }
+
+    /**
+     * @depends testArrayAccess
+     */
+    public function testOffsetSetWithNullValue(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector[1] = null;
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\Int24Vector();

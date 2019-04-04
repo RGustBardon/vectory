@@ -3,3 +3,5 @@ includes:
     - vendor/phpstan/phpstan-phpunit/rules.neon
 
 parameters:
+    ignoreErrors:
+        - '~assertFalse\(\) with true will always evaluate to false~'
