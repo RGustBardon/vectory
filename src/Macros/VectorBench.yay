@@ -4,24 +4,28 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+require_once __DIR__.'/../../vendor/autoload.php';
+
 /**
- * @OutputTimeUnit("seconds")
+ * @BeforeMethods({"setUp"})
  * @OutputMode("throughput")
+ * @OutputTimeUnit("seconds")
  * @internal
  */
 final class _
 {
-    public function provideVectors(): \Generator
-    {
-        yield [self::getInstance(), self::getRandomValue()];
+    private $value;
+    private /* \Vectory\Interface */ $vector;
+    
+    public function setUp(): void {
+        \mt_srand(0);
+
+        $this->value = self::getRandomValue();
     }
 
-    /**
-     * @ParamProviders({"provideVectors"})
-     */
-    public function benchPushing(array $params): void
+    public function benchPushing(): void
     {
-        $params[0][] = $params[1];
+        $this->vector[] = $this->value;
     }
 
     __test_methods()

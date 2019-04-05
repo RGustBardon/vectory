@@ -8,11 +8,6 @@ $(macro :unsafe) {
         $<!Integer>{ 0 }
     ));
     
-    protected function setUp(): void
-    {
-        \mt_srand(0);
-    }
-    
     private static function getInstance(): \Vectory\VectorInterface
     {
         return new $[Fqn]();

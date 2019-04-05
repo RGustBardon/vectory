@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+require_once __DIR__.'/../../vendor/autoload.php';
+
 /**
- * @OutputTimeUnit("seconds")
+ * @BeforeMethods({"setUp"})
  * @OutputMode("throughput")
+ * @OutputTimeUnit("seconds")
  *
  * @internal
  */
@@ -24,23 +27,19 @@ final class Uint40VectorBench
     private const INVALID_VALUE = '0'
 
     ;
+    private $value;
+    private /* \Vectory\Interface */ $vector;
 
-    private function setUp(): void
+    public function setUp(): void
     {
         \mt_srand(0);
+
+        $this->value = self::getRandomValue();
     }
 
-    public function provideVectors(): \Generator
+    public function benchPushing(): void
     {
-        yield [self::getInstance(), self::getRandomValue()];
-    }
-
-    /**
-     * @ParamProviders({"provideVectors"})
-     */
-    public function benchPushing(array $params): void
-    {
-        $params[0][] = $params[1];
+        $this->vector[] = $this->value;
     }
 
     private static function getInstance(): \Vectory\VectorInterface

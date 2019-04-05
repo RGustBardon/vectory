@@ -9,6 +9,11 @@ use Vectory\VectorInterface;
 
 final class _ extends TestCase
 {
+    protected function setUp(): void
+    {
+        \mt_srand(0);
+    }
+    
     __array_access_methods_test()
     __test_methods()
 }
