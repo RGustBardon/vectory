@@ -17,8 +17,6 @@ require_once __DIR__.'/../../vendor/autoload.php';
 
 /**
  * @BeforeMethods({"setUp"})
- * @OutputMode("throughput")
- * @OutputTimeUnit("seconds")
  *
  * @internal
  */
@@ -37,6 +35,9 @@ final class NullableInt64VectorBench
         $this->value = self::getRandomValue();
     }
 
+    /**
+     * @Revs(10000)
+     */
     public function benchPushing(): void
     {
         $this->vector[] = $this->value;
