@@ -10,4 +10,5 @@ class _ implements VectorInterface
     __base_properties()
     
     __array_access_methods()
+    __countable_methods()
 }

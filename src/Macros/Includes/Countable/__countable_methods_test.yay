@@ -1,0 +1,39 @@
+<?php
+
+$(macro :unsafe) {
+    __countable_methods_test()
+} >> {
+    /**
+     * @depends testArrayAccess
+     */
+    public function testCountable(): void
+    {
+        $vector = self::getInstance();
+        self::assertCount(0, $vector);
+        
+        $vector[1] = self::getRandomValue();
+        self::assertCount(2, $vector);
+        
+        $vector[2] = $vector[1];
+        self::assertCount(3, $vector);
+        
+        $vector[2] = self::getRandomValue();
+        self::assertCount(3, $vector);
+        
+        unset($vector[0]);
+        self::assertCount(2, $vector);
+        
+        unset($vector[2]);
+        self::assertCount(2, $vector);
+        
+        $vector[] = $[DefaultValue];
+        self::assertCount(3, $vector);
+
+        $$(expand(
+            $<Nullable>{
+                $vector[3] = null;
+                self::assertCount(4, $vector);
+            }
+        ))
+    }
+}

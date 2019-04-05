@@ -82,4 +82,9 @@ class Char1Vector implements VectorInterface
             }
         }
     }
+
+    public function count(): int
+    {
+        return $this->elementCount;
+    }
 }

@@ -106,4 +106,9 @@ class NullableUint56Vector implements VectorInterface
             }
         }
     }
+
+    public function count(): int
+    {
+        return $this->elementCount;
+    }
 }

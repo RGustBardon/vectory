@@ -79,4 +79,9 @@ class BoolVector implements VectorInterface
             }
         }
     }
+
+    public function count(): int
+    {
+        return $this->elementCount;
+    }
 }

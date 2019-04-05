@@ -15,5 +15,6 @@ final class _ extends TestCase
     }
     
     __array_access_methods_test()
+    __countable_methods_test()
     __test_methods()
 }

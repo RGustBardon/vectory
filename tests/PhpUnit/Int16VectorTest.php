@@ -147,6 +147,24 @@ final class Int16VectorTest extends TestCase
         $vector[1] = null;
     }
 
+    public function testCountable(): void
+    {
+        $vector = self::getInstance();
+        self::assertCount(0, $vector);
+        $vector[1] = self::getRandomValue();
+        self::assertCount(2, $vector);
+        $vector[2] = $vector[1];
+        self::assertCount(3, $vector);
+        $vector[2] = self::getRandomValue();
+        self::assertCount(3, $vector);
+        unset($vector[0]);
+        self::assertCount(2, $vector);
+        unset($vector[2]);
+        self::assertCount(2, $vector);
+        $vector[] = 0;
+        self::assertCount(3, $vector);
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\Int16Vector();

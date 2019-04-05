@@ -106,4 +106,9 @@ class NullableChar3Vector implements VectorInterface
             }
         }
     }
+
+    public function count(): int
+    {
+        return $this->elementCount;
+    }
 }

@@ -151,6 +151,26 @@ final class NullableUint40VectorTest extends TestCase
         self::assertNull($vector[1]);
     }
 
+    public function testCountable(): void
+    {
+        $vector = self::getInstance();
+        self::assertCount(0, $vector);
+        $vector[1] = self::getRandomValue();
+        self::assertCount(2, $vector);
+        $vector[2] = $vector[1];
+        self::assertCount(3, $vector);
+        $vector[2] = self::getRandomValue();
+        self::assertCount(3, $vector);
+        unset($vector[0]);
+        self::assertCount(2, $vector);
+        unset($vector[2]);
+        self::assertCount(2, $vector);
+        $vector[] = 0;
+        self::assertCount(3, $vector);
+        $vector[3] = null;
+        self::assertCount(4, $vector);
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\NullableUint40Vector();

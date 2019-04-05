@@ -1,0 +1,10 @@
+<?php
+
+$(macro :unsafe) {
+    __countable_methods()
+} >> {
+    public function count(): int
+    {
+        return $this->elementCount;
+    }
+}
