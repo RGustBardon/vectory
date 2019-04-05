@@ -13,6 +13,48 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+/**
+ * @OutputTimeUnit("seconds")
+ * @OutputMode("throughput")
+ *
+ * @internal
+ */
 final class NullableChar3VectorBench
 {
+    private const INVALID_VALUE =
+        0
+    ;
+
+    private function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function provideVectors(): \Generator
+    {
+        yield [self::getInstance(), self::getRandomValue()];
+    }
+
+    /**
+     * @ParamProviders({"provideVectors"})
+     */
+    public function benchPushing(array $params): void
+    {
+        $params[0][] = $params[1];
+    }
+
+    private static function getInstance(): \Vectory\VectorInterface
+    {
+        return new \Vectory\NullableChar3Vector();
+    }
+
+    private static function getRandomValue()
+    {
+        $value = '';
+        for ($i = 0; $i < 3; ++$i) {
+            $value .= \chr(\mt_rand(0x0, 0xff));
+        }
+
+        return $value;
+    }
 }

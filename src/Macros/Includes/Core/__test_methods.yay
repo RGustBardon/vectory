@@ -13,7 +13,7 @@ $(macro :unsafe) {
         \mt_srand(0);
     }
     
-    private static function getInstance(): VectorInterface
+    private static function getInstance(): \Vectory\VectorInterface
     {
         return new $[Fqn]();
     }

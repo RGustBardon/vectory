@@ -13,6 +13,43 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+/**
+ * @OutputTimeUnit("seconds")
+ * @OutputMode("throughput")
+ *
+ * @internal
+ */
 final class BoolVectorBench
 {
+    private const INVALID_VALUE =
+        0
+    ;
+
+    private function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function provideVectors(): \Generator
+    {
+        yield [self::getInstance(), self::getRandomValue()];
+    }
+
+    /**
+     * @ParamProviders({"provideVectors"})
+     */
+    public function benchPushing(array $params): void
+    {
+        $params[0][] = $params[1];
+    }
+
+    private static function getInstance(): \Vectory\VectorInterface
+    {
+        return new \Vectory\BoolVector();
+    }
+
+    private static function getRandomValue()
+    {
+        return [false, true][\mt_rand(0, 1)];
+    }
 }

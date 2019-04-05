@@ -13,6 +13,49 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+/**
+ * @OutputTimeUnit("seconds")
+ * @OutputMode("throughput")
+ *
+ * @internal
+ */
 final class NullableUint8VectorBench
 {
+    private const INVALID_VALUE = '0'
+
+    ;
+
+    private function setUp(): void
+    {
+        \mt_srand(0);
+    }
+
+    public function provideVectors(): \Generator
+    {
+        yield [self::getInstance(), self::getRandomValue()];
+    }
+
+    /**
+     * @ParamProviders({"provideVectors"})
+     */
+    public function benchPushing(array $params): void
+    {
+        $params[0][] = $params[1];
+    }
+
+    private static function getInstance(): \Vectory\VectorInterface
+    {
+        return new \Vectory\NullableUint8Vector();
+    }
+
+    private static function getRandomValue()
+    {
+        $value = \dechex(\mt_rand(0x0, 0xff));
+
+        for ($i = 1; $i < 1; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+
+        return \hexdec($value);
+    }
 }
