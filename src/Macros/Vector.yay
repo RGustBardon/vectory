@@ -11,4 +11,5 @@ class _ implements VectorInterface
     
     __array_access_methods()
     __countable_methods()
+    __iterator_aggregate_methods()
 }

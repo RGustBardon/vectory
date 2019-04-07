@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-interface VectorInterface extends \ArrayAccess, \Countable
+interface VectorInterface extends
+    \ArrayAccess,
+    \Countable,
+    \IteratorAggregate
 {
 }

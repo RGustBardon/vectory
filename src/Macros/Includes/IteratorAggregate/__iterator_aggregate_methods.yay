@@ -1,0 +1,26 @@
+<?php
+
+$(macro :unsafe) {
+    __iterator_aggregate_methods()
+} >> {
+    public function getIterator(): \Traversable
+    {
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        $<Nullable>{
+            $nullabilitySource = $this->nullabilitySource;
+        }
+        for ($index = 0; $index < $elementCount; ++$index) {
+            $<Nullable>{
+                if ($nullabilitySource[$index] ?? false) {
+                    yield $index => null;
+                } else {
+                    yield $index => $primarySource[$index] ?? $[DefaultValue];
+                }
+            }
+            $<!Nullable>{
+                yield $index => $primarySource[$index] ?? $[DefaultValue];
+            }
+        }
+    }
+}

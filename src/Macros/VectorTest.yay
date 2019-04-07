@@ -13,8 +13,9 @@ final class _ extends TestCase
     {
         \mt_srand(0);
     }
-    
+
     __array_access_methods_test()
     __countable_methods_test()
+    __iterator_aggregate_methods_test()
     __test_methods()
 }

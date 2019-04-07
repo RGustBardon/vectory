@@ -108,4 +108,18 @@ class NullableBoolVector implements VectorInterface
     {
         return $this->elementCount;
     }
+
+    public function getIterator(): \Traversable
+    {
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        $nullabilitySource = $this->nullabilitySource;
+        for ($index = 0; $index < $elementCount; ++$index) {
+            if ($nullabilitySource[$index] ?? false) {
+                (yield $index => null);
+            } else {
+                (yield $index => $primarySource[$index] ?? false);
+            }
+        }
+    }
 }

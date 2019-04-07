@@ -87,4 +87,13 @@ class Int16Vector implements VectorInterface
     {
         return $this->elementCount;
     }
+
+    public function getIterator(): \Traversable
+    {
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        for ($index = 0; $index < $elementCount; ++$index) {
+            (yield $index => $primarySource[$index] ?? 0);
+        }
+    }
 }

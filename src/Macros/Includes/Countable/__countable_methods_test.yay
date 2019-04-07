@@ -26,14 +26,25 @@ $(macro :unsafe) {
         unset($vector[2]);
         self::assertCount(2, $vector);
         
-        $vector[] = $[DefaultValue];
+        $vector[2] = $[DefaultValue];
         self::assertCount(3, $vector);
-
-        $$(expand(
-            $<Nullable>{
-                $vector[3] = null;
-                self::assertCount(4, $vector);
-            }
-        ))
     }
+
+    $$(expand(
+        $<Nullable>{
+            /**
+             * @depends testOffsetSetWithNullValue
+             */
+            public function testCountableWithNullValue(): void
+            {
+                $vector = self::getInstance();
+
+                $vector[0] = null;
+                self::assertCount(1, $vector);
+                
+                $vector[2] = null;
+                self::assertCount(3, $vector);
+            }
+        }
+    ))
 }
