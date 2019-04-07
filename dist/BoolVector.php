@@ -93,4 +93,16 @@ class BoolVector implements VectorInterface
             (yield $index => $primarySource[$index] ?? false);
         }
     }
+
+    public function jsonSerialize(): array
+    {
+        $result = [];
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        for ($index = 0; $index < $elementCount; ++$index) {
+            $result[] = $primarySource[$index] ?? false;
+        }
+
+        return $result;
+    }
 }

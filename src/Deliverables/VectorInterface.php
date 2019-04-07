@@ -16,6 +16,7 @@ namespace Vectory;
 interface VectorInterface extends
     \ArrayAccess,
     \Countable,
-    \IteratorAggregate
+    \IteratorAggregate,
+    \JsonSerializable
 {
 }

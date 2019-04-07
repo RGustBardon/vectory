@@ -122,4 +122,21 @@ class NullableInt64Vector implements VectorInterface
             }
         }
     }
+
+    public function jsonSerialize(): array
+    {
+        $result = [];
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        $nullabilitySource = $this->nullabilitySource;
+        for ($index = 0; $index < $elementCount; ++$index) {
+            if ($nullabilitySource[$index] ?? false) {
+                $result[] = null;
+            } else {
+                $result[] = $primarySource[$index] ?? 0;
+            }
+        }
+
+        return $result;
+    }
 }

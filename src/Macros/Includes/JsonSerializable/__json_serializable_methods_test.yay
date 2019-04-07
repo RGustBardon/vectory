@@ -1,0 +1,59 @@
+<?php
+
+$(macro :unsafe) {
+    __json_serializable_methods_test()
+} >> {
+    /**
+     * @depends testArrayAccess
+     */
+    public function testJsonSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertNativeJson([], $vector);
+        
+        $<String>{
+            $value = self::getRandomUtf8String();
+            $sequence = [$value, self::getRandomUtf8String(), $value];
+        }
+        $<!String>{
+            $value = self::getRandomValue();
+            $sequence = [$value, self::getRandomValue(), $value];
+        }
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = $[DefaultValue];
+        \array_push($sequence, $[DefaultValue], $[DefaultValue]);
+        
+        self::assertNativeJson($sequence, $vector);
+    }
+    
+    $$(expand(
+        $<Nullable>{
+            /**
+             * @depends testJsonSerializable
+             */
+            public function testJsonSerializableWithNullValue(): void
+            {
+                $vector = self::getInstance();
+                
+                $vector[0] = null;
+                self::assertNativeJson([null], $vector);
+
+                $vector[2] = null;
+                self::assertNativeJson([null, $[DefaultValue], null], $vector);
+            }
+        }
+    ))
+    
+    private static function assertNativeJson($expected, $actual): void
+    {
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        
+        $actualJson = \json_encode($actual);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        
+        self::assertSame($expectedJson, $actualJson);
+    }
+}

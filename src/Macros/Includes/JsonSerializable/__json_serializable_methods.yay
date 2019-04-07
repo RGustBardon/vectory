@@ -1,0 +1,28 @@
+<?php
+
+$(macro :unsafe) {
+    __json_serializable_methods()
+} >> {
+    public function jsonSerialize(): array
+    {
+        $result = [];
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        $<Nullable>{
+            $nullabilitySource = $this->nullabilitySource;
+        }
+        for ($index = 0; $index < $elementCount; ++$index) {
+            $<Nullable>{
+                if ($nullabilitySource[$index] ?? false) {
+                    $result[] = null;
+                } else {
+                    $result[] = $primarySource[$index] ?? $[DefaultValue];
+                }
+            }
+            $<!Nullable>{
+                $result[] = $primarySource[$index] ?? $[DefaultValue];
+            }
+        }
+        return $result;
+    }
+}

@@ -213,6 +213,38 @@ final class NullableInt64VectorTest extends TestCase
         self::assertSame([null, 0, null], \iterator_to_array($vector));
     }
 
+    public function testJsonSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertNativeJson([], $vector);
+        $value = self::getRandomValue();
+        $sequence = [$value, self::getRandomValue(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = 0;
+        \array_push($sequence, 0, 0);
+        self::assertNativeJson($sequence, $vector);
+    }
+
+    public function testJsonSerializableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertNativeJson([null], $vector);
+        $vector[2] = null;
+        self::assertNativeJson([null, 0, null], $vector);
+    }
+
+    private static function assertNativeJson($expected, $actual): void
+    {
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        $actualJson = \json_encode($actual);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        self::assertSame($expectedJson, $actualJson);
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\NullableInt64Vector();

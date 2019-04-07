@@ -93,4 +93,16 @@ class Int64Vector implements VectorInterface
             (yield $index => $primarySource[$index] ?? 0);
         }
     }
+
+    public function jsonSerialize(): array
+    {
+        $result = [];
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        for ($index = 0; $index < $elementCount; ++$index) {
+            $result[] = $primarySource[$index] ?? 0;
+        }
+
+        return $result;
+    }
 }

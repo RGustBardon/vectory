@@ -57,4 +57,35 @@ final class NullableChar1VectorBench
 
         return $value;
     }
+
+    private static function getRandomUtf8String(): string
+    {
+        \assert(0x10ffff <= \mt_getrandmax());
+        $string = '';
+        while (\strlen($string) < 1) {
+            $characterMaxLength = \min(4, 1 - \strlen($string));
+            $character = '';
+            switch (\mt_rand(1, $characterMaxLength)) {
+                        case 1:
+                            $character = \mb_chr(\mt_rand(0x0, 0x7f));
+
+                            break;
+                        case 2:
+                            $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+
+                            break;
+                        case 3:
+                            $character = \mb_chr(\mt_rand(0x800, 0xffff));
+
+                            break;
+                        case 4:
+                            $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+
+                            break;
+                    }
+            $string .= $character;
+        }
+
+        return $string;
+    }
 }

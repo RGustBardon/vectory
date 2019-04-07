@@ -227,6 +227,38 @@ final class NullableChar2VectorTest extends TestCase
         self::assertSame([null, "\0\0", null], \iterator_to_array($vector));
     }
 
+    public function testJsonSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertNativeJson([], $vector);
+        $value = self::getRandomUtf8String();
+        $sequence = [$value, self::getRandomUtf8String(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = "\0\0";
+        \array_push($sequence, "\0\0", "\0\0");
+        self::assertNativeJson($sequence, $vector);
+    }
+
+    public function testJsonSerializableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertNativeJson([null], $vector);
+        $vector[2] = null;
+        self::assertNativeJson([null, "\0\0", null], $vector);
+    }
+
+    private static function assertNativeJson($expected, $actual): void
+    {
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        $actualJson = \json_encode($actual);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        self::assertSame($expectedJson, $actualJson);
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\NullableChar2Vector();
@@ -240,5 +272,36 @@ final class NullableChar2VectorTest extends TestCase
         }
 
         return $value;
+    }
+
+    private static function getRandomUtf8String(): string
+    {
+        \assert(0x10ffff <= \mt_getrandmax());
+        $string = '';
+        while (\strlen($string) < 2) {
+            $characterMaxLength = \min(4, 2 - \strlen($string));
+            $character = '';
+            switch (\mt_rand(1, $characterMaxLength)) {
+                case 1:
+                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
+
+                    break;
+                case 2:
+                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+
+                    break;
+                case 3:
+                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
+
+                    break;
+                case 4:
+                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+
+                    break;
+            }
+            $string .= $character;
+        }
+
+        return $string;
     }
 }
