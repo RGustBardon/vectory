@@ -13,4 +13,5 @@ class _ implements VectorInterface
     __countable_methods()
     __iterator_aggregate_methods()
     __json_serializable_methods()
+    __serializable_methods()
 }

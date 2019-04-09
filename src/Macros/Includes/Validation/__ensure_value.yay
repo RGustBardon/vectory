@@ -56,7 +56,7 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     $$(expand($<Nullable>{
-        if (null !== $value) {
+        if (null !== $(value)) {
             $$(expand(__do_ensure_value($(value))))
         }
     }))

@@ -1,0 +1,40 @@
+<?php
+
+$(macro :unsafe) {
+    __serializable_methods_test()
+} >> {
+    /**
+     * @depends testArrayAccess
+     * @depends testCountable
+     * @depends testIteratorAggregate
+     */
+    public function testSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertSerialization([], $vector);
+        
+        $value = self::getRandomValue();
+        $sequence = [$value, self::getRandomValue(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = $[DefaultValue];
+        \array_push($sequence, $[DefaultValue], $[DefaultValue]);
+        self::assertSerialization($sequence, $vector);
+    }
+    
+    private static function assertSerialization($expected, $vector)
+    {
+        $actualSerialized = \serialize($vector);
+        $actualUnserialized = \unserialize(
+            $actualSerialized,
+            ['allowed_classes' => [\ltrim($[FullyQualifiedClassName], '\\')]]
+        );
+        
+        $actual = [];
+        foreach ($actualUnserialized as $index => $element) {
+            $actual[$index] = $element;
+        }
+        self::assertSame($expected, $actual);
+    }
+}

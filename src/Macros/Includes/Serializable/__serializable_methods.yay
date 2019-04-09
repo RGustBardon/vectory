@@ -1,0 +1,113 @@
+<?php
+
+$(macro :unsafe) {
+    __serializable_methods()
+} >> {
+    public function serialize(): string
+    {
+        return \serialize([
+            $this->elementCount,
+            $this->primarySource,
+            $<Nullable>{ $this->nullabilitySource, }
+        ]);
+    }
+    
+    public function unserialize(string $serialized): void
+    {
+        $errorMessage = 'Details unavailable';
+        \set_error_handler(static function (int $errno, string $errstr) use (&$errorMessage): void {
+            $errorMessage = $errstr;
+        });
+        $result = \unserialize($serialized, ['allowed_classes' => [\ltrim($[FullyQualifiedClassName], '\\')]]);
+        \restore_error_handler();
+        
+        if (false === $result) {
+            __throw(
+                \UnexpectedValueException,
+                \sprintf('Failed to unserialize (%s)', $errorMessage)
+            );
+        }
+        
+        $<Nullable>{
+            if (
+                !\is_array($result)
+                || [0, 1, 2] !== \array_keys($result)
+                || ['int', 'array', 'array'] !== \array_map('gettype', $result)
+            ) {
+                $errorMessage = 'Expected an array of int, array, array';
+                __throw(
+                    \TypeError,
+                    \sprintf('Failed to unserialize (%s)', $errorMessage)
+                );
+            }
+            
+            [$elementCount, $primarySource, $nullabilitySource] = $result;
+        }
+        $<!Nullable>{
+            if (
+                !\is_array($result)
+                || [0, 1] !== \array_keys($result)
+                || ['int', 'array'] !== \array_map('gettype', $result)
+            ) {
+                $errorMessage = 'Expected an array of int, array';
+                __throw(
+                    \TypeError,
+                    \sprintf('Failed to unserialize (%s)', $errorMessage)
+                );
+            }
+            
+            [$elementCount, $primarySource] = $result;
+        }
+        
+        if ($elementCount < 0) {
+            $errorMessage = 'The element count must not be negative';
+            __throw(
+                \DomainException,
+                \sprintf('Failed to unserialize (%s)', $errorMessage)
+            );
+        }
+        
+        if (\count($primarySource) > $elementCount) {
+            $errorMessage = 'Too many elements in the primary source';
+            __throw(
+                \OverflowException,
+                \sprintf('Failed to unserialize (%s)', $errorMessage)
+            );
+        }
+        
+        $<Nullable>{
+            if (\count($nullabilitySource) > $elementCount) {
+                $errorMessage = 'Too many elements in the nullability source';
+                __throw(
+                    \OverflowException,
+                    \sprintf('Failed to unserialize (%s)', $errorMessage)
+                );
+            }
+        }
+        
+        $this->elementCount = $elementCount;
+        try {
+            foreach ($primarySource as $index => $element) {
+                __ensure_index($index);
+                __ensure_value($element);
+            }
+            
+            $<Nullable>{
+                foreach ($nullabilitySource as $index => $element) {
+                    __ensure_index($index);
+                    if (!\is_bool($element)) {
+                        __throw(
+                            \TypeError,
+                            \sprintf('Value must be a Boolean, %s given', \gettype($element))
+                        );
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->elementCount = null;
+            throw $e;
+        }
+        
+        [, $this->primarySource $<Nullable>{ , $this->nullabilitySource }] = $result;
+    }
+}

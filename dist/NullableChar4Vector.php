@@ -142,4 +142,85 @@ class NullableChar4Vector implements VectorInterface
 
         return $result;
     }
+
+    public function serialize(): string
+    {
+        return \serialize([$this->elementCount, $this->primarySource, $this->nullabilitySource]);
+    }
+
+    public function unserialize(string $serialized): void
+    {
+        $errorMessage = 'Details unavailable';
+        \set_error_handler(static function (int $errno, string $errstr) use (&$errorMessage): void {
+            $errorMessage = $errstr;
+        });
+        $result = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar4Vector', '\\')]]);
+        \restore_error_handler();
+        if (false === $result) {
+            throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        if (!\is_array($result) || [0, 1, 2] !== \array_keys($result) || ['int', 'array', 'array'] !== \array_map('gettype', $result)) {
+            $errorMessage = 'Expected an array of int, array, array';
+
+            throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        [$elementCount, $primarySource, $nullabilitySource] = $result;
+        if ($elementCount < 0) {
+            $errorMessage = 'The element count must not be negative';
+
+            throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        if (\count($primarySource) > $elementCount) {
+            $errorMessage = 'Too many elements in the primary source';
+
+            throw new \OverflowException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        if (\count($nullabilitySource) > $elementCount) {
+            $errorMessage = 'Too many elements in the nullability source';
+
+            throw new \OverflowException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        $this->elementCount = $elementCount;
+
+        try {
+            foreach ($primarySource as $index => $element) {
+                if (!\is_int($index)) {
+                    throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+                }
+                if (0 === $this->elementCount) {
+                    throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
+                }
+                if ($index < 0 || $index >= $this->elementCount) {
+                    throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+                }
+                if (null !== $element) {
+                    if (!\is_string($element)) {
+                        throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', ' or null', \gettype($element)));
+                    }
+                    if (4 !== \strlen($element)) {
+                        throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 4, \strlen($element)));
+                    }
+                }
+            }
+            foreach ($nullabilitySource as $index => $element) {
+                if (!\is_int($index)) {
+                    throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
+                }
+                if (0 === $this->elementCount) {
+                    throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
+                }
+                if ($index < 0 || $index >= $this->elementCount) {
+                    throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
+                }
+                if (!\is_bool($element)) {
+                    throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be a Boolean, %s given', \gettype($element)));
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->elementCount = null;
+
+            throw $e;
+        }
+        [, $this->primarySource, $this->nullabilitySource] = $result;
+    }
 }

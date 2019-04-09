@@ -33,7 +33,8 @@ namespace Vectory\ValueObjects;
     private $defaultValue;
     private /* ?int */ $minimumValue;
     private /* ?int */ $maximumValue;
-    private $className;
+    private /* string */ $className;
+    private /* string */ $fullyQualifiedClassName;
 
     public function __construct(
         ?int $bytesPerElement,
@@ -117,6 +118,11 @@ namespace Vectory\ValueObjects;
     {
         return $this->className;
     }
+    
+    public function getFullyQualifiedClassName(): string
+    {
+        return $this->fullyQualifiedClassName;
+    }
 
     private function assertValidParameters(): void
     {
@@ -175,5 +181,6 @@ namespace Vectory\ValueObjects;
         }
 
         $this->className .= self::NAME_TOKEN_SUFFIX;
+        $this->fullyQualifiedClassName = '\\Vectory\\'.$this->className;
     }
 }

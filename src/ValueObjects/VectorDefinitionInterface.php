@@ -42,4 +42,6 @@ interface VectorDefinitionInterface
     public function getMaximumValue(): int;
 
     public function getClassName(): string;
+
+    public function getFullyQualifiedClassName(): string;
 }

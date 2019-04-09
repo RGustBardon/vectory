@@ -195,7 +195,7 @@ YAY;
             }
         }
 
-        $fqn = '\\Vectory\\'.$vectorDefinition->getClassName();
+        $fqn = $vectorDefinition->getFullyQualifiedClassName();
         $concatenatedMacros = [\sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', $fqn)];
         foreach ($vectorDefinition->export() as $name => $value) {
             if (\is_string($value)) {
