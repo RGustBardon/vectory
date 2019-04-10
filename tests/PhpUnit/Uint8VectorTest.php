@@ -21,6 +21,10 @@ use Vectory\VectorInterface;
  */
 final class Uint8VectorTest extends TestCase
 {
+    // __countable_methods_test()
+    // __iterator_aggregate_methods_test()
+    // __json_serializable_methods_test()
+    // __serializable_methods_test()
     private const INVALID_VALUE = '0';
 
     protected function setUp(): void
@@ -145,112 +149,6 @@ final class Uint8VectorTest extends TestCase
         $this->expectException(\TypeError::class);
         $vector = self::getInstance();
         $vector[1] = null;
-    }
-
-    public function testCountable(): void
-    {
-        $vector = self::getInstance();
-        self::assertCount(0, $vector);
-        $vector[1] = self::getRandomValue();
-        self::assertCount(2, $vector);
-        $vector[2] = $vector[1];
-        self::assertCount(3, $vector);
-        $vector[2] = self::getRandomValue();
-        self::assertCount(3, $vector);
-        unset($vector[0]);
-        self::assertCount(2, $vector);
-        unset($vector[2]);
-        self::assertCount(2, $vector);
-        $vector[2] = 0;
-        self::assertCount(3, $vector);
-    }
-
-    public function testIteratorAggregate(): void
-    {
-        $vector = self::getInstance();
-        self::assertSame([], \iterator_to_array($vector));
-        $element = self::getRandomValue();
-        $vector[1] = $element;
-        self::assertSame([0, $element], \iterator_to_array($vector));
-        unset($vector[0]);
-        self::assertSame([$element], \iterator_to_array($vector));
-    }
-
-    /**
-     * @depends testIteratorAggregate
-     */
-    public function testIteratorAggregateWithModification(): void
-    {
-        $vector = self::getInstance();
-        $elements = [self::getRandomValue(), self::getRandomValue(), self::getRandomValue()];
-        $sequence = [$elements[1], $elements[2], $elements[1]];
-        foreach ($sequence as $element) {
-            $vector[] = $element;
-        }
-        $iterations = [];
-        foreach ($vector as $outerIndex => $outerElement) {
-            if (1 === $outerIndex) {
-                $vector[] = $elements[2];
-            }
-            $innerIteration = [];
-            foreach ($vector as $innerIndex => $innerElement) {
-                if (1 === $innerIndex) {
-                    $vector[2] = $elements[0];
-                }
-                $innerIteration[] = [$innerIndex, $innerElement];
-            }
-            $iterations[] = $innerIteration;
-            $iterations[] = [$outerIndex, $outerElement];
-        }
-        self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
-    }
-
-    public function testJsonSerializable(): void
-    {
-        $vector = self::getInstance();
-        self::assertNativeJson([], $vector);
-        $value = self::getRandomValue();
-        $sequence = [$value, self::getRandomValue(), $value];
-        foreach ($sequence as $value) {
-            $vector[] = $value;
-        }
-        $vector[4] = 0;
-        \array_push($sequence, 0, 0);
-        self::assertNativeJson($sequence, $vector);
-    }
-
-    public function testSerializable(): void
-    {
-        $vector = self::getInstance();
-        self::assertSerialization([], $vector);
-        $value = self::getRandomValue();
-        $sequence = [$value, self::getRandomValue(), $value];
-        foreach ($sequence as $value) {
-            $vector[] = $value;
-        }
-        $vector[4] = 0;
-        \array_push($sequence, 0, 0);
-        self::assertSerialization($sequence, $vector);
-    }
-
-    private static function assertNativeJson($expected, $vector): void
-    {
-        $expectedJson = \json_encode($expected);
-        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
-        $actualJson = \json_encode($vector);
-        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
-        self::assertSame($expectedJson, $actualJson);
-    }
-
-    private static function assertSerialization($expected, $vector)
-    {
-        $actualSerialized = \serialize($vector);
-        $actualUnserialized = \unserialize($actualSerialized, ['allowed_classes' => [\ltrim('\\Vectory\\Uint8Vector', '\\')]]);
-        $actual = [];
-        foreach ($actualUnserialized as $index => $element) {
-            $actual[$index] = $element;
-        }
-        self::assertSame($expected, $actual);
     }
 
     private static function getInstance(): VectorInterface

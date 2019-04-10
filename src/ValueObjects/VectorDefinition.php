@@ -31,6 +31,7 @@ namespace Vectory\ValueObjects;
     private /* string */ $type;
 
     private $defaultValue;
+    private /* bool */ $bitArithmetic;
     private /* ?int */ $minimumValue;
     private /* ?int */ $maximumValue;
     private /* string */ $className;
@@ -67,6 +68,11 @@ namespace Vectory\ValueObjects;
     public function getBytesPerElement(): int
     {
         return $this->bytesPerElement;
+    }
+    
+    public function hasBitArithmetic(): bool
+    {
+        return $this->bitArithmetic;
     }
 
     public function isNullable(): bool
@@ -154,6 +160,7 @@ namespace Vectory\ValueObjects;
 
     private function deriveProperties(): void
     {
+        $this->bitArithmetic = $this->nullable || $this->isBoolean();
         $this->className = '';
         if ($this->nullable) {
             $this->className .= self::NAME_TOKEN_NULLABLE;

@@ -5,9 +5,9 @@ $(macro :unsafe) {
 } >> {
     $$(expand(
         private /* int */ $elementCount = 0;
-        private /* array */ $primarySource = [];
+        private /* string */ $primarySource = '';
         $<Nullable>{
-            private /* array */ $nullabilitySource = [];
+            private /* string */ $nullabilitySource = '';
         }
     ))
 }

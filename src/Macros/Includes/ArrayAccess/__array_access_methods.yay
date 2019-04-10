@@ -19,7 +19,7 @@ $(macro :unsafe) {
     }
     
     public function offsetSet($index, $value)
-    {
+    {   
         if (null === $index) {
             $index = $this->elementCount;
         } elseif ($index < 0) {

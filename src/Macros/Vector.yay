@@ -10,8 +10,9 @@ class _ implements VectorInterface
     __base_properties()
     
     __array_access_methods()
-    __countable_methods()
-    __iterator_aggregate_methods()
-    __json_serializable_methods()
-    __serializable_methods()
+    
+    // __countable_methods()
+    // __iterator_aggregate_methods()
+    // __json_serializable_methods()
+    // __serializable_methods()
 }

@@ -1,6 +1,49 @@
 <?php
 
 $(macro :unsafe) {
+    __do_set_value_boolean(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+        )
+} >> {
+    $byteIndex = $(index) >> 3;
+    $$(expand(
+        __do_set_value_string(
+            $(vector),
+            $(prefix),
+            $byteIndex,
+            $(value) ?
+                (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") | $originalMask[$(index) & 7]) :
+                (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") & $invertedMask[$(index) & 7])
+        )
+    ))
+}
+
+$(macro :unsafe) {
+    __do_set_value_integer(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+        )
+} >> {
+    $(vector)->$(prefix)Source[$(index)] = $(value);
+}
+
+$(macro :unsafe) {
+    __do_set_value_string(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+        )
+} >> {
+    $(vector)->$(prefix)Source[$(index)] = $(value);
+}
+    
+$(macro :unsafe) {
     __do_set_value(
         $(T_VARIABLE as vector),
         $(label() as prefix),
@@ -8,8 +51,18 @@ $(macro :unsafe) {
         $(layer() as value)
     )
 } >> {
-    $(vector)->$(prefix)Source[$(index)] = $(value);
+    $<Boolean>{
+        $$(expand(__do_set_value_boolean($(vector), $(prefix), $(index), $(value))));
+    }
+    $<Integer>{
+        $$(expand(__do_set_value_integer($(vector), $(prefix), $(index), $(value))));
+    }
+    $<String>{
+        $$(expand(__do_set_value_string($(vector), $(prefix), $(index), $(value))));
+    }
 }
+
+
 
 $(macro :unsafe) {
     __set_value(
@@ -27,11 +80,16 @@ $(macro :unsafe) {
         $ast->append($append);
     }
 } >> {
+    $<HasBitArithmetic>{
+        static $originalMask = ["\x1", "\x2", "\x4", "\x8", "\x10", "\x20", "\x40", "\x80"];
+        static $invertedMask = ["\xfe", "\xfd", "\xfb", "\xf7", "\xef", "\xdf", "\xbf", "\x7f"];
+    }
+    
     $(__context_Nullable ? {
         if (null === $(value)) {
-            $$(expand(__do_set_value($(vector), nullability, $(index), true)));
+            $$(expand(__do_set_value_boolean($(vector), nullability, $(index), true)));
         } else {
-            $$(expand(__do_set_value($(vector), nullability, $(index), false)));
+            $$(expand(__do_set_value_boolean($(vector), nullability, $(index), false)));
             $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
         }
     });

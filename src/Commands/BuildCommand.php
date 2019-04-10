@@ -219,6 +219,7 @@ YAY;
 
         foreach (
             [
+                'HasBitArithmetic' => $vectorDefinition->hasBitArithmetic(),
                 'HasMinimumMaximum' => $vectorDefinition->isInteger() &&
                 $vectorDefinition->getBytesPerElement() < 8,
                 'Nullable' => $vectorDefinition->isNullable(),
