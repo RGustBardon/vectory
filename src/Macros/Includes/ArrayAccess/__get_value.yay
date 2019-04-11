@@ -1,25 +1,87 @@
 <?php
 
 $(macro :unsafe) {
-    __do_get_value(
+    __do_get_value_boolean(
         $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
     )
     $(optional(token(';')))
-    $(_() as __context_DefaultValue)
-} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if (Vectory::isNullable() && 'nullability' === (string) $ast->{'prefix'}) {
-        $token = new \Yay\Token(\T_STRING, 'false');
-        $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
-    }
 } >> {
-    $(result) =
-        $(vector)->$(prefix)Source[$(index)] ??
-            $(__context_DefaultValue ?! {$[DefaultValue]});
+    $$(expand(
+        $byteIndex = $(index) >> 3;
+        __do_get_value_string($(vector), $(prefix), $byteIndex, $(result))
+    ))
+    $(result) = ("\x0" !== ($(result) & $mask[$(index) & 7]));
 }
 
+$(macro :unsafe) {
+    __do_get_value_integer(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(T_VARIABLE as result)
+    )
+    $(optional(token(';')))
+} >> {
+    $$(expand(
+        __do_get_value_string($(vector), $(prefix), $(index), $(result))
+    ))
+    // TODO: Unpack signed and unsigned integers.
+    $(result) = 0;
+}
+
+$(macro :unsafe) {
+    __do_get_value_string(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(T_VARIABLE as result)
+    )
+    $(optional(token(';')))
+    $(_() as __context_BytesPerElement)
+    $(_() as __context_OneBytePerElement)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    $bytesPerElement = 1;
+    if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
+        $bytesPerElement = Vectory::getBytesPerElement();
+    }
+    $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
+    $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
+    
+    if (1 === $bytesPerElement) {
+        $append = new \Yay\Ast('__context_OneBytePerElement');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+} >> {
+    $(__context_OneBytePerElement ? {
+        $(result) = $(vector)->$(prefix)Source[$(index)];
+    })
+    $(__context_OneBytePerElement ! {
+        $(result) = \substr($(vector)->$(prefix)Source, $(index) * $(__context_BytesPerElement), $(__context_BytesPerElement));
+    })
+}
+
+$(macro :unsafe) {
+    __do_get_value(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(T_VARIABLE as result)
+    )
+} >> {
+    $<Boolean>{
+        $$(expand(__do_get_value_boolean($(vector), $(prefix), $(index), $(result))));
+    }
+    $<Integer>{
+        $$(expand(__do_get_value_integer($(vector), $(prefix), $(index), $(result))));
+    }
+    $<String>{
+        $$(expand(__do_get_value_string($(vector), $(prefix), $(index), $(result))));
+    }
+}
 
 $(macro :unsafe) {
     __get_value(
@@ -37,8 +99,12 @@ $(macro :unsafe) {
         $ast->append($append);
     }
 } >> {
+    $<HasBitArithmetic>{
+        static $mask = ["\x1", "\x2", "\x4", "\x8", "\x10", "\x20", "\x40", "\x80"];
+    }
+    
     $(__context_Nullable ? {
-        $$(expand(__do_get_value($(vector), nullability, $(index), $isNull)));
+        $$(expand(__do_get_value_boolean($(vector), nullability, $(index), $isNull)));
         if ($isNull) {
             $(result) = null;
         } else {

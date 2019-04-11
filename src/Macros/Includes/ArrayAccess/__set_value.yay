@@ -1,12 +1,12 @@
 <?php
 
 $(macro :unsafe) {
-    __do_set_value_boolean(
+    __do_set_value_false(
         $(T_VARIABLE as vector),
         $(label() as prefix),
-        $(T_VARIABLE as index),
-        $(layer() as value)
-        )
+        $(T_VARIABLE as index)
+    )
+    $(optional(token(';')))
 } >> {
     $byteIndex = $(index) >> 3;
     $$(expand(
@@ -14,11 +14,44 @@ $(macro :unsafe) {
             $(vector),
             $(prefix),
             $byteIndex,
-            $(value) ?
-                (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") | $originalMask[$(index) & 7]) :
-                (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") & $invertedMask[$(index) & 7])
+            (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") & $invertedMask[$(index) & 7])
         )
     ))
+}
+
+$(macro :unsafe) {
+    __do_set_value_true(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index)
+    )
+    $(optional(token(';')))
+} >> {
+    $byteIndex = $(index) >> 3;
+    $$(expand(
+        __do_set_value_string(
+            $(vector),
+            $(prefix),
+            $byteIndex,
+            (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") | $originalMask[$(index) & 7])
+        )
+    ))
+}
+
+$(macro :unsafe) {
+    __do_set_value_boolean(
+        $(T_VARIABLE as vector),
+        $(label() as prefix),
+        $(T_VARIABLE as index),
+        $(layer() as value)
+    )
+    $(optional(token(';')))
+} >> {
+    if ($(value)) {
+        $$(expand(__do_set_value_true($(vector), $(prefix), $(index))))
+    } else {
+        $$(expand(__do_set_value_false($(vector), $(prefix), $(index))))
+    }
 }
 
 $(macro :unsafe) {
@@ -27,8 +60,10 @@ $(macro :unsafe) {
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
-        )
+    )
+    $(optional(token(';')))
 } >> {
+    // TODO: Pack signed and unsigned integers.
     $(vector)->$(prefix)Source[$(index)] = $(value);
 }
 
@@ -38,9 +73,49 @@ $(macro :unsafe) {
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
-        )
+    )
+    $(optional(token(';')))
+    $(_() as __context_BytesPerElement)
+    $(_() as __context_OneBytePerElement)
+    $(_() as __context_DefaultValue)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    $bytesPerElement = 1;
+    if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
+        $bytesPerElement = Vectory::getBytesPerElement();
+    }
+    $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
+    $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
+    
+    if (1 === $bytesPerElement) {
+        $append = new \Yay\Ast('__context_OneBytePerElement');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
+
+    $defaultValue = \str_repeat("\0", $bytesPerElement);
+    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, '\''.$defaultValue.'\'');
+    $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
 } >> {
-    $(vector)->$(prefix)Source[$(index)] = $(value);
+    $unassignedCount = $index - \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
+    if ($unassignedCount < 0) {
+        // Case 1. Overwrite an existing item.
+        $(__context_OneBytePerElement ? {
+            $(vector)->$(prefix)Source[$(index)] = $(value);
+        })
+        $(__context_OneBytePerElement ! {
+            $elementIndex = 0;
+            $byteIndex = $(index) * $(__context_BytesPerElement);
+            do {
+                $(vector)->$(prefix)Source[$byteIndex++] = $(value)[$elementIndex++];
+            } while ($elementIndex < $(__context_BytesPerElement));
+        })
+    } elseif (0 === $unassignedCount) {
+        // Case 2. Append an element right after the last one.
+        $(vector)->$(prefix)Source .= $(value);
+    } else {
+        // Case 3. Append to a gap after the last element. Fill the gap with default values.
+        $(vector)->$(prefix)Source .= \str_repeat($(__context_DefaultValue), (int) $unassignedCount).$(value);
+    }
 }
     
 $(macro :unsafe) {
@@ -50,6 +125,7 @@ $(macro :unsafe) {
         $(T_VARIABLE as index),
         $(layer() as value)
     )
+    $(optional(token(';')))
 } >> {
     $<Boolean>{
         $$(expand(__do_set_value_boolean($(vector), $(prefix), $(index), $(value))));
@@ -61,8 +137,6 @@ $(macro :unsafe) {
         $$(expand(__do_set_value_string($(vector), $(prefix), $(index), $(value))));
     }
 }
-
-
 
 $(macro :unsafe) {
     __set_value(
@@ -87,9 +161,9 @@ $(macro :unsafe) {
     
     $(__context_Nullable ? {
         if (null === $(value)) {
-            $$(expand(__do_set_value_boolean($(vector), nullability, $(index), true)));
+            $$(expand(__do_set_value_true($(vector), nullability, $(index))));
         } else {
-            $$(expand(__do_set_value_boolean($(vector), nullability, $(index), false)));
+            $$(expand(__do_set_value_false($(vector), nullability, $(index))));
             $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
         }
     });

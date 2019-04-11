@@ -39,8 +39,9 @@ class Uint16Vector implements VectorInterface
         if ($index < 0 || $index >= $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
-
-        return $this->primarySource[$index] ?? 0;
+        $value = \substr($this->primarySource, $index * 2, 2);
+        // TODO: Unpack signed and unsigned integers.
+        return 0;
     }
 
     public function offsetSet($index, $value)
