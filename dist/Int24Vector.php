@@ -66,21 +66,8 @@ class Int24Vector implements VectorInterface
     public function offsetUnset($index)
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
-            if ($this->elementCount === $index) {
-                --$this->elementCount;
-                unset($this->primarySource[$index]);
-            } else {
-                if (\count($this->primarySource) !== $this->elementCount) {
-                    $this->primarySource += \array_fill(0, $this->elementCount, 0);
-                }
-                \ksort($this->primarySource, \SORT_NUMERIC);
-                \array_splice($this->primarySource, $index, 1);
-                $this->primarySource = \array_diff($this->primarySource, [0]);
-                if (!isset($this->primarySource[$this->elementCount - 2])) {
-                    $this->primarySource[$this->elementCount - 2] = 0;
-                }
-                --$this->elementCount;
-            }
+            --$this->elementCount;
+            $this->primarySource = \substr_replace($this->primarySource, '', $index * 3, 3);
         }
     }
 
