@@ -96,7 +96,7 @@ $(macro :unsafe) {
     $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, '\''.$defaultValue.'\'');
     $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
 } >> {
-    $unassignedCount = $index - \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
+    $unassignedCount = $(index) - \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
     if ($unassignedCount < 0) {
         // Case 1. Overwrite an existing item.
         $(__context_OneBytePerElement ? {
@@ -164,8 +164,8 @@ $(macro :unsafe) {
             $$(expand(__do_set_value_true($(vector), nullability, $(index))));
         } else {
             $$(expand(__do_set_value_false($(vector), nullability, $(index))));
-            $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
         }
+        $$(expand(__do_set_value($(vector), $(prefix), $(index), ($(value) ?? $[DefaultValue]))));
     });
     
     $(__context_Nullable ! {

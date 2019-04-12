@@ -16,7 +16,7 @@ $(macro :unsafe) {
     $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
     $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
 } >> {
-    if (--$(vector)->elementCount > $(index)) {
+    if ($(vector)->elementCount > $(index)) {
         $carry = "\x0";
         $byteCount = \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
         for ($i = $byteCount - 1, $byteIndex = ($(index) >> 3); $i > $byteIndex; --$i) {
@@ -44,7 +44,6 @@ $(macro :unsafe) {
     )
     $(optional(token(';')))
 } >> {
-    --$(vector)->elementCount;
     $(vector)->$(prefix)Source = \substr_replace(
         $(vector)->$(prefix)Source,
         '',
@@ -329,6 +328,8 @@ $(macro :unsafe) {
             "\xff" => "\x7f",
         ];
     }
+    
+    --$(vector)->elementCount;
     
     $(__context_Nullable ? {
         $$(expand(__do_unset_value_boolean($(vector), nullability, $(index))));
