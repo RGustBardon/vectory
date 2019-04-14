@@ -21,7 +21,6 @@ use Vectory\VectorInterface;
  */
 final class NullableChar3VectorTest extends TestCase
 {
-    // __countable_methods_test()
     // __iterator_aggregate_methods_test()
     // __json_serializable_methods_test()
     // __serializable_methods_test()
@@ -153,6 +152,33 @@ final class NullableChar3VectorTest extends TestCase
         self::assertFalse(isset($vector[2]));
         self::assertSame("\0\0\0", $vector[0]);
         self::assertNull($vector[1]);
+    }
+
+    public function testCountable(): void
+    {
+        $vector = self::getInstance();
+        self::assertCount(0, $vector);
+        $vector[1] = self::getRandomValue();
+        self::assertCount(2, $vector);
+        $vector[2] = $vector[1];
+        self::assertCount(3, $vector);
+        $vector[2] = self::getRandomValue();
+        self::assertCount(3, $vector);
+        unset($vector[0]);
+        self::assertCount(2, $vector);
+        unset($vector[2]);
+        self::assertCount(2, $vector);
+        $vector[2] = "\0\0\0";
+        self::assertCount(3, $vector);
+    }
+
+    public function testCountableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertCount(1, $vector);
+        $vector[2] = null;
+        self::assertCount(3, $vector);
     }
 
     private static function getInstance(): VectorInterface
