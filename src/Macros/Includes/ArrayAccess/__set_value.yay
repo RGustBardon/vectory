@@ -63,8 +63,11 @@ $(macro :unsafe) {
     )
     $(optional(token(';')))
 } >> {
-    // TODO: Pack signed and unsigned integers.
-    $(vector)->$(prefix)Source[$(index)] = $(value);
+    $unpackedInteger = ($(value));
+    $$(expand(
+        __pack_integer($unpackedInteger, $packedInteger);
+        __do_set_value_string($(vector), $(prefix), $(index), $packedInteger);
+    ))
 }
 
 $(macro :unsafe) {

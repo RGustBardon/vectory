@@ -9,5 +9,8 @@ $(macro :unsafe) {
         $<Nullable>{
             private /* string */ $nullabilitySource = '';
         }
+        $<Signed>{
+            private static /* bool */ $littleEndian;
+        }
     ))
 }

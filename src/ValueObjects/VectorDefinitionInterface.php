@@ -24,7 +24,7 @@ interface VectorDefinitionInterface
     public function getBytesPerElement(): int;
 
     public function hasBitArithmetic(): bool;
-    
+
     public function isNullable(): bool;
 
     public function isSigned(): bool;

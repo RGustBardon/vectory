@@ -1,0 +1,165 @@
+<?php
+
+$(macro :unsafe) {
+    __pack_integer(
+        $(T_VARIABLE as unpackedInteger),
+        $(T_VARIABLE as result)
+    )
+    $(optional(token(';')))
+} >> {
+    $<Takes1>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('c', $unpackedInteger);
+            }
+            $<!Signed>{
+                $(result) = \chr($unpackedInteger);
+            }
+        ))
+    }
+    $<Takes2>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('s', $unpackedInteger);
+            }
+            $<!Signed>{
+                $(result) = \pack('v', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes3>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('VX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+            }
+            $<!Signed>{
+                $(result) = \pack('VX', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes4>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('l', $unpackedInteger);
+            }
+            $<!Signed>{
+                $(result) = \pack('V', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes5>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('PXXX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+            }
+            $<!Signed>{
+                $(result) = \pack('PXXX', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes6>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('PXX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+            }
+            $<!Signed>{
+                $(result) = \pack('PXX', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes7>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \pack('PX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+            }
+            $<!Signed>{
+                $(result) = \pack('PX', $unpackedInteger);
+            }
+        ))
+    }
+    $<Takes8>{
+        $(result) = \pack('q', $unpackedInteger);
+    }
+}
+
+$(macro :unsafe) {
+    __unpack_integer(
+        $(T_VARIABLE as packedInteger),
+        $(T_VARIABLE as result)
+    )
+    $(optional(token(';')))
+} >> {
+    $<Takes1>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \unpack('c', $packedInteger)[1];
+            }
+            $<!Signed>{
+                $(result) = \ord($packedInteger);
+            }
+        ))
+    }
+    $<Takes2>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \unpack('s', $packedInteger)[1];
+            }
+            $<!Signed>{
+                $(result) = \unpack('v', $packedInteger)[1];
+            }
+        ))
+    }
+    $<Takes3>{
+        $$(expand(
+            $(result) = \unpack('V', $packedInteger."\0")[1];
+            $<Signed>{
+                if ($(result) > $[MaximumValue]) {
+                    $(result) = $[MaximumValue] - $(result);
+                }
+            }
+        ))
+    }
+    $<Takes4>{
+        $$(expand(
+            $<Signed>{
+                $(result) = \unpack('l', $packedInteger)[1];
+            }
+            $<!Signed>{
+                $(result) = \unpack('V', $packedInteger)[1];
+            }
+        ))
+    }
+    $<Takes5>{
+        $$(expand(
+            $(result) = \unpack('P', $packedInteger."\0\0\0")[1];
+            $<Signed>{
+                if ($(result) > $[MaximumValue]) {
+                    $(result) = $[MaximumValue] - $(result);
+                }
+            }
+        ))
+    }
+    $<Takes6>{
+        $$(expand(
+            $(result) = \unpack('P', $packedInteger."\0\0")[1];
+            $<Signed>{
+                if ($(result) > $[MaximumValue]) {
+                    $(result) = $[MaximumValue] - $(result);
+                }
+            }
+        ))
+    }
+    $<Takes7>{
+        $$(expand(
+            $(result) = \unpack('P', $packedInteger."\0")[1];
+            $<Signed>{
+                if ($(result) > $[MaximumValue]) {
+                    $(result) = $[MaximumValue] - $(result);
+                }
+            }
+        ))
+    }
+    $<Takes8>{
+        $(result) = \unpack('q', $packedInteger)[1];
+    }
+}

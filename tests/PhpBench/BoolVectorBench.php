@@ -52,4 +52,37 @@ final class BoolVectorBench
     {
         return [false, true][\mt_rand(0, 1)];
     }
+
+    private static function dumpVector(\Vectory\VectorInterface $vector): void
+    {
+        echo "\n";
+        $trace = \array_reverse(\debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
+        foreach ($trace as $frame) {
+            if (0 === \strpos($frame['class'], 'Vectory')) {
+                $frame['class'] = \substr($frame['class'], \strrpos($frame['class'], '\\') + 1);
+                \printf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
+            }
+        }
+
+        $sources = ['primary'];
+
+        foreach ($sources as $sourcePrefix) {
+            $property = new \ReflectionProperty($vector, $sourcePrefix.'Source');
+            $property->setAccessible(true);
+            $source = $property->getValue($vector);
+            $bytesPerElement = null ?? 1;
+            $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
+            \assert(\is_iterable($elements));
+            foreach ($elements as $index => $element) {
+                echo \substr(\strtoupper($sourcePrefix), 0, 1);
+                \printf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
+                foreach (\str_split($element, 2) as $value) {
+                    $decimal = (int) \hexdec($value);
+                    $binary = \decbin($decimal);
+                    \printf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
+                }
+                echo "\n";
+            }
+        }
+    }
 }

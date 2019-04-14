@@ -172,4 +172,29 @@ $(macro :unsafe) {
             }
         ))
     }
+
+    $$(expand(
+        $<HasMinimumMaximum>{
+            public static function extremumProvider(): \Generator
+            {
+                yield from [
+                    [$[MinimumValue]],
+                    [$[MinimumValue] + 1],
+                    [$[MaximumValue] - 1],
+                    [$[MaximumValue]],
+                ];
+            }
+            
+            /**
+             * @dataProvider extremumProvider
+             * @depends testArrayAccess
+             */
+            public function testOffsetSetWithExtremum(int $extremum): void
+            {
+                $vector = self::getInstance();
+                $vector[0] = $extremum;
+                self::assertSame($extremum, $vector[0]);
+            }
+        }
+    ))
 }

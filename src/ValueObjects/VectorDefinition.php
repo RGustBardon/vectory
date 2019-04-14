@@ -69,7 +69,7 @@ namespace Vectory\ValueObjects;
     {
         return $this->bytesPerElement;
     }
-    
+
     public function hasBitArithmetic(): bool
     {
         return $this->bitArithmetic;
@@ -124,7 +124,7 @@ namespace Vectory\ValueObjects;
     {
         return $this->className;
     }
-    
+
     public function getFullyQualifiedClassName(): string
     {
         return $this->fullyQualifiedClassName;

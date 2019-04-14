@@ -26,10 +26,9 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     $$(expand(
-        __do_get_value_string($(vector), $(prefix), $(index), $(result))
+        __do_get_value_string($(vector), $(prefix), $(index), $packedInteger);
+        __unpack_integer($packedInteger, $(result));
     ))
-    // TODO: Unpack signed and unsigned integers.
-    $(result) = 0;
 }
 
 $(macro :unsafe) {

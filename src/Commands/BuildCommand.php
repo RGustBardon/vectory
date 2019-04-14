@@ -217,19 +217,28 @@ YAY;
                 \sprintf(self::MACRO_FORMAT_CONTEXT, \ucfirst($name), $encodedValue);
         }
 
-        foreach (
-            [
-                'HasBitArithmetic' => $vectorDefinition->hasBitArithmetic(),
-                'HasMinimumMaximum' => $vectorDefinition->isInteger() &&
-                $vectorDefinition->getBytesPerElement() < 8,
-                'Nullable' => $vectorDefinition->isNullable(),
-                'Signed' => $vectorDefinition->isInteger() &&
-                $vectorDefinition->isSigned(),
-                'Boolean' => $vectorDefinition->isBoolean(),
-                'Integer' => $vectorDefinition->isInteger(),
-                'String' => $vectorDefinition->isString(),
-            ] as $name => $isEnabled
-        ) {
+        $flags = [
+            'HasBitArithmetic' => $vectorDefinition->hasBitArithmetic(),
+            'HasMinimumMaximum' => $vectorDefinition->isInteger() &&
+            $vectorDefinition->getBytesPerElement() < 8,
+            'Nullable' => $vectorDefinition->isNullable(),
+            'Signed' => $vectorDefinition->isInteger() &&
+            $vectorDefinition->isSigned(),
+            'Boolean' => $vectorDefinition->isBoolean(),
+            'Integer' => $vectorDefinition->isInteger(),
+            'String' => $vectorDefinition->isString(),
+        ];
+
+        for ($i = 1; $i <= 8; ++$i) {
+            if ($vectorDefinition->isBoolean()) {
+                $flags['Takes'.$i] = 1 === $i;
+            } else {
+                $flags['Takes'.$i] =
+                    $i === ($vectorDefinition->getBytesPerElement() ?? 1);
+            }
+        }
+
+        foreach ($flags as $name => $isEnabled) {
             $format = $isEnabled ? self::MACRO_FORMAT_ENABLE : self::MACRO_FORMAT_IGNORE;
             $concatenatedMacros[] = \sprintf($format, $name, true);
         }

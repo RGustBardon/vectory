@@ -155,6 +155,22 @@ final class NullableInt56VectorTest extends TestCase
         self::assertNull($vector[1]);
     }
 
+    public static function extremumProvider(): \Generator
+    {
+        yield from [[-36028797018963968], [-36028797018963968 + 1], [36028797018963967 - 1], [36028797018963967]];
+    }
+
+    /**
+     * @dataProvider extremumProvider
+     * @depends testArrayAccess
+     */
+    public function testOffsetSetWithExtremum(int $extremum): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = $extremum;
+        self::assertSame($extremum, $vector[0]);
+    }
+
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\NullableInt56Vector();
@@ -170,5 +186,37 @@ final class NullableInt56VectorTest extends TestCase
         $value = \hexdec($value);
 
         return $positive ? $value : -$value;
+    }
+
+    private static function dumpVector(VectorInterface $vector): void
+    {
+        echo "\n";
+        $trace = \array_reverse(\debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
+        foreach ($trace as $frame) {
+            if (0 === \strpos($frame['class'], 'Vectory')) {
+                $frame['class'] = \substr($frame['class'], \strrpos($frame['class'], '\\') + 1);
+                \printf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
+            }
+        }
+        $sources = ['primary'];
+        $sources[] = 'nullability';
+        foreach ($sources as $sourcePrefix) {
+            $property = new \ReflectionProperty($vector, $sourcePrefix.'Source');
+            $property->setAccessible(true);
+            $source = $property->getValue($vector);
+            $bytesPerElement = 7 ?? 1;
+            $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
+            \assert(\is_iterable($elements));
+            foreach ($elements as $index => $element) {
+                echo \substr(\strtoupper($sourcePrefix), 0, 1);
+                \printf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
+                foreach (\str_split($element, 2) as $value) {
+                    $decimal = (int) \hexdec($value);
+                    $binary = \decbin($decimal);
+                    \printf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
+                }
+                echo "\n";
+            }
+        }
     }
 }
