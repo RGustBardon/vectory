@@ -21,7 +21,6 @@ use Vectory\VectorInterface;
  */
 final class BoolVectorTest extends TestCase
 {
-    // __iterator_aggregate_methods_test()
     // __json_serializable_methods_test()
     // __serializable_methods_test()
     private const INVALID_VALUE = 0;
@@ -152,6 +151,46 @@ final class BoolVectorTest extends TestCase
         self::assertCount(2, $vector);
         $vector[2] = false;
         self::assertCount(3, $vector);
+    }
+
+    public function testIteratorAggregate(): void
+    {
+        $vector = self::getInstance();
+        self::assertSame([], \iterator_to_array($vector));
+        $element = self::getRandomValue();
+        $vector[1] = $element;
+        self::assertSame([false, $element], \iterator_to_array($vector));
+        unset($vector[0]);
+        self::assertSame([$element], \iterator_to_array($vector));
+    }
+
+    /**
+     * @depends testIteratorAggregate
+     */
+    public function testIteratorAggregateWithModification(): void
+    {
+        $vector = self::getInstance();
+        $elements = [self::getRandomValue(), self::getRandomValue(), self::getRandomValue()];
+        $sequence = [$elements[1], $elements[2], $elements[1]];
+        foreach ($sequence as $element) {
+            $vector[] = $element;
+        }
+        $iterations = [];
+        foreach ($vector as $outerIndex => $outerElement) {
+            if (1 === $outerIndex) {
+                $vector[] = $elements[2];
+            }
+            $innerIteration = [];
+            foreach ($vector as $innerIndex => $innerElement) {
+                if (1 === $innerIndex) {
+                    $vector[2] = $elements[0];
+                }
+                $innerIteration[] = [$innerIndex, $innerElement];
+            }
+            $iterations[] = $innerIteration;
+            $iterations[] = [$outerIndex, $outerElement];
+        }
+        self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
     }
 
     private static function getInstance(): VectorInterface

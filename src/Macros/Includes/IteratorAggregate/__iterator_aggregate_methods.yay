@@ -6,21 +6,12 @@ $(macro :unsafe) {
     public function getIterator(): \Traversable
     {
         $elementCount = $this->elementCount;
-        $primarySource = $this->primarySource;
-        $<Nullable>{
-            $nullabilitySource = $this->nullabilitySource;
-        }
-        for ($index = 0; $index < $elementCount; ++$index) {
-            $<Nullable>{
-                if ($nullabilitySource[$index] ?? false) {
-                    yield $index => null;
-                } else {
-                    yield $index => $primarySource[$index] ?? $[DefaultValue];
-                }
-            }
-            $<!Nullable>{
-                yield $index => $primarySource[$index] ?? $[DefaultValue];
-            }
+        $clone = clone $this;
+        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
+            $$(expand(
+                $$(expand(__get_value($clone, primary, $getIteratorIndex, $result)))
+            ));
+            yield $getIteratorIndex => $result;
         }
     }
 }
