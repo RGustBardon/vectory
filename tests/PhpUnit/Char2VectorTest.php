@@ -21,7 +21,6 @@ use Vectory\VectorInterface;
  */
 final class Char2VectorTest extends TestCase
 {
-    // __json_serializable_methods_test()
     // __serializable_methods_test()
     private const INVALID_VALUE = 0;
 
@@ -205,6 +204,29 @@ final class Char2VectorTest extends TestCase
             $iterations[] = [$outerIndex, $outerElement];
         }
         self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
+    }
+
+    public function testJsonSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertNativeJson([], $vector);
+        $value = self::getRandomUtf8String();
+        $sequence = [$value, self::getRandomUtf8String(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = "\0\0";
+        \array_push($sequence, "\0\0", "\0\0");
+        self::assertNativeJson($sequence, $vector);
+    }
+
+    private static function assertNativeJson($expected, $vector): void
+    {
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        $actualJson = \json_encode($vector);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        self::assertSame($expectedJson, $actualJson);
     }
 
     private static function getInstance(): VectorInterface

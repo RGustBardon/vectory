@@ -21,7 +21,6 @@ use Vectory\VectorInterface;
  */
 final class NullableChar3VectorTest extends TestCase
 {
-    // __json_serializable_methods_test()
     // __serializable_methods_test()
     private const INVALID_VALUE = 0;
 
@@ -227,6 +226,38 @@ final class NullableChar3VectorTest extends TestCase
         self::assertSame([null], \iterator_to_array($vector));
         $vector[2] = null;
         self::assertSame([null, "\0\0\0", null], \iterator_to_array($vector));
+    }
+
+    public function testJsonSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertNativeJson([], $vector);
+        $value = self::getRandomUtf8String();
+        $sequence = [$value, self::getRandomUtf8String(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = "\0\0\0";
+        \array_push($sequence, "\0\0\0", "\0\0\0");
+        self::assertNativeJson($sequence, $vector);
+    }
+
+    public function testJsonSerializableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertNativeJson([null], $vector);
+        $vector[2] = null;
+        self::assertNativeJson([null, "\0\0\0", null], $vector);
+    }
+
+    private static function assertNativeJson($expected, $vector): void
+    {
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        $actualJson = \json_encode($vector);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        self::assertSame($expectedJson, $actualJson);
     }
 
     private static function getInstance(): VectorInterface

@@ -7,21 +7,11 @@ $(macro :unsafe) {
     {
         $result = [];
         $elementCount = $this->elementCount;
-        $primarySource = $this->primarySource;
-        $<Nullable>{
-            $nullabilitySource = $this->nullabilitySource;
-        }
-        for ($index = 0; $index < $elementCount; ++$index) {
-            $<Nullable>{
-                if ($nullabilitySource[$index] ?? false) {
-                    $result[] = null;
-                } else {
-                    $result[] = $primarySource[$index] ?? $[DefaultValue];
-                }
-            }
-            $<!Nullable>{
-                $result[] = $primarySource[$index] ?? $[DefaultValue];
-            }
+        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
+            $$(expand(
+                $$(expand(__get_value($this, primary, $getIteratorIndex, $element)))
+            ));
+            $result[] = $element;
         }
         return $result;
     }
