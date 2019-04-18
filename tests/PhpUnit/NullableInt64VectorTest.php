@@ -21,7 +21,6 @@ use Vectory\VectorInterface;
  */
 final class NullableInt64VectorTest extends TestCase
 {
-    // __serializable_methods_test()
     private const INVALID_VALUE = '0';
 
     protected function setUp(): void
@@ -237,6 +236,20 @@ final class NullableInt64VectorTest extends TestCase
         self::assertNativeJson([null, 0, null], $vector);
     }
 
+    public function testSerializable(): void
+    {
+        $vector = self::getInstance();
+        self::assertSerialization([], $vector);
+        $value = self::getRandomValue();
+        $sequence = [$value, self::getRandomValue(), $value];
+        foreach ($sequence as $value) {
+            $vector[] = $value;
+        }
+        $vector[4] = 0;
+        \array_push($sequence, 0, 0);
+        self::assertSerialization($sequence, $vector);
+    }
+
     private static function assertNativeJson($expected, $vector): void
     {
         $expectedJson = \json_encode($expected);
@@ -244,6 +257,17 @@ final class NullableInt64VectorTest extends TestCase
         $actualJson = \json_encode($vector);
         self::assertSame(\JSON_ERROR_NONE, \json_last_error());
         self::assertSame($expectedJson, $actualJson);
+    }
+
+    private static function assertSerialization($expected, $vector)
+    {
+        $actualSerialized = \serialize($vector);
+        $actualUnserialized = \unserialize($actualSerialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableInt64Vector', '\\')]]);
+        $actual = [];
+        foreach ($actualUnserialized as $index => $element) {
+            $actual[$index] = $element;
+        }
+        self::assertSame($expected, $actual);
     }
 
     private static function getInstance(): VectorInterface

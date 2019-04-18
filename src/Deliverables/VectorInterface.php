@@ -17,7 +17,7 @@ interface VectorInterface extends
     \ArrayAccess,
     \Countable,
     \IteratorAggregate,
-    \JsonSerializable
-    // , \Serializable
+    \JsonSerializable,
+    \Serializable
 {
 }
