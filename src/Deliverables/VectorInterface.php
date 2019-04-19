@@ -13,11 +13,6 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-interface VectorInterface extends
-    \ArrayAccess,
-    \Countable,
-    \IteratorAggregate,
-    \JsonSerializable,
-    \Serializable
+interface VectorInterface extends \ArrayAccess, \Countable, \IteratorAggregate, \JsonSerializable, \Serializable
 {
 }
