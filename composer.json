@@ -51,9 +51,9 @@
     },
     "scripts": {
         "build": [
-            "php bin/build -v",
+            "php bin/build -vvv",
             "@composer dumpautoload",
-            "phpstan analyse --level=max dist tests",
+            "phpstan analyse --level=max --memory-limit=256M dist tests",
             "phpunit tests/PhpUnit"
         ],
         "bench": [

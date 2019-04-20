@@ -21,6 +21,8 @@ use Vectory\VectorInterface;
  */
 final class NullableChar2VectorTest extends TestCase
 {
+    private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
+    private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
 
     protected function setUp(): void
@@ -264,6 +266,111 @@ final class NullableChar2VectorTest extends TestCase
         self::assertSerialization($sequence, $vector);
     }
 
+    public static function deletionProvider(): \Generator
+    {
+        foreach ([[self::getRandomValue(), self::getRandomValue(), self::getRandomValue(), self::getRandomValue(), self::getRandomValue(), self::getRandomValue()]] as $originalElements) {
+            foreach ([
+                // Random test cases.
+                [[], -1, 0, []],
+                [[], 0, 0, []],
+                [[], 1, 0, []],
+                [[], -1, 1, []],
+                [[], 0, 1, []],
+                [[], 1, 1, []],
+                [[0], -1, 0, [0]],
+                [[0], -1, 1, []],
+                [[0], -1, 2, []],
+                [[0], 0, 0, [0]],
+                [[0], 0, 1, []],
+                [[0], 0, 2, []],
+                [[0], 1, 0, [0]],
+                [[0], 1, 1, [0]],
+                [[0], 1, 2, [0]],
+                [[0, 1], -2, 1, [1]],
+                [[0, 1], -2, 2, []],
+                [[0, 1], -1, 1, [0]],
+                [[0, 1], -1, 2, [0]],
+                [[0, 1], 0, 1, [1]],
+                [[0, 1], 0, 2, []],
+                [[0, 1], 1, 1, [0]],
+                [[0, 1], 1, 2, [0]],
+                [[0, 1, 2, 3, 4, 5], 0, 3, [3, 4, 5]],
+                [[0, 1, 2, 3, 4, 5], 1, 1, [0, 2, 3, 4, 5]],
+                [[0, 1, 2, 3, 4, 5], 1, 3, [0, 4, 5]],
+                [[0, 1, 2, 3, 4, 5], 2, 3, [0, 1, 5]],
+                [[0, 1, 2, 3, 4, 5], 3, 3, [0, 1, 2]],
+                [[0, 1, 2, 3, 4, 5], 4, 3, [0, 1, 2, 3]],
+                [[0, 1, 2, 3, 4, 5], 5, 3, [0, 1, 2, 3, 4]],
+                [[0, 1, 2, 3, 4, 5], -1, 3, [0, 1, 2, 3, 4]],
+                [[0, 1, 2, 3, 4, 5], -2, 3, [0, 1, 2, 3]],
+                [[0, 1, 2, 3, 4, 5], -3, 3, [0, 1, 2]],
+                [[0, 1, 2, 3, 4, 5], -4, 3, [0, 1, 5]],
+                [[0, 1, 2, 3, 4, 5], -5, 3, [0, 4, 5]],
+                [[self::SEQUENCE_SKIP_VALUE, 1, 2, 3, 4, 5], -5, 3, [self::SEQUENCE_DEFAULT_VALUE, 4, 5]],
+                [[0, 1, 2, 3, 4, 5], -6, 3, [3, 4, 5]],
+                [[0, 1, 2, 3, 4, 5], -7, 3, [2, 3, 4, 5]],
+                [[1, 2, 1, 2, 1, 2], 2, 3, [1, 2, 2]],
+                [[1, self::SEQUENCE_SKIP_VALUE, 1, 2, 1, 0], 2, 3, [1, self::SEQUENCE_DEFAULT_VALUE, 0]],
+                // Calculate the positive index corresponding to the negative one.
+                [[0, 1, 2], -1, 1, [0, 1]],
+                // If we still end up with a negative index, decrease `$howMany`.
+                [[0, 1, 2], -4, 3, [2]],
+                // Check if there is anything to delete or
+                // if the positive index is out of bounds.
+                [[0], 0, 0, [0]],
+                [[], 0, 1, []],
+                [[0], 1, 1, [0]],
+                // If the first index conceptually begins a byte
+                // and everything to its right is to be deleted,
+                // no bit-shifting is necessary.
+                [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3], 8, 8, [0, 1, 2, 3, 0, 1, 2, 3]],
+                // `$howManyFullBytes > 0` and then `0 === $howMany`
+                [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0], 8, 8, [0, 1, 2, 3, 0, 1, 2, 3, 0]],
+                // There are not enough bits in the assembled byte,
+                // so augment it with the next source byte.
+                [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0], 8, 17, [0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 0, 1, 2, 3, 0]],
+                // Some of the bits of the target byte need to be preserved,
+                // so augment the assembled byte.
+                [[0, 1, 2], 1, 1, [0, 2]],
+            ] as [$originalSequence, $firstIndex, $howMany, $expected]) {
+                foreach ([false, true] as $nullable) {
+                    $elements = $originalElements;
+                    if ($nullable) {
+                        $elements[\array_rand($elements)] = null;
+                        $elements[\array_rand($elements)] = null;
+                    }
+                    $vector = self::getInstance();
+                    $sequence = $originalSequence;
+                    foreach ($sequence as $index => $key) {
+                        if (self::SEQUENCE_SKIP_VALUE === $key) {
+                            $sequence[$index] = "\0\0";
+                        } else {
+                            $vector[$index] = $elements[$key];
+                        }
+                    }
+                    (yield [$vector, $elements, $sequence, $firstIndex, $howMany, $expected]);
+                }
+            }
+        }
+    }
+
+    /**
+     * @dataProvider deletionProvider
+     */
+    public function testDelete(VectorInterface $vector, array $elements, array $sequence, int $firstIndex, int $howMany, array $expected): void
+    {
+        $expectedSequence = [];
+        foreach ($expected as $key) {
+            if (self::SEQUENCE_DEFAULT_VALUE === $key) {
+                $expectedSequence[] = "\0\0";
+            } else {
+                $expectedSequence[] = $elements[$key];
+            }
+        }
+        $vector->delete($firstIndex, $howMany);
+        self::assertSequence($expectedSequence, $vector);
+    }
+
     private static function assertNativeJson($expected, $vector): void
     {
         $expectedJson = \json_encode($expected);
@@ -330,14 +437,25 @@ final class NullableChar2VectorTest extends TestCase
         return $string;
     }
 
-    private static function dumpVector(VectorInterface $vector): void
+    private static function assertSequence(array $sequence, VectorInterface $vector): void
     {
-        echo "\n";
+        self::assertCount(\count($sequence), $vector);
+        $i = 0;
+        foreach ($vector as $index => $element) {
+            self::assertSame($i, $index);
+            self::assertSame($sequence[$index], $element, 'Index: '.$index."\n".\var_export($sequence, true)."\n".self::getVectorDump($vector));
+            ++$i;
+        }
+    }
+
+    private static function getVectorDump(VectorInterface $vector): string
+    {
+        $dump = "\n";
         $trace = \array_reverse(\debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
         foreach ($trace as $frame) {
             if (0 === \strpos($frame['class'], 'Vectory')) {
                 $frame['class'] = \substr($frame['class'], \strrpos($frame['class'], '\\') + 1);
-                \printf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
+                $dump .= \sprintf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
             }
         }
         $sources = ['primary'];
@@ -350,15 +468,22 @@ final class NullableChar2VectorTest extends TestCase
             $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
             \assert(\is_iterable($elements));
             foreach ($elements as $index => $element) {
-                echo \substr(\strtoupper($sourcePrefix), 0, 1);
-                \printf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
+                $dump .= \substr(\strtoupper($sourcePrefix), 0, 1);
+                $dump .= \sprintf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
                 foreach (\str_split($element, 2) as $value) {
                     $decimal = (int) \hexdec($value);
-                    $binary = \decbin($decimal);
-                    \printf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
+                    $binary = \str_pad(\decbin($decimal), 8, '0', \STR_PAD_LEFT);
+                    $dump .= \sprintf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
                 }
-                echo "\n";
+                $dump .= "\n";
             }
         }
+
+        return $dump;
+    }
+
+    private static function dumpVector(VectorInterface $vector): void
+    {
+        echo self::getVectorDump($vector);
     }
 }

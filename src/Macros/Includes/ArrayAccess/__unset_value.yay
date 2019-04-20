@@ -338,10 +338,7 @@ $(macro :unsafe) {
     $<Boolean>{
         $$(expand(__do_unset_value_boolean($(vector), $(prefix), $(index))));
     }
-    $<Integer>{
-        $$(expand(__do_unset_value_string($(vector), $(prefix), $(index))));
-    }
-    $<String>{
+    $<!Boolean>{
         $$(expand(__do_unset_value_string($(vector), $(prefix), $(index))));
     }
 }

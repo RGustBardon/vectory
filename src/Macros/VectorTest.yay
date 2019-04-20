@@ -19,5 +19,8 @@ final class _ extends TestCase
     __iterator_aggregate_methods_test()
     __json_serializable_methods_test()
     __serializable_methods_test()
+    
+    __delete_methods_test()
+    
     __test_methods()
 }

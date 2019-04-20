@@ -15,4 +15,17 @@ namespace Vectory;
 
 interface VectorInterface extends \ArrayAccess, \Countable, \IteratorAggregate, \JsonSerializable, \Serializable
 {
+    /**
+     * Deletes a certain number of elements.
+     *
+     * Subsequent elements are shifted left by the number of elements deleted.
+     *
+     * @param int $firstIndex the index of the first element that is to be deleted.
+     *                        If negative, `-1` represents the last element, `-2` the element preceding it, etc.
+     *                        If the index is negative and its absolute value is greater than the current number
+     *                        of elements, the index of the first element will be `0`, and `$howMany` will be
+     *                        decreased by their difference
+     * @param int $howMany    the number of elements to be deleted
+     */
+    public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void;
 }

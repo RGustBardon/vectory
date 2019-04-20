@@ -89,14 +89,31 @@ final class Char4VectorBench
         return $string;
     }
 
-    private static function dumpVector(\Vectory\VectorInterface $vector): void
+    private static function assertSequence(array $sequence, \Vectory\VectorInterface $vector): void
     {
-        echo "\n";
+        self::assertCount(\count($sequence), $vector);
+        $i = 0;
+        foreach ($vector as $index => $element) {
+            self::assertSame($i, $index);
+            self::assertSame(
+                $sequence[$index],
+                $element,
+                'Index: '.$index."\n".
+                    \var_export($sequence, true)."\n".
+                    self::getVectorDump($vector)
+            );
+            ++$i;
+        }
+    }
+
+    private static function getVectorDump(VectorInterface $vector): string
+    {
+        $dump = "\n";
         $trace = \array_reverse(\debug_backtrace(\DEBUG_BACKTRACE_IGNORE_ARGS));
         foreach ($trace as $frame) {
             if (0 === \strpos($frame['class'], 'Vectory')) {
                 $frame['class'] = \substr($frame['class'], \strrpos($frame['class'], '\\') + 1);
-                \printf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
+                $dump .= \sprintf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
             }
         }
 
@@ -110,15 +127,22 @@ final class Char4VectorBench
             $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
             \assert(\is_iterable($elements));
             foreach ($elements as $index => $element) {
-                echo \substr(\strtoupper($sourcePrefix), 0, 1);
-                \printf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
+                $dump .= \substr(\strtoupper($sourcePrefix), 0, 1);
+                $dump .= \sprintf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
                 foreach (\str_split($element, 2) as $value) {
                     $decimal = (int) \hexdec($value);
-                    $binary = \decbin($decimal);
-                    \printf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
+                    $binary = \str_pad(\decbin($decimal), 8, '0', \STR_PAD_LEFT);
+                    $dump .= \sprintf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
                 }
-                echo "\n";
+                $dump .= "\n";
             }
         }
+
+        return $dump;
+    }
+
+    private static function dumpVector(\Vectory\VectorInterface $vector): void
+    {
+        echo self::getVectorDump($vector);
     }
 }
