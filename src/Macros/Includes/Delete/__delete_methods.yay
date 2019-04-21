@@ -1,6 +1,26 @@
 <?php
 
 $(macro :unsafe) {
+    __delete(
+        $(T_VARIABLE as vector),
+        $(T_VARIABLE as firstIndex),
+        $(T_VARIABLE as howMany),
+        $(T_VARIABLE as elementCount)
+    )
+} >> {
+    $<Nullable>{
+        $(vector)->deleteBits(false, $(firstIndex), $(howMany), $(elementCount));
+    }
+    
+    $<Boolean>{
+        $(vector)->deleteBits(true, $(firstIndex), $(howMany), $(elementCount));
+    }
+    $<!Boolean>{
+        $(vector)->deleteBytes(true, $(firstIndex), $(howMany), $(elementCount));
+    }
+}
+
+$(macro :unsafe) {
     __delete_methods()
 } >> {
     public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void
@@ -24,138 +44,133 @@ $(macro :unsafe) {
         }
         
         // Delete elements.
-        $<Nullable>{
-            $this->deleteBits(false, $firstIndex, $howMany, $elementCount);
-        }
-            
-        $<Boolean>{
-            $this->deleteBits(true, $firstIndex, $howMany, $elementCount);
-        }
-        $<!Boolean>{
-            $this->deleteBytes(true, $firstIndex, $howMany, $elementCount);
-        }
+        $$(expand(
+          __delete($this, $firstIndex, $howMany, $elementCount);
+        ))
     }
     
-    private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
-    {
-        // Bit-shifting a substring is expensive, so delete all the full bytes in the range, for example:
-        //
-        // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef 0123|4567 89ab|cdef
-        // To be deleted:             XX XXXX|XXXX XXXX|XXXX XXXX XXX
-        // Full bytes:                   ^^^^ ^^^^ ^^^^ ^^^^
-        
-        $elementCount = $this->elementCount;
-        $byteCount = ($elementCount + 7) >> 3;
-        
-        $firstFullByteIndex = ($firstIndex >> 3) + ((0 === ($firstIndex & 7)) ? 0 : 1);
-        $howManyFullBytes = \min($byteCount - 1, ($firstIndex + $howMany) >> 3) - $firstFullByteIndex;
-        if ($howManyFullBytes > 0) {
-            $this->deleteBytes($primarySource, $firstFullByteIndex, $howManyFullBytes, $byteCount);
-            $byteCount -= $howManyFullBytes;
-            $deletedBitCount = ($howManyFullBytes << 3);
-            $elementCount -= $deletedBitCount;
-            $howMany -= $deletedBitCount;
-            if (0 === $howMany) {
-                if ($primarySource) {
-                    $this->elementCount = $elementCount;
+    $<HasBitArithmetic>{
+        private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
+        {
+            // Bit-shifting a substring is expensive, so delete all the full bytes in the range, for example:
+            //
+            // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef 0123|4567 89ab|cdef
+            // To be deleted:             XX XXXX|XXXX XXXX|XXXX XXXX XXX
+            // Full bytes:                   ^^^^ ^^^^ ^^^^ ^^^^
+            
+            $elementCount = $this->elementCount;
+            $byteCount = ($elementCount + 7) >> 3;
+            
+            $firstFullByteIndex = ($firstIndex >> 3) + ((0 === ($firstIndex & 7)) ? 0 : 1);
+            $howManyFullBytes = \min($byteCount - 1, ($firstIndex + $howMany) >> 3) - $firstFullByteIndex;
+            if ($howManyFullBytes > 0) {
+                $this->deleteBytes($primarySource, $firstFullByteIndex, $howManyFullBytes, $byteCount);
+                $byteCount -= $howManyFullBytes;
+                $deletedBitCount = ($howManyFullBytes << 3);
+                $elementCount -= $deletedBitCount;
+                $howMany -= $deletedBitCount;
+                if (0 === $howMany) {
+                    if ($primarySource) {
+                        $this->elementCount = $elementCount;
+                    }
+                    return;
                 }
+            }
+            
+            if (0 === ($firstIndex & 7) && $firstIndex + $howMany >= $elementCount) {
+                // If the first index conceptually begins a byte and everything to its right is to be deleted,
+                // no bit-shifting is necessary.
+                
+                if ($primarySource) {
+                    $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3);
+                    $this->elementCount = $firstIndex;
+                } else {
+                    $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
+                }
+                
                 return;
             }
-        }
-        
-        if (0 === ($firstIndex & 7) && $firstIndex + $howMany >= $elementCount) {
-            // If the first index conceptually begins a byte and everything to its right is to be deleted,
-            // no bit-shifting is necessary.
             
-            if ($primarySource) {
-                $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3);
-                $this->elementCount = $firstIndex;
-            } else {
-                $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
-            }
+            // Keep rewriting the target with assembled bytes.
             
-            return;
-        }
-        
-        // Keep rewriting the target with assembled bytes.
-        
-        // During the first iteration, the assembled byte will include some target bits.
-        // After the first iteration, all the assembled bytes will consist of source bits only.
-        
-        // Conceptually:
-        
-        // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef
-        // To be deleted:             XX XXXX XXX
-        // Source bits:                          ^ ^^^^ ^^^^ ^^^^ ^^^^
-        // Target bits:               ^^ ^^^^ ^^^^ ^^^^ ^^^
-        // 1st assembled byte: ^^^^ ^^           ^ ^                   (includes six target bits)
-        // 2nd assembled byte: 1111|1111            ^^^ ^^^^ ^         (consists entirely of source bits)
-        // 3rd assembled byte: 1111|1111 2222|2222            ^^^ ^^^^ (consists of source bits and zeros)
-        
-        // The above is a simplified view. In reality, the bits are reversed in each byte:
-        
-        // Indices:            7654|3210 fedc|ba98 7654|3210 fedc|ba98
-        // To be deleted:      XX         XXX XXXX
-        // Source bits:                  ^         ^^^^ ^^^^ ^^^^ ^^^^
-        // Target bits:        ^^        ^^^^ ^^^^  ^^^ ^^^^
-        // 1st assembled byte:   ^^^^ ^^ ^                 ^           (includes six target bits)
-        // 2nd assembled byte: 1111|1111           ^^^^ ^^^          ^ (consists entirely of source bits)
-        // 3rd assembled byte: 1111|1111 2222|2222           ^^^^ ^^^  (consists of source bits and zeros)
-        
-        $lastByteIndex = $byteCount - 1;
-        $source = ($primarySource ? $this->primarySource : $this->nullabilitySource);
-        
-        $targetHeadBitAbsoluteIndex = $firstIndex;
-        $sourceHeadBitAbsoluteIndex = $firstIndex + $howMany;
-        
-        while ($sourceHeadBitAbsoluteIndex < $elementCount) {
-            // Find out how many target bits are needed to assemble a byte.
-            $targetHeadBitRelativeBitIndex = $targetHeadBitAbsoluteIndex & 7;
-            $targetByteMissingBitCount = 8 - $targetHeadBitRelativeBitIndex;
+            // During the first iteration, the assembled byte will include some target bits.
+            // After the first iteration, all the assembled bytes will consist of source bits only.
             
-            // Get the current source byte as an integer (bit-shifting operators do not work for strings).
-            $sourceHeadByteIndex = $sourceHeadBitAbsoluteIndex >> 3;
-            $assembledByte = \ord($source[$sourceHeadByteIndex]);
+            // Conceptually:
             
-            $sourceHeadShift = $sourceHeadBitAbsoluteIndex & 7;
-            if ($sourceHeadShift > 0) {
-                // Shift the source bits to be copied to the end of the assembled byte.
-                $assembledByte >>= $sourceHeadShift;
-                $sourceAssembledBitCount = 8 - $sourceHeadShift;
-                if ($sourceAssembledBitCount < $targetByteMissingBitCount && $sourceHeadByteIndex < $lastByteIndex) {
-                    // There are not enough bits in the assembled byte, so augment it with the next source byte.
-                    $assembledByte |= (
-                            \ord($source[$sourceHeadByteIndex + 1])
-                            & 0xff >> (8 - $targetByteMissingBitCount + $sourceAssembledBitCount)
-                        ) << $sourceAssembledBitCount;
+            // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef
+            // To be deleted:             XX XXXX XXX
+            // Source bits:                          ^ ^^^^ ^^^^ ^^^^ ^^^^
+            // Target bits:               ^^ ^^^^ ^^^^ ^^^^ ^^^
+            // 1st assembled byte: ^^^^ ^^           ^ ^                   (includes six target bits)
+            // 2nd assembled byte: 1111|1111            ^^^ ^^^^ ^         (consists entirely of source bits)
+            // 3rd assembled byte: 1111|1111 2222|2222            ^^^ ^^^^ (consists of source bits and zeros)
+            
+            // The above is a simplified view. In reality, the bits are reversed in each byte:
+            
+            // Indices:            7654|3210 fedc|ba98 7654|3210 fedc|ba98
+            // To be deleted:      XX         XXX XXXX
+            // Source bits:                  ^         ^^^^ ^^^^ ^^^^ ^^^^
+            // Target bits:        ^^        ^^^^ ^^^^  ^^^ ^^^^
+            // 1st assembled byte:   ^^^^ ^^ ^                 ^           (includes six target bits)
+            // 2nd assembled byte: 1111|1111           ^^^^ ^^^          ^ (consists entirely of source bits)
+            // 3rd assembled byte: 1111|1111 2222|2222           ^^^^ ^^^  (consists of source bits and zeros)
+            
+            $lastByteIndex = $byteCount - 1;
+            $source = ($primarySource ? $this->primarySource : $this->nullabilitySource);
+            
+            $targetHeadBitAbsoluteIndex = $firstIndex;
+            $sourceHeadBitAbsoluteIndex = $firstIndex + $howMany;
+            
+            while ($sourceHeadBitAbsoluteIndex < $elementCount) {
+                // Find out how many target bits are needed to assemble a byte.
+                $targetHeadBitRelativeBitIndex = $targetHeadBitAbsoluteIndex & 7;
+                $targetByteMissingBitCount = 8 - $targetHeadBitRelativeBitIndex;
+                
+                // Get the current source byte as an integer (bit-shifting operators do not work for strings).
+                $sourceHeadByteIndex = $sourceHeadBitAbsoluteIndex >> 3;
+                $assembledByte = \ord($source[$sourceHeadByteIndex]);
+                
+                $sourceHeadShift = $sourceHeadBitAbsoluteIndex & 7;
+                if ($sourceHeadShift > 0) {
+                    // Shift the source bits to be copied to the end of the assembled byte.
+                    $assembledByte >>= $sourceHeadShift;
+                    $sourceAssembledBitCount = 8 - $sourceHeadShift;
+                    if ($sourceAssembledBitCount < $targetByteMissingBitCount && $sourceHeadByteIndex < $lastByteIndex) {
+                        // There are not enough bits in the assembled byte, so augment it with the next source byte.
+                        $assembledByte |= (
+                                \ord($source[$sourceHeadByteIndex + 1])
+                                & 0xff >> (8 - $targetByteMissingBitCount + $sourceAssembledBitCount)
+                            ) << $sourceAssembledBitCount;
+                    }
                 }
+                
+                $targetHeadByteIndex = $targetHeadBitAbsoluteIndex >> 3;
+                if ($targetHeadBitRelativeBitIndex > 0) {
+                    // Some of the bits of the target byte need to be preserved, so augment the assembled byte.
+                    $assembledByte =
+                        \ord($source[$targetHeadByteIndex])
+                        & 0xff >> $targetByteMissingBitCount
+                        | $assembledByte << $targetHeadBitRelativeBitIndex;
+                }
+                
+                // Overwrite the target byte with the assembled byte.
+                $source[$targetHeadByteIndex] = \chr($assembledByte);
+                
+                // Advance by the number of bits rewritten.
+                $targetHeadBitAbsoluteIndex += $targetByteMissingBitCount;
+                $sourceHeadBitAbsoluteIndex += $targetByteMissingBitCount;
             }
             
-            $targetHeadByteIndex = $targetHeadBitAbsoluteIndex >> 3;
-            if ($targetHeadBitRelativeBitIndex > 0) {
-                // Some of the bits of the target byte need to be preserved, so augment the assembled byte.
-                $assembledByte =
-                    \ord($source[$targetHeadByteIndex])
-                    & 0xff >> $targetByteMissingBitCount
-                    | $assembledByte << $targetHeadBitRelativeBitIndex;
+            $elementCount -= \min($howMany, $elementCount - $firstIndex);
+            // Remove all the bytes after the last rewritten byte.
+            $source = \substr_replace($source, '', ($elementCount >> 3) + 1, \PHP_INT_MAX);
+            if ($primarySource) {
+                $this->primarySource = $source;
+                $this->elementCount = $elementCount;
+            } else {
+                $this->nullabilitySource = $source;
             }
-            
-            // Overwrite the target byte with the assembled byte.
-            $source[$targetHeadByteIndex] = \chr($assembledByte);
-            
-            // Advance by the number of bits rewritten.
-            $targetHeadBitAbsoluteIndex += $targetByteMissingBitCount;
-            $sourceHeadBitAbsoluteIndex += $targetByteMissingBitCount;
-        }
-        
-        $elementCount -= \min($howMany, $elementCount - $firstIndex);
-        // Remove all the bytes after the last rewritten byte.
-        $source = \substr_replace($source, '', ($elementCount >> 3) + 1, \PHP_INT_MAX);
-        if ($primarySource) {
-            $this->primarySource = $source;
-            $this->elementCount = $elementCount;
-        } else {
-            $this->nullabilitySource = $source;
         }
     }
     
