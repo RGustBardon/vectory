@@ -89,6 +89,8 @@ final class NullableInt16VectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
         $sources[] = 'nullability';
 

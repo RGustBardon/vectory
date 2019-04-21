@@ -81,6 +81,8 @@ final class BoolVectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
 
         foreach ($sources as $sourcePrefix) {

@@ -117,6 +117,8 @@ final class Char2VectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
 
         foreach ($sources as $sourcePrefix) {

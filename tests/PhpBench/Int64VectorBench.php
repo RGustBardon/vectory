@@ -89,6 +89,8 @@ final class Int64VectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
 
         foreach ($sources as $sourcePrefix) {

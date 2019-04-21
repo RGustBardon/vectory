@@ -87,6 +87,8 @@ final class NullableUint48VectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
         $sources[] = 'nullability';
 

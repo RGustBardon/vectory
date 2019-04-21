@@ -9,6 +9,7 @@ class _ implements VectorInterface
     __base_constants()
     __base_properties()
 
+    __debug_info()
     __array_access_methods()
     __countable_methods()
     __iterator_aggregate_methods()

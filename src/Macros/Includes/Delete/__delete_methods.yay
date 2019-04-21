@@ -161,21 +161,19 @@ $(macro :unsafe) {
     
     private function deleteBytes(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
     {
-        $start = $firstIndex * $[BytesPerElement];
         if ($howMany >= $elementCount - $firstIndex) {
             if ($primarySource) {
-                $this->primarySource = \substr($this->primarySource, 0, $start);
+                $this->primarySource = \substr($this->primarySource, 0, $firstIndex * $[BytesPerElement]);
                 $this->elementCount = $<Boolean>{ 8 * } $firstIndex;
             } else {
-                $this->nullabilitySource = \substr($this->nullabilitySource, 0, $start);
+                $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex);
             }
         } else {
-            $length = $howMany * $[BytesPerElement];
             if ($primarySource) {
-                $this->primarySource = \substr_replace($this->primarySource, '', $start, $length);
+                $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * $[BytesPerElement], $howMany * $[BytesPerElement]);
                 $this->elementCount -= $<Boolean>{ 8 * } $howMany;
             } else {
-                $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $start, $length);
+                $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $firstIndex, $howMany);
             }
         }
     }

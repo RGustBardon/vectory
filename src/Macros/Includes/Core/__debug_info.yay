@@ -1,0 +1,47 @@
+<?php
+
+$(macro :unsafe) {
+    __debug_info()
+} >> {
+    public function __debugInfo(): array
+    {
+        $info = [
+            'elementCount' => $this->elementCount,
+            'elements' => \iterator_to_array($this->getIterator()),
+            'primarySource' => '',
+            $<Nullable>{
+                'nullabilitySource' => '',
+            }
+        ];
+        
+        $sources = ['primary'];
+        $<Nullable>{
+            $sources[] = 'nullability';
+        }
+        if ($this->elementCount > 0) {
+            foreach ($sources as $sourcePrefix) {
+                $info[$sourcePrefix.'Source'] = \PHP_EOL;
+                $property = new \ReflectionProperty($this, $sourcePrefix.'Source');
+                $property->setAccessible(true);
+                $source = $property->getValue($this);
+                $bytesPerElement = $[BytesPerElement] ?? 1;
+                $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
+                \assert(\is_iterable($elements));
+                foreach ($elements as $index => $element) {
+                    $line = '';
+                    $line .= \substr(\strtoupper($sourcePrefix), 0, 1);
+                    $line .= \sprintf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
+                    foreach (\str_split($element, 2) as $value) {
+                        $decimal = (int) \hexdec($value);
+                        $binary = \strrev(\str_pad(\decbin($decimal), 8, '0', \STR_PAD_LEFT));
+                        $line .= \sprintf('% 3s (0x% 2s) %04s %04s | ', $decimal, $value, \substr($binary, 0, 4), \substr($binary, 4));
+                    }
+                    $info[$sourcePrefix.'Source'] .= \substr($line, 0, -3) . \PHP_EOL;
+                }
+                $info[$sourcePrefix.'Source'] = \rtrim($info[$sourcePrefix.'Source'], \PHP_EOL);
+            }
+        }
+        
+        return $info;
+    }
+}

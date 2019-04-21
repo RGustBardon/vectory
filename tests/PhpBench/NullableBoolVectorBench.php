@@ -81,6 +81,8 @@ final class NullableBoolVectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
         $sources[] = 'nullability';
 

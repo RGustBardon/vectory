@@ -445,6 +445,7 @@ final class NullableInt40VectorTest extends TestCase
                 $dump .= \sprintf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
             }
         }
+        $vector->__debugInfo();
         $sources = ['primary'];
         $sources[] = 'nullability';
         foreach ($sources as $sourcePrefix) {

@@ -427,6 +427,7 @@ final class Char2VectorTest extends TestCase
                 $dump .= \sprintf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
             }
         }
+        $vector->__debugInfo();
         $sources = ['primary'];
         foreach ($sources as $sourcePrefix) {
             $property = new \ReflectionProperty($vector, $sourcePrefix.'Source');

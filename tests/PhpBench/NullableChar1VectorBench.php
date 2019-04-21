@@ -117,6 +117,8 @@ final class NullableChar1VectorBench
             }
         }
 
+        $vector->__debugInfo();
+
         $sources = ['primary'];
         $sources[] = 'nullability';
 
