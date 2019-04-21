@@ -21,9 +21,9 @@ use Vectory\VectorInterface;
  */
 final class NullableBoolVectorTest extends TestCase
 {
+    private const INVALID_VALUE = 0;
     private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
-    private const INVALID_VALUE = 0;
 
     protected function setUp(): void
     {
@@ -319,12 +319,12 @@ final class NullableBoolVectorTest extends TestCase
                 // so augment the assembled byte.
                 [[0, 1, 2], 1, 1, [0, 2]],
             ] as [$originalSequence, $firstIndex, $howMany, $expected]) {
-                foreach ([false, true] as $nullable) {
-                    $elements = $originalElements;
-                    if ($nullable) {
-                        $elements[\array_rand($elements)] = null;
-                        $elements[\array_rand($elements)] = null;
-                    }
+                $batch = [$originalElements];
+                $elements = $originalElements;
+                $elements[\array_rand($elements)] = null;
+                $elements[\array_rand($elements)] = null;
+                $batch[] = $elements;
+                foreach ($batch as $elements) {
                     $vector = self::getInstance();
                     $sequence = $originalSequence;
                     foreach ($sequence as $index => $key) {
@@ -355,26 +355,6 @@ final class NullableBoolVectorTest extends TestCase
         }
         $vector->delete($firstIndex, $howMany);
         self::assertSequence($expectedSequence, $vector);
-    }
-
-    private static function assertNativeJson($expected, $vector): void
-    {
-        $expectedJson = \json_encode($expected);
-        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
-        $actualJson = \json_encode($vector);
-        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
-        self::assertSame($expectedJson, $actualJson);
-    }
-
-    private static function assertSerialization($expected, $vector)
-    {
-        $actualSerialized = \serialize($vector);
-        $actualUnserialized = \unserialize($actualSerialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableBoolVector', '\\')]]);
-        $actual = [];
-        foreach ($actualUnserialized as $index => $element) {
-            $actual[$index] = $element;
-        }
-        self::assertSame($expected, $actual);
     }
 
     private static function getInstance(): VectorInterface
@@ -408,33 +388,30 @@ final class NullableBoolVectorTest extends TestCase
                 $dump .= \sprintf("%s%s%s:%d\n", $frame['class'], $frame['type'], $frame['function'], $frame['line']);
             }
         }
-        $vector->__debugInfo();
-        $sources = ['primary'];
-        $sources[] = 'nullability';
-        foreach ($sources as $sourcePrefix) {
-            $property = new \ReflectionProperty($vector, $sourcePrefix.'Source');
-            $property->setAccessible(true);
-            $source = $property->getValue($vector);
-            $bytesPerElement = null ?? 1;
-            $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
-            \assert(\is_iterable($elements));
-            foreach ($elements as $index => $element) {
-                $dump .= \substr(\strtoupper($sourcePrefix), 0, 1);
-                $dump .= \sprintf('% '.\strlen((string) (\strlen($source) / $bytesPerElement)).'d: ', $index);
-                foreach (\str_split($element, 2) as $value) {
-                    $decimal = (int) \hexdec($value);
-                    $binary = \str_pad(\decbin($decimal), 8, '0', \STR_PAD_LEFT);
-                    $dump .= \sprintf('h:% 2s d:% 3s b:%04s %04s | ', $value, $decimal, \substr($binary, 0, 4), \substr($binary, 4));
-                }
-                $dump .= "\n";
-            }
-        }
+        \ob_start();
+        \var_dump($vector);
+        $dump .= \ob_get_clean();
 
         return $dump;
     }
 
-    private static function dumpVector(VectorInterface $vector): void
+    private static function assertNativeJson($expected, $vector): void
     {
-        echo self::getVectorDump($vector);
+        $expectedJson = \json_encode($expected);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        $actualJson = \json_encode($vector);
+        self::assertSame(\JSON_ERROR_NONE, \json_last_error());
+        self::assertSame($expectedJson, $actualJson);
+    }
+
+    private static function assertSerialization($expected, $vector)
+    {
+        $actualSerialized = \serialize($vector);
+        $actualUnserialized = \unserialize($actualSerialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableBoolVector', '\\')]]);
+        $actual = [];
+        foreach ($actualUnserialized as $index => $element) {
+            $actual[$index] = $element;
+        }
+        self::assertSame($expected, $actual);
     }
 }

@@ -134,12 +134,15 @@ $(macro :unsafe) {
                 // so augment the assembled byte.
                 [[0, 1, 2], 1, 1, [0, 2]],
             ] as [$originalSequence, $firstIndex, $howMany, $expected]) {
-                foreach ([false, $<Nullable>{ true, }] as $nullable) {
+                $batch = [$originalElements];
+                $<Nullable>{ 
                     $elements = $originalElements;
-                    if ($nullable) {
-                        $elements[\array_rand($elements)] = null;
-                        $elements[\array_rand($elements)] = null;
-                    }
+                    $elements[\array_rand($elements)] = null;
+                    $elements[\array_rand($elements)] = null;
+                    $batch[] = $elements;
+                }
+                
+                foreach ($batch as $elements) {
                     $vector = self::getInstance();
                     $sequence = $originalSequence;
                     foreach ($sequence as $index => $key) {

@@ -121,25 +121,30 @@ YAY;
     {
         $this->logger = new ConsoleLogger($output);
         $this->parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
-        $this->prettyPrinter = new class extends PrettyPrinter\Standard {
-            protected function pSingleQuotedString(string $string) {
+        $this->prettyPrinter = new class() extends PrettyPrinter\Standard {
+            protected function pSingleQuotedString(string $string)
+            {
                 if (\preg_match('~[\\x0-\\x9\\xb-\\x1f\\x7f-\\xff]~', $string)) {
                     return '"'.$this->escapeString($string, '"').'"';
                 }
+
                 return parent::pSingleQuotedString($string);
             }
-            
-            protected function escapeString($string, $quote) {
+
+            protected function escapeString($string, $quote)
+            {
                 $escaped = parent::escapeString($string, $quote);
-                return preg_replace_callback(
+
+                return \preg_replace_callback(
                     '/([\\x0-\\x9\\xb-\\x1f\\x7f-\\xff])(?=([0-7]?))/',
                     function ($matches): string {
-                        $oct = decoct(ord($matches[1]));
-                        if ($matches[2] !== '') {
+                        $oct = \decoct(\ord($matches[1]));
+                        if ('' !== $matches[2]) {
                             // If there is a trailing digit, use the full three character form
-                            return '\\' . str_pad($oct, 3, '0', \STR_PAD_LEFT);
+                            return '\\'.\str_pad($oct, 3, '0', \STR_PAD_LEFT);
                         }
-                        return '\\' . $oct;
+
+                        return '\\'.$oct;
                     },
                     $escaped
                 );

@@ -195,7 +195,7 @@ class Char4Vector implements VectorInterface
 
     public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void
     {
-        $elementCount = $this->elementCount;
+        $elementCount = (int) $this->elementCount;
         // Calculate the positive index corresponding to the negative one.
         if ($firstIndex < 0) {
             $firstIndex += $elementCount;
@@ -219,15 +219,11 @@ class Char4Vector implements VectorInterface
             if ($primarySource) {
                 $this->primarySource = \substr($this->primarySource, 0, $firstIndex * 4);
                 $this->elementCount = $firstIndex;
-            } else {
-                $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex);
             }
         } else {
             if ($primarySource) {
                 $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * 4, $howMany * 4);
                 $this->elementCount -= $howMany;
-            } else {
-                $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $firstIndex, $howMany);
             }
         }
     }

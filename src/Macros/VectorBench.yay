@@ -29,5 +29,5 @@ final class _
         $this->vector[] = $this->value;
     }
 
-    __test_methods()
+    __instantiation_methods()
 }

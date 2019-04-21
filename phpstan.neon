@@ -5,5 +5,4 @@ includes:
 parameters:
     ignoreErrors:
         - '~assertFalse\(\) with true will always evaluate to false~'
-        - '~Array has 2 duplicate keys with value~'
         - '~If condition is always true~'

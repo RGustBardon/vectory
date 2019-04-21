@@ -14,6 +14,9 @@ final class _ extends TestCase
         \mt_srand(0);
     }
 
+    __instantiation_methods()
+    __test_methods()
+    
     __array_access_methods_test()
     __countable_methods_test()
     __iterator_aggregate_methods_test()
@@ -21,6 +24,4 @@ final class _ extends TestCase
     __serializable_methods_test()
     
     __delete_methods_test()
-    
-    __test_methods()
 }

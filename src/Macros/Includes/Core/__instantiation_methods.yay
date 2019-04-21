@@ -1,0 +1,85 @@
+<?php
+
+$(macro :unsafe) {
+    __instantiation_methods()
+} >> {
+    private const INVALID_VALUE = $$(expand(
+        $<Integer>{ '0' }
+        $<!Integer>{ 0 }
+    ));
+    
+    private static function getInstance(): \Vectory\VectorInterface
+    {
+        return new $[Fqn]();
+    }
+    
+    private static function getRandomValue()
+    {
+        $$(expand(
+            $<Boolean>{
+                return [false, true][\mt_rand(0, 1)];
+            }
+            $<Integer>{
+                $<Signed>{
+                    $positive = 0 === \mt_rand(0, 1);
+                    $value = \dechex(\mt_rand(0x0, $positive ? 0x7f : 0x80));
+                }
+                $<!Signed>{
+                    $value = \dechex(\mt_rand(0x0, 0xff));
+                }
+                
+                for ($i = 1; $i < $[BytesPerElement]; ++$i) {
+                    $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+                }
+                $value = \hexdec($value);
+                
+                $<Signed>{
+                    return $positive ? $value : -$value;
+                }
+                $<!Signed>{
+                    return $value;
+                }
+            }
+            $<String>{
+                $value = '';
+                for ($i = 0; $i < $[BytesPerElement]; ++$i) {
+                    $value .= \chr(\mt_rand(0x0, 0xff));
+                }
+                return $value;
+            }
+        ))
+    }
+        
+    $$(expand(
+        $<String>{
+            private static function getRandomUtf8String(): string
+            {
+                \assert(0x10ffff <= \mt_getrandmax());
+                $string = '';
+                while (\strlen($string) < $[BytesPerElement]) {
+                    $characterMaxLength = \min(4, $[BytesPerElement] - \strlen($string));
+                    $character = '';
+                    switch (\mt_rand(1, $characterMaxLength)) {
+                        case 1:
+                            $character = \mb_chr(\mt_rand(0x0, 0x7f));
+                            break;
+                            
+                        case 2:
+                            $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+                            break;
+                            
+                        case 3:
+                            $character = \mb_chr(\mt_rand(0x800, 0xffff));
+                            break;
+
+                        case 4:
+                            $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+                            break;
+                    }
+                    $string .= $character;
+                }
+                return $string;
+            }
+        }
+    ))
+}

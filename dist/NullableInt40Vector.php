@@ -290,7 +290,7 @@ class NullableInt40Vector implements VectorInterface
 
     public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void
     {
-        $elementCount = $this->elementCount;
+        $elementCount = (int) $this->elementCount;
         // Calculate the positive index corresponding to the negative one.
         if ($firstIndex < 0) {
             $firstIndex += $elementCount;
