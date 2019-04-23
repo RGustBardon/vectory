@@ -3,9 +3,6 @@
 $(macro :unsafe) {
     __delete_methods_test()
 } >> {
-    private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
-    private const SEQUENCE_SKIP_VALUE = 'SkipValue';
-    
     public static function deletionProvider(): \Generator
     {
         foreach ([

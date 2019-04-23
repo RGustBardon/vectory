@@ -229,6 +229,24 @@ class Int48Vector implements VectorInterface
         $this->deleteBytes(true, $firstIndex, $howMany, $elementCount);
     }
 
+    public function insert(iterable $elements, int $firstIndex = -1): void
+    {
+        // Prepare a substring to insert.
+        $substringToInsert = '';
+        foreach ($elements as $element) {
+            if (!\is_int($element)) {
+                throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', '', \gettype($element)));
+            }
+            if ($element < -140737488355328 || $element > 140737488355327) {
+                throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$element.', expected '.-140737488355328 .' <= x <= '. 140737488355327);
+            }
+            $packedInteger = \pack('PXX', $element >= 0 ? $element : -$element + 140737488355327);
+            $substringToInsert .= $packedInteger;
+        }
+        // Insert the elements.
+        $this->insertBytes($substringToInsert, $firstIndex);
+    }
+
     private function deleteBytes(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
     {
         if ($howMany >= $elementCount - $firstIndex) {
@@ -241,6 +259,37 @@ class Int48Vector implements VectorInterface
                 $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * 6, $howMany * 6);
                 $this->elementCount -= $howMany;
             }
+        }
+    }
+
+    private function insertBytes(string $substringToInsert, int $firstIndex): void
+    {
+        $defaultValue = 0;
+        $defaultValue = \pack('PXX', $defaultValue >= 0 ? $defaultValue : -$defaultValue + 140737488355327);
+        if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
+            // Insert the elements.
+            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 6;
+            $this->primarySource .= \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_LEFT);
+        } else {
+            $originalFirstIndex = $firstIndex;
+            // Calculate the positive index corresponding to the negative one.
+            if ($firstIndex < 0) {
+                $firstIndex += $this->elementCount;
+                // Keep the indices within the bounds.
+                if ($firstIndex < 0) {
+                    $firstIndex = 0;
+                }
+            }
+            // Resize the bytemap if the negative first element index is greater than the new element count.
+            $insertedElementCount = (int) (\strlen($substringToInsert) / 6);
+            $newElementCount = $this->elementCount + $insertedElementCount;
+            if (-$originalFirstIndex > $newElementCount) {
+                $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
+                $padLength = ($overflow + $insertedElementCount) * 6;
+                $substringToInsert = \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_RIGHT);
+            }
+            // Insert the elements.
+            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 6, 0);
         }
     }
 }

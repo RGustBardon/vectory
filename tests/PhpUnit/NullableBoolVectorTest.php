@@ -21,9 +21,9 @@ use Vectory\VectorInterface;
  */
 final class NullableBoolVectorTest extends TestCase
 {
-    private const INVALID_VALUE = 0;
     private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
+    private const INVALID_VALUE = 0;
 
     protected function setUp(): void
     {
@@ -354,6 +354,108 @@ final class NullableBoolVectorTest extends TestCase
             }
         }
         $vector->delete($firstIndex, $howMany);
+        self::assertSequence($expectedSequence, $vector);
+    }
+
+    public static function insertionProvider(): \Generator
+    {
+        foreach ([[false, true, false, true, false, true], [false, false, true, false, true, false], [false, false, false, true, true, true], [false, true, true, true, false, false]] as $originalElements) {
+            foreach ([
+                // Random test cases.
+                [[], [], -3, [0, 0]],
+                [[], [], -2, [0]],
+                [[], [], -1, []],
+                [[], [], 0, []],
+                [[], [], 1, [0]],
+                [[1], [], -3, [0, 1]],
+                [[1], [], -2, [1]],
+                [[1], [], -1, [1]],
+                [[1], [], 0, [1]],
+                [[1], [], 1, [1]],
+                [[], [1], -3, [1, 0, 0]],
+                [[], [1], -2, [1, 0]],
+                [[], [1], -1, [1]],
+                [[], [1], 0, [1]],
+                [[], [1], 1, [0, 1]],
+                [[0, 1, 2, 3, 0, 1, 2], [4, 5], 3, [0, 1, 2, 4, 5, 3, 0, 1, 2]],
+                [[0, 1, 2, 3, self::SEQUENCE_SKIP_VALUE, 1, 2], [4, 5], 3, [0, 1, 2, 4, 5, 3, self::SEQUENCE_DEFAULT_VALUE, 1, 2]],
+                // `($howManyBitsToInsert & 7) > 0`
+                [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2, 3, 0], 0, [0, 1, 2, 3, 0, 1, 2, 3, 0, 0, 1, 2, 3, 0, 1, 2, 3]],
+                // Zero or more elements are to be inserted
+                // after the existing elements (X?G?N?).
+                [[], [], 1, [0]],
+                // `$howManyBitsToInsert > 0`
+                [[], [1], 0, [1]],
+                // `$tailRelativeBitIndex > 0`
+                [[2], [1], 1, [2, 1]],
+                // `$firstIndex < 0`
+                [[2, 3], [1], -2, [1, 2, 3]],
+                // Keep the indices within the bounds.
+                [[2], [1], -2, [1, 2]],
+                // Resize the bitmap if the negative first bit
+                // index is greater than the new bit count (N?GX?).
+                [[], [1], -8, [1, 0, 0, 0, 0, 0, 0, 0]],
+                // The gap did not end at a full byte,
+                // so remove the superfluous bits.
+                [[], [1], -2, [1, 0]],
+                // The bits are not to be inserted at the beginning,
+                // so splice (XNX).
+                [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2, 3], 8, [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3]],
+                // The bits are to be inserted at the beginning,
+                // so prepend (NX).
+                [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2, 3], 0, [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3]],
+                // `0 === ($firstIndex & 7) && ($howManyBitsToInsert & 7) > 0`
+                [[1], [1], 0, [1, 1]],
+                // Splice inside a byte (XNX).
+                [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2, 3], 1, [0, 0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 0, 1, 2, 3]],
+                // The tail did not end at a full byte,
+                // so remove the superfluous bits.
+                [[0, 1, 2, 3, 0, 1, 2], [0, 1, 2, 3, 0, 1, 2, 3], 1, [0, 0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 0, 1, 2]],
+                // `($firstIndex & 7) > 0 && ($howManyBitsToInsert & 7) > 0`
+                [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2], 1, [0, 0, 1, 2, 3, 0, 1, 2, 1, 2, 3, 0, 1, 2, 3]],
+            ] as [$originalSequence, $inserted, $firstIndex, $expected]) {
+                $batch = [$originalElements];
+                $elements = $originalElements;
+                $elements[\array_rand($elements)] = null;
+                $elements[\array_rand($elements)] = null;
+                $batch[] = $elements;
+                foreach ($batch as $elements) {
+                    $vector = self::getInstance();
+                    $sequence = $originalSequence;
+                    foreach ($sequence as $index => $key) {
+                        if (self::SEQUENCE_SKIP_VALUE === $key) {
+                            $sequence[$index] = false;
+                        } else {
+                            $vector[$index] = $elements[$key];
+                        }
+                    }
+                    (yield [$vector, $elements, false, $sequence, $inserted, $firstIndex, $expected]);
+                }
+            }
+        }
+        // Repeat the last test using a generator instead of an array.
+        (yield [$vector, $elements, true, $sequence, $inserted, $firstIndex, $expected]);
+    }
+
+    /**
+     * @dataProvider insertionProvider
+     */
+    public function testInsert(VectorInterface $vector, array $elements, bool $useGenerator, array $sequence, array $inserted, int $firstIndex, array $expected): void
+    {
+        $expectedSequence = [];
+        foreach ($expected as $key) {
+            if (self::SEQUENCE_DEFAULT_VALUE === $key) {
+                $expectedSequence[] = false;
+            } else {
+                $expectedSequence[] = $elements[$key];
+            }
+        }
+        $generator = (static function () use ($elements, $inserted) {
+            foreach ($inserted as $key) {
+                (yield $elements[$key]);
+            }
+        })();
+        $vector->insert($useGenerator ? $generator : \iterator_to_array($generator), $firstIndex);
         self::assertSequence($expectedSequence, $vector);
     }
 

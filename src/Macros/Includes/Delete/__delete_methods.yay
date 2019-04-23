@@ -50,17 +50,15 @@ $(macro :unsafe) {
     }
     
     $<HasBitArithmetic>{
-        private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
+        private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): int
         {
+            $byteCount = ($elementCount + 7) >> 3;
+            
             // Bit-shifting a substring is expensive, so delete all the full bytes in the range, for example:
             //
             // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef 0123|4567 89ab|cdef
             // To be deleted:             XX XXXX|XXXX XXXX|XXXX XXXX XXX
             // Full bytes:                   ^^^^ ^^^^ ^^^^ ^^^^
-            
-            $elementCount = $this->elementCount;
-            $byteCount = ($elementCount + 7) >> 3;
-            
             $firstFullByteIndex = ($firstIndex >> 3) + ((0 === ($firstIndex & 7)) ? 0 : 1);
             $howManyFullBytes = \min($byteCount - 1, ($firstIndex + $howMany) >> 3) - $firstFullByteIndex;
             if ($howManyFullBytes > 0) {
@@ -73,7 +71,7 @@ $(macro :unsafe) {
                     if ($primarySource) {
                         $this->elementCount = $elementCount;
                     }
-                    return;
+                    return $elementCount;
                 }
             }
             
@@ -91,7 +89,7 @@ $(macro :unsafe) {
                     }
                 }
                 
-                return;
+                return $firstIndex;
             }
             
             // Keep rewriting the target with assembled bytes.
@@ -177,11 +175,12 @@ $(macro :unsafe) {
                 $this->primarySource = $source;
                 $this->elementCount = $elementCount;
             }
-            $<Nullable> {
+            $<Nullable>{
                 else {
                     $this->nullabilitySource = $source;
                 }
             }
+            return $elementCount;
         }
     }
     
@@ -202,7 +201,7 @@ $(macro :unsafe) {
                 $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * $[BytesPerElement], $howMany * $[BytesPerElement]);
                 $this->elementCount -= $<Boolean>{ 8 * } $howMany;
             }
-            $<Nullable> {
+            $<Nullable>{
                 else {
                     $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $firstIndex, $howMany);
                 }

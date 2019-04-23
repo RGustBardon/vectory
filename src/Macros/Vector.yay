@@ -17,4 +17,5 @@ class _ implements VectorInterface
     __serializable_methods()
     
     __delete_methods()
+    __insert_methods()
 }

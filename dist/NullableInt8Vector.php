@@ -296,15 +296,48 @@ class NullableInt8Vector implements VectorInterface
         $this->deleteBytes(true, $firstIndex, $howMany, $elementCount);
     }
 
-    private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
+    public function insert(iterable $elements, int $firstIndex = -1): void
     {
+        // Prepare a substring to insert.
+        $substringToInsert = '';
+        $nullabilitySubstring = '';
+        $nullabilityByte = 0;
+        $howManyBitsToInsert = 0;
+        foreach ($elements as $element) {
+            if (null === $element) {
+                $nullabilityByte = $nullabilityByte | 1 << ($howManyBitsToInsert & 7);
+            } else {
+                if (!\is_int($element)) {
+                    throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', ' or null', \gettype($element)));
+                }
+                if ($element < -128 || $element > 127) {
+                    throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Value out of range: '.$element.', expected '.-128 .' <= x <= '. 127);
+                }
+                $packedInteger = \pack('c', $element);
+                $substringToInsert .= $packedInteger;
+            }
+            ++$howManyBitsToInsert;
+            if (0 === ($howManyBitsToInsert & 7)) {
+                $nullabilitySubstring .= \chr($nullabilityByte);
+                $nullabilityByte = 0;
+            }
+        }
+        if (($howManyBitsToInsert & 7) > 0) {
+            $nullabilitySubstring .= \chr($nullabilityByte);
+        }
+        // Insert the elements.
+        $this->insertBits(false, $nullabilitySubstring, $firstIndex, $howManyBitsToInsert);
+        $this->insertBytes($substringToInsert, $firstIndex);
+    }
+
+    private function deleteBits(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): int
+    {
+        $byteCount = $elementCount + 7 >> 3;
         // Bit-shifting a substring is expensive, so delete all the full bytes in the range, for example:
         //
         // Indices:            0123|4567 89ab|cdef 0123|4567 89ab|cdef 0123|4567 89ab|cdef
         // To be deleted:             XX XXXX|XXXX XXXX|XXXX XXXX XXX
         // Full bytes:                   ^^^^ ^^^^ ^^^^ ^^^^
-        $elementCount = $this->elementCount;
-        $byteCount = $elementCount + 7 >> 3;
         $firstFullByteIndex = ($firstIndex >> 3) + (0 === ($firstIndex & 7) ? 0 : 1);
         $howManyFullBytes = \min($byteCount - 1, $firstIndex + $howMany >> 3) - $firstFullByteIndex;
         if ($howManyFullBytes > 0) {
@@ -318,7 +351,7 @@ class NullableInt8Vector implements VectorInterface
                     $this->elementCount = $elementCount;
                 }
 
-                return;
+                return $elementCount;
             }
         }
         if (0 === ($firstIndex & 7) && $firstIndex + $howMany >= $elementCount) {
@@ -331,7 +364,7 @@ class NullableInt8Vector implements VectorInterface
                 $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
             }
 
-            return;
+            return $firstIndex;
         }
         // Keep rewriting the target with assembled bytes.
         // During the first iteration, the assembled byte will include some target bits.
@@ -393,6 +426,8 @@ class NullableInt8Vector implements VectorInterface
         } else {
             $this->nullabilitySource = $source;
         }
+
+        return $elementCount;
     }
 
     private function deleteBytes(bool $primarySource, int $firstIndex, int $howMany, int $elementCount): void
@@ -411,6 +446,234 @@ class NullableInt8Vector implements VectorInterface
             } else {
                 $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $firstIndex, $howMany);
             }
+        }
+    }
+
+    private function insertBits(bool $primarySource, string $substringToInsert, int $firstIndex, int $howManyBitsToInsert): void
+    {
+        // Conceptually, after the insertion, the string will consist of at most three different substrings.
+        // Elements might already exist in the source. These will be denoted by E.
+        // New elements might need to be inserted. These will be denoted by N.
+        // There might be a gap between existing elements and new elements.
+        // It will be filled with zeros and denoted by G.
+        // The question mark means that the substring is optional.
+        // Substrings will be concatenated quickly, and then the `delete` method will remove all the
+        // superfluous bits. For instance, if the source contains 3 bits and 2 bits are to be inserted with
+        // their first index being 10 (0xa), then:
+        // Indices:          0123|4567 89ab|cdef 0123|4567
+        // To be inserted:   NN
+        // Original source:  EEE0|0000
+        // `$firstIndex`:                ^
+        // Concatenation:    EEE0|0000 GGGG|GGGG NN00|0000
+        // Superfluous bits:    ^ ^^^^         ^   ^^ ^^^^
+        // Deletion:         EEEG|GGGG GGNN|0000
+        // The above is a simplified view. In reality, the bits are reversed in each byte:
+        // Indices:          7654|3210 fedc|ba98 7654|3210
+        // To be inserted:   NN
+        // Original source:  0000|0EEE
+        // Concatenation:    0000|0EEE GGGG|GGGG 0000|00NN
+        // Deletion:         GGGG|GEEE 0000|NNGG
+        // If `$firstIndex` is out of bounds (for instance, in case there are originally 3 bits, -4 or 3
+        // would be an out-of-bound first index) and no elements are to be inserted, then the source
+        // will still be mutated: it will be padded with zeros in the direction where elements would
+        // have been inserted.
+        $elementCount = (int) $this->elementCount;
+        $byteCount = $elementCount + 7 >> 3;
+        if (-1 === $firstIndex || $firstIndex > $elementCount - 1) {
+            // Zero or more elements are to be inserted after the existing elements (X?G?N?).
+            $originalBitCount = $elementCount;
+            $tailRelativeBitIndex = $elementCount & 7;
+            // Calculate if a gap should exist between the existing elements and the new ones.
+            $gapInBits = \max(0, $firstIndex - $elementCount);
+            $gapInBytes = ($gapInBits >> 3) + (0 === ($gapInBits & 7) ? 0 : 1);
+            if ($gapInBytes > 0) {
+                // Append the gap (X?GN?).
+                $byteCount += $gapInBytes;
+                $elementCount += $gapInBytes << 3;
+                if ($primarySource) {
+                    $this->primarySource .= \str_repeat("\0", $gapInBytes);
+                    $this->elementCount = $elementCount;
+                } else {
+                    $this->nullabilitySource .= \str_repeat("\0", $gapInBytes);
+                }
+                $elementCount = $this->deleteBits($primarySource, $originalBitCount + $gapInBits, \PHP_INT_MAX, $elementCount);
+                $byteCount = $elementCount >> 3;
+            }
+            if ($howManyBitsToInsert > 0) {
+                // Append new elements (X?G?N).
+                $bitCountAfterFillingTheGap = $elementCount;
+                $tailRelativeBitIndex = $elementCount & 7;
+                $byteCount += \strlen($substringToInsert);
+                $elementCount = $byteCount << 3;
+                if ($primarySource) {
+                    $this->primarySource .= $substringToInsert;
+                    $this->elementCount = $elementCount;
+                } else {
+                    $this->nullabilitySource .= $substringToInsert;
+                }
+                if ($tailRelativeBitIndex > 0) {
+                    // The gap did not end at a full byte, so remove the superfluous bits.
+                    $elementCount = $this->deleteBits($primarySource, $bitCountAfterFillingTheGap, 8 - $tailRelativeBitIndex, $elementCount);
+                }
+                // Delete all the bits after the last inserted bit.
+                $this->deleteBits($primarySource, $originalBitCount + $gapInBits + $howManyBitsToInsert, \PHP_INT_MAX, $elementCount);
+            }
+        } else {
+            // Elements are to be inserted left of the rightmost bit though not necessarily immediately before it.
+            $originalFirstIndex = $firstIndex;
+            // Calculate the positive index corresponding to the negative one.
+            if ($firstIndex < 0) {
+                $firstIndex += $elementCount;
+                // Keep the indices within the bounds.
+                if ($firstIndex < 0) {
+                    $firstIndex = 0;
+                }
+            }
+            $newBitCount = $elementCount + $howManyBitsToInsert;
+            if (-$originalFirstIndex > $newBitCount) {
+                // Resize the source if the negative first bit index is greater than the new bit count (N?GX?).
+                $originalBitCount = $elementCount;
+                $overflowInBits = -$originalFirstIndex - $newBitCount - ($howManyBitsToInsert > 0 ? 0 : 1);
+                $padLengthInBits = $overflowInBits + $howManyBitsToInsert;
+                $padLengthInBytes = $padLengthInBits + 7 >> 3;
+                $substringToInsert = \str_pad($substringToInsert, $padLengthInBytes, "\0", \STR_PAD_RIGHT);
+                $byteCount += \strlen($substringToInsert);
+                $elementCount = $byteCount << 3;
+                if ($primarySource) {
+                    $this->primarySource = $substringToInsert.$this->primarySource;
+                    $this->elementCount = $elementCount;
+                } else {
+                    $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
+                }
+                if (($padLengthInBits & 7) > 0) {
+                    // The gap did not end at a full byte, so remove the superfluous bits.
+                    $this->deleteBits($primarySource, $padLengthInBits, 8 - ($padLengthInBits & 7), $elementCount);
+                }
+            } elseif ($howManyBitsToInsert > 0) {
+                // There will be no gap left or right of the original source (X?NX).
+                if (0 === ($firstIndex & 7)) {
+                    // The bits are to be inserted at a full byte.
+                    if ($primarySource) {
+                        if ($firstIndex > 0) {
+                            // The bits are not to be inserted at the beginning, so splice (XNX).
+                            $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3).$substringToInsert.\substr($this->primarySource, $firstIndex >> 3);
+                        } else {
+                            // The bits are to be inserted at the beginning, so prepend (NX).
+                            $this->primarySource = $substringToInsert.$this->primarySource;
+                        }
+                        $byteCount = \strlen($this->primarySource);
+                        $elementCount += \strlen($substringToInsert) << 3;
+                        $this->elementCount = $elementCount;
+                    } else {
+                        if ($firstIndex > 0) {
+                            // The bits are not to be inserted at the beginning, so splice (XNX).
+                            $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3).$substringToInsert.\substr($this->nullabilitySource, $firstIndex >> 3);
+                        } else {
+                            // The bits are to be inserted at the beginning, so prepend (NX).
+                            $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
+                        }
+                        $byteCount = \strlen($this->nullabilitySource);
+                        $elementCount += \strlen($substringToInsert) << 3;
+                    }
+                    if (($howManyBitsToInsert & 7) > 0) {
+                        // The inserted bits did not end at a full byte, so remove the superfluous bits.
+                        $this->deleteBits($primarySource, $firstIndex + $howManyBitsToInsert, 8 - ($howManyBitsToInsert & 7), $elementCount);
+                    }
+                } else {
+                    // Splice inside a byte (XNX).
+                    // The part of the original bytemap to the left of what is being inserted will be
+                    // referred to as 'head,' the part to the right will be referred to as 'tail.'
+                    // Since splicing does not start at a full byte, both the head and the tail will
+                    // originally have one byte in common. The overlapping bits (rightmost in the head
+                    // and leftmost in the tail) will then by removed by calling the `delete` method.
+                    // Head bits will be denoted as H, tail bits will be denoted as T.
+                    // For instance, if the source contains 20 bits and 5 bits are to be inserted with
+                    // their first index being 10 (0xa), then:
+                    // Indices:         0123|4567 89ab|cdef 0123|4567 89ab|cdef 0123|4567
+                    // To be inserted:  NNNNN
+                    // Original source: EEEE|EEEE EEEE|EEEE EEEE|0000
+                    //                            ---------
+                    //                                |     same byte
+                    //                                |------------------.
+                    //                                |                   \
+                    //                            ---------           ---------
+                    // Concatenation:   HHHH|HHHH HHHH|HHHH NNNN|N000 TTTT|TTTT TTTT|0000
+                    // `$firstIndex`:               ^
+                    // Overlapping bits:            ^^ ^^^^           ^^
+                    // 1st deletion:                                                 ^^^^
+                    // 2nd deletion:                              ^^^ ^^                  ('middle gap')
+                    // 3rd deletion:                ^^ ^^^^
+                    // Result:          HHHH|HHHH HHNN|NNNT TTTT|TTTT T000|0000
+                    // The above is a simplified view. In reality, the bits are reversed in each byte:
+                    // Indices:         7654|3210 fedc|ba98 7654|3210 fedc|ba98 7654|3210
+                    // To be inserted:  NNNNN
+                    // Original source: EEEE|EEEE EEEE|EEEE 0000|EEEE
+                    //                            ---------
+                    //                                |     same byte
+                    //                                |------------------.
+                    //                                |                   \
+                    //                            ---------           ---------
+                    // Concatenation:   HHHH|HHHH HHHH|HHHH 000N|NNNN TTTT|TTTT 0000|TTTT
+                    // Result:          HHHH|HHHH TNNN|NNHH TTTT|TTTT 0000|000T
+                    $originalBitCount = $elementCount;
+                    $head = '';
+                    if ($primarySource) {
+                        $head = \substr($this->primarySource, 0, ($firstIndex >> 3) + 1);
+                        $tail = \substr($this->primarySource, $firstIndex >> 3);
+                        $this->primarySource = $head.$substringToInsert.$tail;
+                        $elementCount = \strlen($this->primarySource) << 3;
+                        $this->elementCount = $elementCount;
+                    } else {
+                        $head = \substr($this->nullabilitySource, 0, ($firstIndex >> 3) + 1);
+                        $tail = \substr($this->nullabilitySource, $firstIndex >> 3);
+                        $this->nullabilitySource = $head.$substringToInsert.$tail;
+                        $elementCount = \strlen($this->nullabilitySource) << 3;
+                    }
+                    if (($originalBitCount & 7) > 0) {
+                        // The tail did not end at a full byte, so remove the superfluous bits.
+                        $elementCount = $this->deleteBits($primarySource, ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);
+                    }
+                    // Remove the middle gap.
+                    $middleGapLengthInBits = $firstIndex & 7;
+                    if (($howManyBitsToInsert & 7) > 0) {
+                        $middleGapLengthInBits += 8 - ($howManyBitsToInsert & 7);
+                    }
+                    $elementCount = $this->deleteBits($primarySource, (\strlen($head) << 3) + $howManyBitsToInsert, $middleGapLengthInBits, $elementCount);
+                    // The head did not end at a full byte, so remove the superfluous bits.
+                    $this->deleteBits($primarySource, $firstIndex, 8 - ($firstIndex & 7), $elementCount);
+                }
+            }
+        }
+    }
+
+    private function insertBytes(string $substringToInsert, int $firstIndex): void
+    {
+        $defaultValue = 0;
+        $defaultValue = \pack('c', $defaultValue);
+        if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
+            // Insert the elements.
+            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 1;
+            $this->primarySource .= \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_LEFT);
+        } else {
+            $originalFirstIndex = $firstIndex;
+            // Calculate the positive index corresponding to the negative one.
+            if ($firstIndex < 0) {
+                $firstIndex += $this->elementCount;
+                // Keep the indices within the bounds.
+                if ($firstIndex < 0) {
+                    $firstIndex = 0;
+                }
+            }
+            // Resize the bytemap if the negative first element index is greater than the new element count.
+            $insertedElementCount = (int) (\strlen($substringToInsert) / 1);
+            $newElementCount = $this->elementCount + $insertedElementCount;
+            if (-$originalFirstIndex > $newElementCount) {
+                $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
+                $padLength = ($overflow + $insertedElementCount) * 1;
+                $substringToInsert = \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_RIGHT);
+            }
+            // Insert the elements.
+            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 1, 0);
         }
     }
 }

@@ -10,75 +10,75 @@ $(macro :unsafe) {
     $<Takes1>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('c', $unpackedInteger);
+                $(result) = \pack('c', $(unpackedInteger));
             }
             $<!Signed>{
-                $(result) = \chr($unpackedInteger);
+                $(result) = \chr($(unpackedInteger));
             }
         ))
     }
     $<Takes2>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('s', $unpackedInteger);
+                $(result) = \pack('s', $(unpackedInteger));
             }
             $<!Signed>{
-                $(result) = \pack('v', $unpackedInteger);
+                $(result) = \pack('v', $(unpackedInteger));
             }
         ))
     }
     $<Takes3>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('VX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+                $(result) = \pack('VX', $(unpackedInteger) >= 0 ? $(unpackedInteger) : -$(unpackedInteger) + $[MaximumValue]);
             }
             $<!Signed>{
-                $(result) = \pack('VX', $unpackedInteger);
+                $(result) = \pack('VX', $(unpackedInteger));
             }
         ))
     }
     $<Takes4>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('l', $unpackedInteger);
+                $(result) = \pack('l', $(unpackedInteger));
             }
             $<!Signed>{
-                $(result) = \pack('V', $unpackedInteger);
+                $(result) = \pack('V', $(unpackedInteger));
             }
         ))
     }
     $<Takes5>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('PXXX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+                $(result) = \pack('PXXX', $(unpackedInteger) >= 0 ? $(unpackedInteger) : -$(unpackedInteger) + $[MaximumValue]);
             }
             $<!Signed>{
-                $(result) = \pack('PXXX', $unpackedInteger);
+                $(result) = \pack('PXXX', $(unpackedInteger));
             }
         ))
     }
     $<Takes6>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('PXX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+                $(result) = \pack('PXX', $(unpackedInteger) >= 0 ? $(unpackedInteger) : -$(unpackedInteger) + $[MaximumValue]);
             }
             $<!Signed>{
-                $(result) = \pack('PXX', $unpackedInteger);
+                $(result) = \pack('PXX', $(unpackedInteger));
             }
         ))
     }
     $<Takes7>{
         $$(expand(
             $<Signed>{
-                $(result) = \pack('PX', $unpackedInteger >= 0 ? $unpackedInteger : -$unpackedInteger + $[MaximumValue]);
+                $(result) = \pack('PX', $(unpackedInteger) >= 0 ? $(unpackedInteger) : -$(unpackedInteger) + $[MaximumValue]);
             }
             $<!Signed>{
-                $(result) = \pack('PX', $unpackedInteger);
+                $(result) = \pack('PX', $(unpackedInteger));
             }
         ))
     }
     $<Takes8>{
-        $(result) = \pack('q', $unpackedInteger);
+        $(result) = \pack('q', $(unpackedInteger));
     }
 }
 
@@ -92,26 +92,26 @@ $(macro :unsafe) {
     $<Takes1>{
         $$(expand(
             $<Signed>{
-                $(result) = \unpack('c', $packedInteger)[1];
+                $(result) = \unpack('c', $(packedInteger))[1];
             }
             $<!Signed>{
-                $(result) = \ord($packedInteger);
+                $(result) = \ord($(packedInteger));
             }
         ))
     }
     $<Takes2>{
         $$(expand(
             $<Signed>{
-                $(result) = \unpack('s', $packedInteger)[1];
+                $(result) = \unpack('s', $(packedInteger))[1];
             }
             $<!Signed>{
-                $(result) = \unpack('v', $packedInteger)[1];
+                $(result) = \unpack('v', $(packedInteger))[1];
             }
         ))
     }
     $<Takes3>{
         $$(expand(
-            $(result) = \unpack('V', $packedInteger."\0")[1];
+            $(result) = \unpack('V', $(packedInteger)."\0")[1];
             $<Signed>{
                 if ($(result) > $[MaximumValue]) {
                     $(result) = $[MaximumValue] - $(result);
@@ -122,16 +122,16 @@ $(macro :unsafe) {
     $<Takes4>{
         $$(expand(
             $<Signed>{
-                $(result) = \unpack('l', $packedInteger)[1];
+                $(result) = \unpack('l', $(packedInteger))[1];
             }
             $<!Signed>{
-                $(result) = \unpack('V', $packedInteger)[1];
+                $(result) = \unpack('V', $(packedInteger))[1];
             }
         ))
     }
     $<Takes5>{
         $$(expand(
-            $(result) = \unpack('P', $packedInteger."\0\0\0")[1];
+            $(result) = \unpack('P', $(packedInteger)."\0\0\0")[1];
             $<Signed>{
                 if ($(result) > $[MaximumValue]) {
                     $(result) = $[MaximumValue] - $(result);
@@ -141,7 +141,7 @@ $(macro :unsafe) {
     }
     $<Takes6>{
         $$(expand(
-            $(result) = \unpack('P', $packedInteger."\0\0")[1];
+            $(result) = \unpack('P', $(packedInteger)."\0\0")[1];
             $<Signed>{
                 if ($(result) > $[MaximumValue]) {
                     $(result) = $[MaximumValue] - $(result);
@@ -151,7 +151,7 @@ $(macro :unsafe) {
     }
     $<Takes7>{
         $$(expand(
-            $(result) = \unpack('P', $packedInteger."\0")[1];
+            $(result) = \unpack('P', $(packedInteger)."\0")[1];
             $<Signed>{
                 if ($(result) > $[MaximumValue]) {
                     $(result) = $[MaximumValue] - $(result);
@@ -160,6 +160,6 @@ $(macro :unsafe) {
         ))
     }
     $<Takes8>{
-        $(result) = \unpack('q', $packedInteger)[1];
+        $(result) = \unpack('q', $(packedInteger))[1];
     }
 }
