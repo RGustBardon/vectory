@@ -500,7 +500,7 @@ class NullableUint40Vector implements VectorInterface
                     $this->nullabilitySource .= \str_repeat("\0", $gapInBytes);
                 }
                 $elementCount = $this->deleteBits($primarySource, $originalBitCount + $gapInBits, \PHP_INT_MAX, $elementCount);
-                $byteCount = $elementCount >> 3;
+                $byteCount = $elementCount + 7 >> 3;
             }
             if ($howManyBitsToInsert > 0) {
                 // Append new elements (X?G?N).
@@ -541,7 +541,7 @@ class NullableUint40Vector implements VectorInterface
                 $padLengthInBytes = $padLengthInBits + 7 >> 3;
                 $substringToInsert = \str_pad($substringToInsert, $padLengthInBytes, "\0", \STR_PAD_RIGHT);
                 $byteCount += \strlen($substringToInsert);
-                $elementCount = $byteCount << 3;
+                $elementCount = $padLengthInBytes << 3;
                 if ($primarySource) {
                     $this->primarySource = $substringToInsert.$this->primarySource;
                     $this->elementCount = $elementCount;
