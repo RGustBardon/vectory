@@ -224,6 +224,8 @@ class Int64Vector implements VectorInterface
     public function insert(iterable $elements, int $firstIndex = -1): void
     {
         // Prepare a substring to insert.
+        $defaultValue = 0;
+        $defaultValue = \pack('q', $defaultValue);
         $substringToInsert = '';
         foreach ($elements as $element) {
             if (!\is_int($element)) {
@@ -258,7 +260,8 @@ class Int64Vector implements VectorInterface
         if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
             // Insert the elements.
             $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 8;
-            $this->primarySource .= \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->primarySource .= \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->elementCount += $padLength / 8;
         } else {
             $originalFirstIndex = $firstIndex;
             // Calculate the positive index corresponding to the negative one.
@@ -275,10 +278,11 @@ class Int64Vector implements VectorInterface
             if (-$originalFirstIndex > $newElementCount) {
                 $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
                 $padLength = ($overflow + $insertedElementCount) * 8;
-                $substringToInsert = \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_RIGHT);
+                $substringToInsert = \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_RIGHT);
             }
             // Insert the elements.
             $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 8, 0);
+            $this->elementCount += (int) (\strlen($substringToInsert) / 8);
         }
     }
 }

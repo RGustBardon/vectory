@@ -12,11 +12,6 @@ final class _ extends TestCase
     private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
 
-    protected function setUp(): void
-    {
-        \mt_srand(0);
-    }
-
     __instantiation_methods()
     __test_methods()
     

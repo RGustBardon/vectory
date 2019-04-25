@@ -305,6 +305,8 @@ class NullableInt64Vector implements VectorInterface
     public function insert(iterable $elements, int $firstIndex = -1): void
     {
         // Prepare a substring to insert.
+        $defaultValue = 0;
+        $defaultValue = \pack('q', $defaultValue);
         $substringToInsert = '';
         $nullabilitySubstring = '';
         $nullabilityByte = 0;
@@ -312,6 +314,7 @@ class NullableInt64Vector implements VectorInterface
         foreach ($elements as $element) {
             if (null === $element) {
                 $nullabilityByte = $nullabilityByte | 1 << ($howManyBitsToInsert & 7);
+                $substringToInsert .= $defaultValue;
             } else {
                 if (!\is_int($element)) {
                     throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'int', ' or null', \gettype($element)));
@@ -541,7 +544,7 @@ class NullableInt64Vector implements VectorInterface
                 $padLengthInBytes = $padLengthInBits + 7 >> 3;
                 $substringToInsert = \str_pad($substringToInsert, $padLengthInBytes, "\0", \STR_PAD_RIGHT);
                 $byteCount += \strlen($substringToInsert);
-                $elementCount = $padLengthInBytes << 3;
+                $elementCount += $padLengthInBytes << 3;
                 if ($primarySource) {
                     $this->primarySource = $substringToInsert.$this->primarySource;
                     $this->elementCount = $elementCount;
@@ -634,7 +637,7 @@ class NullableInt64Vector implements VectorInterface
                     }
                     if (($originalBitCount & 7) > 0) {
                         // The tail did not end at a full byte, so remove the superfluous bits.
-                        $elementCount = $this->deleteBits($primarySource, ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);
+                        $elementCount = $this->deleteBits($primarySource, $elementCount + ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);
                     }
                     // Remove the middle gap.
                     $middleGapLengthInBits = $firstIndex & 7;
@@ -656,7 +659,8 @@ class NullableInt64Vector implements VectorInterface
         if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
             // Insert the elements.
             $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 8;
-            $this->primarySource .= \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->primarySource .= \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->elementCount += $padLength / 8;
         } else {
             $originalFirstIndex = $firstIndex;
             // Calculate the positive index corresponding to the negative one.
@@ -673,10 +677,11 @@ class NullableInt64Vector implements VectorInterface
             if (-$originalFirstIndex > $newElementCount) {
                 $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
                 $padLength = ($overflow + $insertedElementCount) * 8;
-                $substringToInsert = \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_RIGHT);
+                $substringToInsert = \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_RIGHT);
             }
             // Insert the elements.
             $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 8, 0);
+            $this->elementCount += (int) (\strlen($substringToInsert) / 8);
         }
     }
 }

@@ -22,7 +22,7 @@ $(macro :unsafe) {
             $<Integer>{
                 $<Signed>{
                     $positive = 0 === \mt_rand(0, 1);
-                    $value = \dechex(\mt_rand(0x0, $positive ? 0x7f : 0x80));
+                    $value = \dechex(\mt_rand(0x0, 0x7f));
                 }
                 $<!Signed>{
                     $value = \dechex(\mt_rand(0x0, 0xff));

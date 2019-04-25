@@ -216,6 +216,7 @@ class Char2Vector implements VectorInterface
     public function insert(iterable $elements, int $firstIndex = -1): void
     {
         // Prepare a substring to insert.
+        $defaultValue = "\0\0";
         $substringToInsert = '';
         foreach ($elements as $element) {
             if (!\is_string($element)) {
@@ -251,7 +252,8 @@ class Char2Vector implements VectorInterface
         if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
             // Insert the elements.
             $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 2;
-            $this->primarySource .= \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->primarySource .= \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_LEFT);
+            $this->elementCount += $padLength / 2;
         } else {
             $originalFirstIndex = $firstIndex;
             // Calculate the positive index corresponding to the negative one.
@@ -268,10 +270,11 @@ class Char2Vector implements VectorInterface
             if (-$originalFirstIndex > $newElementCount) {
                 $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
                 $padLength = ($overflow + $insertedElementCount) * 2;
-                $substringToInsert = \str_pad($substringToInsert, $padLength, $defaultValue, \STR_PAD_RIGHT);
+                $substringToInsert = \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_RIGHT);
             }
             // Insert the elements.
             $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 2, 0);
+            $this->elementCount += (int) (\strlen($substringToInsert) / 2);
         }
     }
 }

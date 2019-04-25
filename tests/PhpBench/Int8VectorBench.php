@@ -51,7 +51,7 @@ final class Int8VectorBench
     private static function getRandomValue()
     {
         $positive = 0 === \mt_rand(0, 1);
-        $value = \dechex(\mt_rand(0x0, $positive ? 0x7f : 0x80));
+        $value = \dechex(\mt_rand(0x0, 0x7f));
 
         for ($i = 1; $i < 1; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);

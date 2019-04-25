@@ -565,7 +565,7 @@ class NullableBoolVector implements VectorInterface
                 $padLengthInBytes = $padLengthInBits + 7 >> 3;
                 $substringToInsert = \str_pad($substringToInsert, $padLengthInBytes, "\0", \STR_PAD_RIGHT);
                 $byteCount += \strlen($substringToInsert);
-                $elementCount = $padLengthInBytes << 3;
+                $elementCount += $padLengthInBytes << 3;
                 if ($primarySource) {
                     $this->primarySource = $substringToInsert.$this->primarySource;
                     $this->elementCount = $elementCount;
@@ -658,7 +658,7 @@ class NullableBoolVector implements VectorInterface
                     }
                     if (($originalBitCount & 7) > 0) {
                         // The tail did not end at a full byte, so remove the superfluous bits.
-                        $elementCount = $this->deleteBits($primarySource, ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);
+                        $elementCount = $this->deleteBits($primarySource, $elementCount + ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);
                     }
                     // Remove the middle gap.
                     $middleGapLengthInBits = $firstIndex & 7;
