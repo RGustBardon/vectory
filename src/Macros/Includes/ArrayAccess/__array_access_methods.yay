@@ -10,9 +10,7 @@ $(macro :unsafe) {
     
     public function offsetGet($index)
     {
-        if (null === $index) {
-            $index = $this->elementCount;
-        } else __ensure_index($index);
+        __ensure_index($index);
         
         __get_value($this, primary, $index, $value);
         return $value;
@@ -22,6 +20,8 @@ $(macro :unsafe) {
     {   
         if (null === $index) {
             $index = $this->elementCount;
+        } elseif (!\is_int($index)) {
+            $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given')))
         } elseif ($index < 0) {
             __throw(\OutOfRangeException, 'Negative index: '.$index);
         }

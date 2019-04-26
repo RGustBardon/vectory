@@ -25,19 +25,19 @@ final class BoolVectorTest extends TestCase
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
 
-    public function testThrowsIfIndexOfInvalidType(): void
+    public function testThrowsIfIndexRetrievedOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
-        self::getInstance()[false];
+        self::getInstance()['foo'];
     }
 
-    public function testThrowsIfIndexOfEmptyContainer(): void
+    public function testThrowsIfIndexRetrievedOfEmptyContainer(): void
     {
         $this->expectException(\OutOfRangeException::class);
         self::getInstance()[0];
     }
 
-    public function testThrowsIfIndexIsNegative(): void
+    public function testThrowsIfIndexRetrievedIsNegative(): void
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
@@ -45,15 +45,21 @@ final class BoolVectorTest extends TestCase
         $vector[-1];
     }
 
-    public function testThrowsIfIndexIsOutOfRange(): void
+    public function testThrowsIfIndexSetOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector['foo'] = false;
+    }
+
+    public function testThrowsIfIndexSetIsNegative(): void
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[0] = false;
-        $vector[1];
+        $vector[-1] = false;
     }
 
-    public function testThrowsIfValueOfInvalidType(): void
+    public function testThrowsIfValueSetOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
         $vector = self::getInstance();
@@ -95,6 +101,12 @@ final class BoolVectorTest extends TestCase
         self::assertFalse(isset($vector[2]));
         self::assertSame($value, $vector[0]);
         self::assertSame($otherValue, $vector[1]);
+        $vector[17] = $value;
+        self::assertFalse($vector[15]);
+        self::assertFalse($vector[16]);
+        self::assertSame($value, $vector[17]);
+        unset($vector[3]);
+        unset($vector[2]);
     }
 
     /**
@@ -205,7 +217,7 @@ final class BoolVectorTest extends TestCase
     public function testSerializable(): void
     {
         $vector = self::getInstance();
-        self::assertSerialization([], $vector);
+        self::assertSerialization([], \serialize($vector));
         $value = self::getRandomValue();
         $sequence = [$value, self::getRandomValue(), $value];
         foreach ($sequence as $value) {
@@ -213,7 +225,7 @@ final class BoolVectorTest extends TestCase
         }
         $vector[4] = false;
         \array_push($sequence, false, false);
-        self::assertSerialization($sequence, $vector);
+        self::assertSerialization($sequence, \serialize($vector));
     }
 
     public static function deletionProvider(): \Generator
@@ -314,6 +326,13 @@ final class BoolVectorTest extends TestCase
         }
         $vector->delete($firstIndex, $howMany);
         self::assertSequence($expectedSequence, $vector);
+    }
+
+    public function testThrowsIfValueInsertedOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector->insert([self::INVALID_VALUE]);
     }
 
     public static function insertionProvider(): \Generator
@@ -461,10 +480,9 @@ final class BoolVectorTest extends TestCase
         self::assertSame($expectedJson, $actualJson);
     }
 
-    private static function assertSerialization($expected, $vector)
+    private static function assertSerialization($expected, string $serialized): void
     {
-        $actualSerialized = \serialize($vector);
-        $actualUnserialized = \unserialize($actualSerialized, ['allowed_classes' => [\ltrim('\\Vectory\\BoolVector', '\\')]]);
+        $actualUnserialized = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\BoolVector', '\\')]]);
         $actual = [];
         foreach ($actualUnserialized as $index => $element) {
             $actual[$index] = $element;

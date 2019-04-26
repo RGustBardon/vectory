@@ -152,12 +152,17 @@ $(macro :unsafe) {
                     // Append the gap (X?GN?).
                     $byteCount += $gapInBytes;
                     $elementCount += ($gapInBytes << 3);
-                    if ($primarySource) {
-                        $this->primarySource .= \str_repeat("\0", $gapInBytes);
-                        $this->elementCount = $elementCount;
+                    $<Boolean>{
+                        if ($primarySource) {
+                            $this->primarySource .= \str_repeat("\0", $gapInBytes);
+                            $this->elementCount = $elementCount;
+                        }
+                        $<Nullable>{
+                            else
+                        }
                     }
                     $<Nullable>{
-                        else {
+                        {
                             $this->nullabilitySource .= \str_repeat("\0", $gapInBytes);
                         }
                     }
@@ -173,12 +178,17 @@ $(macro :unsafe) {
                     $byteCount += \strlen($substringToInsert);
                     $elementCount = ($byteCount << 3);
                     
-                    if ($primarySource) {
-                        $this->primarySource .= $substringToInsert;
-                        $this->elementCount = $elementCount;
+                    $<Boolean>{
+                        if ($primarySource) {
+                            $this->primarySource .= $substringToInsert;
+                            $this->elementCount = $elementCount;
+                        }
+                        $<Nullable>{
+                            else
+                        }
                     }
                     $<Nullable>{
-                        else {
+                        {
                             $this->nullabilitySource .= $substringToInsert;
                         }
                     }
@@ -217,12 +227,17 @@ $(macro :unsafe) {
                     $byteCount += \strlen($substringToInsert);
                     $elementCount += ($padLengthInBytes << 3);
                     
-                    if ($primarySource) {
-                        $this->primarySource = $substringToInsert.$this->primarySource;
-                        $this->elementCount = $elementCount;
+                    $<Boolean>{
+                        if ($primarySource) {
+                            $this->primarySource = $substringToInsert.$this->primarySource;
+                            $this->elementCount = $elementCount;
+                        }
+                        $<Nullable>{
+                            else
+                        }
                     }
                     $<Nullable>{
-                        else {
+                        {
                             $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
                         }
                     }
@@ -236,23 +251,28 @@ $(macro :unsafe) {
                     
                     if (0 === ($firstIndex & 7)) {
                         // The bits are to be inserted at a full byte.
-                        if ($primarySource) {
-                            if ($firstIndex > 0) {
-                                // The bits are not to be inserted at the beginning, so splice (XNX).
-                                $this->primarySource =
-                                    \substr($this->primarySource, 0, $firstIndex >> 3).
-                                    $substringToInsert.
-                                    \substr($this->primarySource, $firstIndex >> 3);
-                            } else {
-                                // The bits are to be inserted at the beginning, so prepend (NX).
-                                $this->primarySource = $substringToInsert.$this->primarySource;
+                        $<Boolean>{
+                            if ($primarySource) {
+                                if ($firstIndex > 0) {
+                                    // The bits are not to be inserted at the beginning, so splice (XNX).
+                                    $this->primarySource =
+                                        \substr($this->primarySource, 0, $firstIndex >> 3).
+                                        $substringToInsert.
+                                        \substr($this->primarySource, $firstIndex >> 3);
+                                } else {
+                                    // The bits are to be inserted at the beginning, so prepend (NX).
+                                    $this->primarySource = $substringToInsert.$this->primarySource;
+                                }
+                                $byteCount = \strlen($this->primarySource);
+                                $elementCount += (\strlen($substringToInsert) << 3);
+                                $this->elementCount = $elementCount;
                             }
-                            $byteCount = \strlen($this->primarySource);
-                            $elementCount += (\strlen($substringToInsert) << 3);
-                            $this->elementCount = $elementCount;
+                            $<Nullable>{
+                                else
+                            }
                         }
                         $<Nullable>{
-                            else {
+                            {
                                 if ($firstIndex > 0) {
                                     // The bits are not to be inserted at the beginning, so splice (XNX).
                                     $this->nullabilitySource =
@@ -316,15 +336,20 @@ $(macro :unsafe) {
                         // Result:          HHHH|HHHH TNNN|NNHH TTTT|TTTT 0000|000T
                         $originalBitCount = $elementCount;
                         $head = '';
-                        if ($primarySource) {
-                            $head = \substr($this->primarySource, 0, ($firstIndex >> 3) + 1);
-                            $tail = \substr($this->primarySource, $firstIndex >> 3);
-                            $this->primarySource = $head.$substringToInsert.$tail;
-                            $elementCount = (\strlen($this->primarySource) << 3);
-                            $this->elementCount = $elementCount;
+                        $<Boolean>{
+                            if ($primarySource) {
+                                $head = \substr($this->primarySource, 0, ($firstIndex >> 3) + 1);
+                                $tail = \substr($this->primarySource, $firstIndex >> 3);
+                                $this->primarySource = $head.$substringToInsert.$tail;
+                                $elementCount = (\strlen($this->primarySource) << 3);
+                                $this->elementCount = $elementCount;
+                            }
+                            $<Nullable>{
+                                else
+                            }
                         }
                         $<Nullable>{
-                            else {
+                            {
                                 $head = \substr($this->nullabilitySource, 0, ($firstIndex >> 3) + 1);
                                 $tail = \substr($this->nullabilitySource, $firstIndex >> 3);
                                 $this->nullabilitySource = $head.$substringToInsert.$tail;

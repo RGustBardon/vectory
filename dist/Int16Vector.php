@@ -60,12 +60,8 @@ class Int16Vector implements VectorInterface
 
     public function offsetGet($index)
     {
-        if (null === $index) {
-            $index = $this->elementCount;
-        } else {
-            if (!\is_int($index)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-            }
+        if (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
@@ -82,6 +78,8 @@ class Int16Vector implements VectorInterface
     {
         if (null === $index) {
             $index = $this->elementCount;
+        } elseif (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         } elseif ($index < 0) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Negative index: '.$index);
         }
@@ -180,7 +178,7 @@ class Int16Vector implements VectorInterface
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
         if ((\pack('S', 1) === \pack('v', 1)) !== $littleEndian) {
-            $pattern = '~(.)(.)~';
+            $pattern = '~(.)(.)~s';
             $replacement = '${2}${1}';
             $this->primarySource = \preg_replace($pattern, $replacement, $this->primarySource);
         }

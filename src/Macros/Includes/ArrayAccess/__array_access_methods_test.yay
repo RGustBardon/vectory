@@ -10,19 +10,19 @@ $(macro :unsafe) {
         $ast->append($append);
     }
 } >> {
-    public function testThrowsIfIndexOfInvalidType(): void
+    public function testThrowsIfIndexRetrievedOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
-        (self::getInstance())[false];
+        (self::getInstance())['foo'];
     }
     
-    public function testThrowsIfIndexOfEmptyContainer(): void
+    public function testThrowsIfIndexRetrievedOfEmptyContainer(): void
     {
         $this->expectException(\OutOfRangeException::class);
         (self::getInstance())[0];
     }
     
-    public function testThrowsIfIndexIsNegative(): void
+    public function testThrowsIfIndexRetrievedIsNegative(): void
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
@@ -30,15 +30,21 @@ $(macro :unsafe) {
         $vector[-1];
     }
     
-    public function testThrowsIfIndexIsOutOfRange(): void
+    public function testThrowsIfIndexSetOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector['foo'] = $[DefaultValue];
+    }
+    
+    public function testThrowsIfIndexSetIsNegative(): void
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[0] = $[DefaultValue];
-        $vector[1];
+        $vector[-1] = $[DefaultValue];
     }
     
-    public function testThrowsIfValueOfInvalidType(): void
+    public function testThrowsIfValueSetOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
         $vector = self::getInstance();
@@ -47,14 +53,14 @@ $(macro :unsafe) {
     
     $$(expand(
         $<HasMinimumMaximum>{
-            public function testThrowsIfValueIsLowerThanMinimum(): void
+            public function testThrowsIfValueSetIsLowerThanMinimum(): void
             {
                 $this->expectException(\OutOfRangeException::class);
                 $vector = self::getInstance();
                 $vector[0] = $[MinimumValue] - 1;
             }
             
-            public function testThrowsIfValueIsGreaterThanMaximum(): void
+            public function testThrowsIfValueSetIsGreaterThanMaximum(): void
             {
                 $this->expectException(\OutOfRangeException::class);
                 $vector = self::getInstance();
@@ -64,7 +70,7 @@ $(macro :unsafe) {
         
         $<String>{
             $(__context_Multibyte ? {
-                public function testThrowsIfValueIsTooShort(): void
+                public function testThrowsIfValueSetIsTooShort(): void
                 {
                     $this->expectException(\LengthException::class);
                     $vector = self::getInstance();
@@ -72,7 +78,7 @@ $(macro :unsafe) {
                 }
             })
                 
-            public function testThrowsIfValueIsTooLong(): void
+            public function testThrowsIfValueSetIsTooLong(): void
             {
                 $this->expectException(\LengthException::class);
                 $vector = self::getInstance();
@@ -120,6 +126,13 @@ $(macro :unsafe) {
         self::assertFalse(isset($vector[2]));
         self::assertSame($value, $vector[0]);
         self::assertSame($otherValue, $vector[1]);
+        
+        $vector[17] = $value;
+        self::assertSame($[DefaultValue], $vector[15]);
+        self::assertSame($[DefaultValue], $vector[16]);
+        self::assertSame($value, $vector[17]);
+        unset($vector[3]);
+        unset($vector[2]);
     }
     
     /**

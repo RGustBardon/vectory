@@ -62,12 +62,8 @@ class NullableInt16Vector implements VectorInterface
 
     public function offsetGet($index)
     {
-        if (null === $index) {
-            $index = $this->elementCount;
-        } else {
-            if (!\is_int($index)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-            }
+        if (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
@@ -93,6 +89,8 @@ class NullableInt16Vector implements VectorInterface
     {
         if (null === $index) {
             $index = $this->elementCount;
+        } elseif (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         } elseif ($index < 0) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Negative index: '.$index);
         }
@@ -254,7 +252,7 @@ class NullableInt16Vector implements VectorInterface
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
         if ((\pack('S', 1) === \pack('v', 1)) !== $littleEndian) {
-            $pattern = '~(.)(.)~';
+            $pattern = '~(.)(.)~s';
             $replacement = '${2}${1}';
             $this->primarySource = \preg_replace($pattern, $replacement, $this->primarySource);
         }
@@ -359,22 +357,13 @@ class NullableInt16Vector implements VectorInterface
             $elementCount -= $deletedBitCount;
             $howMany -= $deletedBitCount;
             if (0 === $howMany) {
-                if ($primarySource) {
-                    $this->elementCount = $elementCount;
-                }
-
                 return $elementCount;
             }
         }
         if (0 === ($firstIndex & 7) && $firstIndex + $howMany >= $elementCount) {
             // If the first index conceptually begins a byte and everything to its right is to be deleted,
             // no bit-shifting is necessary.
-            if ($primarySource) {
-                $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3);
-                $this->elementCount = $firstIndex;
-            } else {
-                $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
-            }
+            $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
 
             return $firstIndex;
         }
@@ -432,12 +421,7 @@ class NullableInt16Vector implements VectorInterface
         $elementCount -= \min($howMany, $elementCount - $firstIndex);
         // Remove all the bytes after the last rewritten byte.
         $source = \substr_replace($source, '', ($elementCount >> 3) + 1, \PHP_INT_MAX);
-        if ($primarySource) {
-            $this->primarySource = $source;
-            $this->elementCount = $elementCount;
-        } else {
-            $this->nullabilitySource = $source;
-        }
+        $this->nullabilitySource = $source;
 
         return $elementCount;
     }
@@ -502,12 +486,7 @@ class NullableInt16Vector implements VectorInterface
                 // Append the gap (X?GN?).
                 $byteCount += $gapInBytes;
                 $elementCount += $gapInBytes << 3;
-                if ($primarySource) {
-                    $this->primarySource .= \str_repeat("\0", $gapInBytes);
-                    $this->elementCount = $elementCount;
-                } else {
-                    $this->nullabilitySource .= \str_repeat("\0", $gapInBytes);
-                }
+                $this->nullabilitySource .= \str_repeat("\0", $gapInBytes);
                 $elementCount = $this->deleteBits($primarySource, $originalBitCount + $gapInBits, \PHP_INT_MAX, $elementCount);
                 $byteCount = $elementCount + 7 >> 3;
             }
@@ -517,12 +496,7 @@ class NullableInt16Vector implements VectorInterface
                 $tailRelativeBitIndex = $elementCount & 7;
                 $byteCount += \strlen($substringToInsert);
                 $elementCount = $byteCount << 3;
-                if ($primarySource) {
-                    $this->primarySource .= $substringToInsert;
-                    $this->elementCount = $elementCount;
-                } else {
-                    $this->nullabilitySource .= $substringToInsert;
-                }
+                $this->nullabilitySource .= $substringToInsert;
                 if ($tailRelativeBitIndex > 0) {
                     // The gap did not end at a full byte, so remove the superfluous bits.
                     $elementCount = $this->deleteBits($primarySource, $bitCountAfterFillingTheGap, 8 - $tailRelativeBitIndex, $elementCount);
@@ -551,12 +525,7 @@ class NullableInt16Vector implements VectorInterface
                 $substringToInsert = \str_pad($substringToInsert, $padLengthInBytes, "\0", \STR_PAD_RIGHT);
                 $byteCount += \strlen($substringToInsert);
                 $elementCount += $padLengthInBytes << 3;
-                if ($primarySource) {
-                    $this->primarySource = $substringToInsert.$this->primarySource;
-                    $this->elementCount = $elementCount;
-                } else {
-                    $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
-                }
+                $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
                 if (($padLengthInBits & 7) > 0) {
                     // The gap did not end at a full byte, so remove the superfluous bits.
                     $this->deleteBits($primarySource, $padLengthInBits, 8 - ($padLengthInBits & 7), $elementCount);
@@ -565,28 +534,15 @@ class NullableInt16Vector implements VectorInterface
                 // There will be no gap left or right of the original source (X?NX).
                 if (0 === ($firstIndex & 7)) {
                     // The bits are to be inserted at a full byte.
-                    if ($primarySource) {
-                        if ($firstIndex > 0) {
-                            // The bits are not to be inserted at the beginning, so splice (XNX).
-                            $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3).$substringToInsert.\substr($this->primarySource, $firstIndex >> 3);
-                        } else {
-                            // The bits are to be inserted at the beginning, so prepend (NX).
-                            $this->primarySource = $substringToInsert.$this->primarySource;
-                        }
-                        $byteCount = \strlen($this->primarySource);
-                        $elementCount += \strlen($substringToInsert) << 3;
-                        $this->elementCount = $elementCount;
+                    if ($firstIndex > 0) {
+                        // The bits are not to be inserted at the beginning, so splice (XNX).
+                        $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3).$substringToInsert.\substr($this->nullabilitySource, $firstIndex >> 3);
                     } else {
-                        if ($firstIndex > 0) {
-                            // The bits are not to be inserted at the beginning, so splice (XNX).
-                            $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3).$substringToInsert.\substr($this->nullabilitySource, $firstIndex >> 3);
-                        } else {
-                            // The bits are to be inserted at the beginning, so prepend (NX).
-                            $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
-                        }
-                        $byteCount = \strlen($this->nullabilitySource);
-                        $elementCount += \strlen($substringToInsert) << 3;
+                        // The bits are to be inserted at the beginning, so prepend (NX).
+                        $this->nullabilitySource = $substringToInsert.$this->nullabilitySource;
                     }
+                    $byteCount = \strlen($this->nullabilitySource);
+                    $elementCount += \strlen($substringToInsert) << 3;
                     if (($howManyBitsToInsert & 7) > 0) {
                         // The inserted bits did not end at a full byte, so remove the superfluous bits.
                         $this->deleteBits($primarySource, $firstIndex + $howManyBitsToInsert, 8 - ($howManyBitsToInsert & 7), $elementCount);
@@ -629,18 +585,10 @@ class NullableInt16Vector implements VectorInterface
                     // Result:          HHHH|HHHH TNNN|NNHH TTTT|TTTT 0000|000T
                     $originalBitCount = $elementCount;
                     $head = '';
-                    if ($primarySource) {
-                        $head = \substr($this->primarySource, 0, ($firstIndex >> 3) + 1);
-                        $tail = \substr($this->primarySource, $firstIndex >> 3);
-                        $this->primarySource = $head.$substringToInsert.$tail;
-                        $elementCount = \strlen($this->primarySource) << 3;
-                        $this->elementCount = $elementCount;
-                    } else {
-                        $head = \substr($this->nullabilitySource, 0, ($firstIndex >> 3) + 1);
-                        $tail = \substr($this->nullabilitySource, $firstIndex >> 3);
-                        $this->nullabilitySource = $head.$substringToInsert.$tail;
-                        $elementCount = \strlen($this->nullabilitySource) << 3;
-                    }
+                    $head = \substr($this->nullabilitySource, 0, ($firstIndex >> 3) + 1);
+                    $tail = \substr($this->nullabilitySource, $firstIndex >> 3);
+                    $this->nullabilitySource = $head.$substringToInsert.$tail;
+                    $elementCount = \strlen($this->nullabilitySource) << 3;
                     if (($originalBitCount & 7) > 0) {
                         // The tail did not end at a full byte, so remove the superfluous bits.
                         $elementCount = $this->deleteBits($primarySource, $elementCount + ($originalBitCount & 7) - 8, \PHP_INT_MAX, $elementCount);

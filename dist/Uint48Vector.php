@@ -59,12 +59,8 @@ class Uint48Vector implements VectorInterface
 
     public function offsetGet($index)
     {
-        if (null === $index) {
-            $index = $this->elementCount;
-        } else {
-            if (!\is_int($index)) {
-                throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
-            }
+        if (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         }
         if (0 === $this->elementCount) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'The container is empty, so index '.$index.' does not exist');
@@ -81,6 +77,8 @@ class Uint48Vector implements VectorInterface
     {
         if (null === $index) {
             $index = $this->elementCount;
+        } elseif (!\is_int($index)) {
+            throw new \TypeError(self::EXCEPTION_PREFIX.'Index must be of type int, '.\gettype($index).' given');
         } elseif ($index < 0) {
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Negative index: '.$index);
         }

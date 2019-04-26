@@ -3,6 +3,49 @@
 $(macro :unsafe) {
     __insert_methods_test()
 } >> {
+    public function testThrowsIfValueInsertedOfInvalidType(): void
+    {
+        $this->expectException(\TypeError::class);
+        $vector = self::getInstance();
+        $vector->insert([self::INVALID_VALUE]);
+    }
+    
+    $$(expand(
+        $<HasMinimumMaximum>{
+            public function testThrowsIfValueInsertedIsLowerThanMinimum(): void
+            {
+                $this->expectException(\OutOfRangeException::class);
+                $vector = self::getInstance();
+                $vector->insert([$[MinimumValue] - 1]);
+            }
+            
+            public function testThrowsIfValueInsertedIsGreaterThanMaximum(): void
+            {
+                $this->expectException(\OutOfRangeException::class);
+                $vector = self::getInstance();
+                $vector->insert([$[MaximumValue] + 1]);
+            }
+        }
+        
+        $<String>{
+            $(__context_Multibyte ? {
+                public function testThrowsIfValueInsertedIsTooShort(): void
+                {
+                    $this->expectException(\LengthException::class);
+                    $vector = self::getInstance();
+                    $vector->insert([\substr($[DefaultValue], 0, -1)]);
+                }
+            })
+            
+            public function testThrowsIfValueInsertedIsTooLong(): void
+            {
+                $this->expectException(\LengthException::class);
+                $vector = self::getInstance();
+                $vector->insert([$[DefaultValue] . "\x0"]);
+            }
+        }
+    ))
+    
     public static function insertionProvider(): \Generator
     {
         $originalElements = [

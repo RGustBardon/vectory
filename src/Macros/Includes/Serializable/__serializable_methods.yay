@@ -92,15 +92,15 @@ $(macro :unsafe) {
         $( __context_AffectedByEndianness ? {
             if ((\pack('S', 1) === \pack('v', 1)) !== $littleEndian) {
                 $<Takes2>{
-                    $pattern = '~(.)(.)~';
+                    $pattern = '~(.)(.)~s';
                     $replacement = '${2}${1}';
                 }
                 $<Takes4>{
-                    $pattern = '~(.)(.)(.)(.)~';
+                    $pattern = '~(.)(.)(.)(.)~s';
                     $replacement = '${4}${3}${2}${1}';
                 }
                 $<Takes8>{
-                    $pattern = '~(.)(.)(.)(.)(.)(.)(.)(.)~';
+                    $pattern = '~(.)(.)(.)(.)(.)(.)(.)(.)~s';
                     $replacement = '${8}${7}${6}${5}${4}${3}${2}${1}';
                 }
                 $this->primarySource =

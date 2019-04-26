@@ -2,6 +2,13 @@
 
 $(macro :unsafe) {
     __serializable_methods_test()
+    $(_() as __context_AffectedByEndianness)
+} >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
+    if (Vectory::isInteger() && Vectory::isSigned() && \in_array(Vectory::getBytesperElement(), [2, 4, 8], true)) {
+        $append = new \Yay\Ast('__context_AffectedByEndianness');
+        $append->push(new \Yay\Ast());
+        $ast->append($append);
+    }
 } >> {
     /**
      * @depends testArrayAccess
@@ -11,7 +18,7 @@ $(macro :unsafe) {
     public function testSerializable(): void
     {
         $vector = self::getInstance();
-        self::assertSerialization([], $vector);
+        self::assertSerialization([], \serialize($vector));
         
         $value = self::getRandomValue();
         $sequence = [$value, self::getRandomValue(), $value];
@@ -20,14 +27,49 @@ $(macro :unsafe) {
         }
         $vector[4] = $[DefaultValue];
         \array_push($sequence, $[DefaultValue], $[DefaultValue]);
-        self::assertSerialization($sequence, $vector);
+        self::assertSerialization($sequence, \serialize($vector));
     }
     
-    private static function assertSerialization($expected, $vector)
+    $( __context_AffectedByEndianness ? {
+        /**
+         * @depends testSerializable
+         */
+        public function testSerializableWithDifferentEndianness(): void
+        {
+            $vector = self::getInstance();
+            $sequence = [
+                self::getRandomValue(),
+                self::getRandomValue(),
+                $<Nullable>{ null, }
+                $<!Nullable>{ $[DefaultValue], }
+            ];
+            foreach ($sequence as $value) {
+                $vector[] = $value;
+            }
+            $serialized = \serialize($vector);
+            
+            $littleEndianPosition = \strpos($serialized, ';b:') + 3;
+            $serialized[$littleEndianPosition] = (string) \abs(1 - (int) $serialized[$littleEndianPosition]);
+            
+            $primarySourcePosition = \strpos($serialized, ';s:') + 3;
+            \preg_match('~[0-9]+~', $serialized, $matches, 0, $primarySourcePosition);
+            $primarySourceLength = $matches[0];
+            $primarySourcePosition += \strlen($primarySourceLength) + 2;
+            $primarySource = \substr($serialized, $primarySourcePosition, (int) $primarySourceLength);
+            $primarySourceReversed = '';
+            foreach (\str_split($primarySource, $[BytesPerElement]) as $chunk) {
+                $primarySourceReversed .= \strrev($chunk);
+            }
+            $serialized = \substr_replace($serialized, $primarySourceReversed, $primarySourcePosition, $primarySourceLength);
+            
+            self::assertSerialization($sequence, $serialized);
+        }
+    })
+    
+    private static function assertSerialization($expected, string $serialized): void
     {
-        $actualSerialized = \serialize($vector);
         $actualUnserialized = \unserialize(
-            $actualSerialized,
+            $serialized,
             ['allowed_classes' => [\ltrim($[FullyQualifiedClassName], '\\')]]
         );
         

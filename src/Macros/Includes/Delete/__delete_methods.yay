@@ -68,8 +68,10 @@ $(macro :unsafe) {
                 $elementCount -= $deletedBitCount;
                 $howMany -= $deletedBitCount;
                 if (0 === $howMany) {
-                    if ($primarySource) {
-                        $this->elementCount = $elementCount;
+                    $<Boolean>{
+                        if ($primarySource) {
+                            $this->elementCount = $elementCount;
+                        }
                     }
                     return $elementCount;
                 }
@@ -79,12 +81,17 @@ $(macro :unsafe) {
                 // If the first index conceptually begins a byte and everything to its right is to be deleted,
                 // no bit-shifting is necessary.
                 
-                if ($primarySource) {
-                    $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3);
-                    $this->elementCount = $firstIndex;
+                $<Boolean>{
+                    if ($primarySource) {
+                        $this->primarySource = \substr($this->primarySource, 0, $firstIndex >> 3);
+                        $this->elementCount = $firstIndex;
+                    }
+                    $<Nullable>{
+                        else
+                    }
                 }
-                $<Nullable> {
-                    else {
+                $<Nullable>{
+                    {
                         $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex >> 3);
                     }
                 }
@@ -171,12 +178,17 @@ $(macro :unsafe) {
             $elementCount -= \min($howMany, $elementCount - $firstIndex);
             // Remove all the bytes after the last rewritten byte.
             $source = \substr_replace($source, '', ($elementCount >> 3) + 1, \PHP_INT_MAX);
-            if ($primarySource) {
-                $this->primarySource = $source;
-                $this->elementCount = $elementCount;
+            $<Boolean>{
+                if ($primarySource) {
+                    $this->primarySource = $source;
+                    $this->elementCount = $elementCount;
+                }
+                $<Nullable>{
+                    else
+                }
             }
             $<Nullable>{
-                else {
+                {
                     $this->nullabilitySource = $source;
                 }
             }
