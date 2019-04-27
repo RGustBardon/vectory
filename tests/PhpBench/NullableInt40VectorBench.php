@@ -60,4 +60,16 @@ final class NullableInt40VectorBench
 
         return $positive ? $value : -$value;
     }
+
+    private static function getRandomSignedInteger(bool $negative): int
+    {
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < 5; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+        $value = ($negative ? ($value < 0 ? -$value : -549755813888) : $value);
+
+        return (int) $value;
+    }
 }

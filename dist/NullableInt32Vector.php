@@ -244,42 +244,37 @@ class NullableInt32Vector implements VectorInterface
 
             throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        $previousValues = [$this->elementCount, $this->primarySource, $this->nullabilitySource];
-        [$version, $littleEndian, $this->elementCount, $this->primarySource, $this->nullabilitySource] = $newValues;
+        [$version, $littleEndian, $elementCount, $primarySource, $nullabilitySource] = $newValues;
         if (!\in_array($version, self::SUPPORTED_SERIALIZATION_FORMAT_VERSIONS, true)) {
             $errorMessage = 'Unsupported version: '.$version;
 
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
+        if ($elementCount < 0) {
+            $errorMessage = 'The element count must not be negative';
+
+            throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
         if ((\pack('S', 1) === \pack('v', 1)) !== $littleEndian) {
             $pattern = '~(.)(.)(.)(.)~s';
             $replacement = '${4}${3}${2}${1}';
-            $this->primarySource = \preg_replace($pattern, $replacement, $this->primarySource);
+            $primarySource = \preg_replace($pattern, $replacement, $primarySource);
         }
+        $expectedLength = $elementCount * 4;
+        if (\strlen($primarySource) !== $expectedLength) {
+            $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($primarySource));
 
-        try {
-            $expectedLength = $this->elementCount * 4;
-            if (\strlen($this->primarySource) !== $expectedLength) {
-                $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($this->primarySource));
-
-                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
-            }
-            $expectedLength = $this->elementCount + 7 >> 3;
-            if (\strlen($this->nullabilitySource) !== $expectedLength) {
-                $errorMessage = \sprintf('Unexpected length of the nullability source: expected %d bytes, found %d instead', $expectedLength, \strlen($this->nullabilitySource));
-
-                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
-            }
-            if ($this->elementCount < 0) {
-                $errorMessage = 'The element count must not be negative';
-
-                throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
-            }
-        } catch (\Throwable $e) {
-            [$this->elementCount, $this->primarySource, $this->nullabilitySource] = $previousValues;
-
-            throw $e;
+            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
+        $expectedLength = $elementCount + 7 >> 3;
+        if (\strlen($nullabilitySource) !== $expectedLength) {
+            $errorMessage = \sprintf('Unexpected length of the nullability source: expected %d bytes, found %d instead', $expectedLength, \strlen($nullabilitySource));
+
+            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        $this->elementCount = $elementCount;
+        $this->primarySource = $primarySource;
+        $this->nullabilitySource = $nullabilitySource;
     }
 
     public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void

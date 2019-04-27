@@ -169,31 +169,25 @@ class Uint40Vector implements VectorInterface
 
             throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        $previousValues = [$this->elementCount, $this->primarySource];
-        [$version, $this->elementCount, $this->primarySource] = $newValues;
+        [$version, $elementCount, $primarySource] = $newValues;
         if (!\in_array($version, self::SUPPORTED_SERIALIZATION_FORMAT_VERSIONS, true)) {
             $errorMessage = 'Unsupported version: '.$version;
 
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
+        if ($elementCount < 0) {
+            $errorMessage = 'The element count must not be negative';
 
-        try {
-            $expectedLength = $this->elementCount * 5;
-            if (\strlen($this->primarySource) !== $expectedLength) {
-                $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($this->primarySource));
-
-                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
-            }
-            if ($this->elementCount < 0) {
-                $errorMessage = 'The element count must not be negative';
-
-                throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
-            }
-        } catch (\Throwable $e) {
-            [$this->elementCount, $this->primarySource] = $previousValues;
-
-            throw $e;
+            throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
+        $expectedLength = $elementCount * 5;
+        if (\strlen($primarySource) !== $expectedLength) {
+            $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($primarySource));
+
+            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
+        }
+        $this->elementCount = $elementCount;
+        $this->primarySource = $primarySource;
     }
 
     public function delete(int $firstIndex = -1, int $howMany = \PHP_INT_MAX): void

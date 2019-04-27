@@ -66,19 +66,13 @@ $(macro :unsafe) {
                 \sprintf('Failed to unserialize (%s)', $errorMessage)
             );
         }
-        
-        $previousValues = [
-            $this->elementCount,
-            $this->primarySource,
-            $<Nullable>{ $this->nullabilitySource, }
-        ];
-        
+
         [
             $version,
             $( __context_AffectedByEndianness ? { $littleEndian, })
-            $this->elementCount,
-            $this->primarySource,
-            $<Nullable>{ $this->nullabilitySource, }
+            $elementCount,
+            $primarySource,
+            $<Nullable>{ $nullabilitySource, }
         ] = $newValues;
         
         if (!\in_array($version, self::SUPPORTED_SERIALIZATION_FORMAT_VERSIONS, true)) {
@@ -89,6 +83,14 @@ $(macro :unsafe) {
             );
         }
 
+        if ($elementCount < 0) {
+            $errorMessage = 'The element count must not be negative';
+            __throw(
+                \DomainException,
+                \sprintf('Failed to unserialize (%s)', $errorMessage)
+            );
+        }
+        
         $( __context_AffectedByEndianness ? {
             if ((\pack('S', 1) === \pack('v', 1)) !== $littleEndian) {
                 $<Takes2>{
@@ -103,60 +105,48 @@ $(macro :unsafe) {
                     $pattern = '~(.)(.)(.)(.)(.)(.)(.)(.)~s';
                     $replacement = '${8}${7}${6}${5}${4}${3}${2}${1}';
                 }
-                $this->primarySource =
-                    \preg_replace($pattern, $replacement, $this->primarySource);
+                $primarySource = \preg_replace($pattern, $replacement, $primarySource);
             }
         })
         
-        try {
-            $<Boolean>{
-                $expectedLength = (($this->elementCount + 7) >> 3);
-            }
-            $<!Boolean>{
-                $expectedLength = $this->elementCount * $[BytesPerElement];
-            }
-            
-            if (\strlen($this->primarySource) !== $expectedLength) {
+        $<Boolean>{
+            $expectedLength = (($elementCount + 7) >> 3);
+        }
+        $<!Boolean>{
+            $expectedLength = $elementCount * $[BytesPerElement];
+        }
+        
+        if (\strlen($primarySource) !== $expectedLength) {
+            $errorMessage = \sprintf(
+                'Unexpected length of the primary source: expected %d bytes, found %d instead',
+                $expectedLength,
+                \strlen($primarySource)
+            );
+            __throw(
+                \LengthException,
+                \sprintf('Failed to unserialize (%s)', $errorMessage)
+            );
+        }
+        
+        $<Nullable>{
+            $expectedLength = (($elementCount + 7) >> 3);
+            if (\strlen($nullabilitySource) !== $expectedLength) {
                 $errorMessage = \sprintf(
-                    'Unexpected length of the primary source: expected %d bytes, found %d instead',
+                    'Unexpected length of the nullability source: expected %d bytes, found %d instead',
                     $expectedLength,
-                    \strlen($this->primarySource)
+                    \strlen($nullabilitySource)
                 );
                 __throw(
                     \LengthException,
                     \sprintf('Failed to unserialize (%s)', $errorMessage)
                 );
             }
-            
-            $<Nullable>{
-                $expectedLength = (($this->elementCount + 7) >> 3);
-                if (\strlen($this->nullabilitySource) !== $expectedLength) {
-                    $errorMessage = \sprintf(
-                        'Unexpected length of the nullability source: expected %d bytes, found %d instead',
-                        $expectedLength,
-                        \strlen($this->nullabilitySource)
-                    );
-                    __throw(
-                        \LengthException,
-                        \sprintf('Failed to unserialize (%s)', $errorMessage)
-                    );
-                }
-            }
-            
-            if ($this->elementCount < 0) {
-                $errorMessage = 'The element count must not be negative';
-                __throw(
-                    \DomainException,
-                    \sprintf('Failed to unserialize (%s)', $errorMessage)
-                );
-            }
-        } catch (\Throwable $e) {
-            [
-                $this->elementCount,
-                $this->primarySource,
-                $<Nullable>{ $this->nullabilitySource, }
-            ] = $previousValues;
-            throw $e;
+        }
+
+        $this->elementCount = $elementCount;
+        $this->primarySource = $primarySource;
+        $<Nullable>{
+            $this->nullabilitySource = $nullabilitySource;
         }
     }
 }

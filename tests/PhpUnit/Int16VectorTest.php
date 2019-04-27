@@ -131,9 +131,9 @@ final class Int16VectorTest extends TestCase
         $vector = self::getInstance();
         $value0 = self::getRandomValue();
         $vector[] = $value0;
-        $value2 = self::getRandomValue();
+        $value2 = self::getRandomSignedInteger(false);
+        $value3 = self::getRandomSignedInteger(true);
         $vector[2] = $value2;
-        $value3 = self::getRandomValue();
         $vector[] = $value3;
         self::assertTrue(isset($vector[0]));
         self::assertTrue(isset($vector[1]));
@@ -207,7 +207,7 @@ final class Int16VectorTest extends TestCase
     public function testIteratorAggregateWithModification(): void
     {
         $vector = self::getInstance();
-        $elements = [self::getRandomValue(), self::getRandomValue(), self::getRandomValue()];
+        $elements = [self::getRandomValue(), self::getRandomSignedInteger(false), self::getRandomSignedInteger(true)];
         $sequence = [$elements[1], $elements[2], $elements[1]];
         foreach ($sequence as $element) {
             $vector[] = $element;
@@ -234,8 +234,8 @@ final class Int16VectorTest extends TestCase
     {
         $vector = self::getInstance();
         self::assertNativeJson([], $vector);
-        $value = self::getRandomValue();
-        $sequence = [$value, self::getRandomValue(), $value];
+        $value = self::getRandomSignedInteger(false);
+        $sequence = [$value, self::getRandomSignedInteger(true), $value];
         foreach ($sequence as $value) {
             $vector[] = $value;
         }
@@ -244,6 +244,29 @@ final class Int16VectorTest extends TestCase
         self::assertNativeJson($sequence, $vector);
     }
 
+    public static function corruptedSerializationProvider(): \Generator
+    {
+        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;i:[0-9]+;s:0:"";\\}\\}$)~', '-1']];
+    }
+
+    /**
+     * @dataProvider corruptedSerializationProvider
+     */
+    public function testThrowsIfUnserializesCorrupted(string $expectedException, string $pattern, string $replacement): void
+    {
+        $this->expectException($expectedException);
+        $serialized = \serialize(self::getInstance());
+        $serialized = (string) \preg_replace($pattern, $replacement, $serialized, 1);
+        \preg_match('~^(C:[0-9]+:[^:]+:)([0-9]+)(.*)~', $serialized, $match);
+        $serialized = $match[1].(\strlen($match[3]) - \strlen(':{}')).$match[3];
+        self::unserializeVector($serialized);
+    }
+
+    /**
+     * @depends testArrayAccess
+     * @depends testCountable
+     * @depends testIteratorAggregate
+     */
     public function testSerializable(): void
     {
         $vector = self::getInstance();
@@ -517,6 +540,18 @@ final class Int16VectorTest extends TestCase
         return $positive ? $value : -$value;
     }
 
+    private static function getRandomSignedInteger(bool $negative): int
+    {
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < 2; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+        $value = $negative ? $value < 0 ? -$value : -32768 : $value;
+
+        return (int) $value;
+    }
+
     private static function assertSequence(array $sequence, VectorInterface $vector): void
     {
         self::assertCount(\count($sequence), $vector);
@@ -556,11 +591,16 @@ final class Int16VectorTest extends TestCase
 
     private static function assertSerialization($expected, string $serialized): void
     {
-        $actualUnserialized = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\Int16Vector', '\\')]]);
+        $actualUnserialized = self::unserializeVector($serialized);
         $actual = [];
         foreach ($actualUnserialized as $index => $element) {
             $actual[$index] = $element;
         }
         self::assertSame($expected, $actual);
+    }
+
+    private static function unserializeVector(string $serialized)
+    {
+        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\Int16Vector', '\\')]]);
     }
 }

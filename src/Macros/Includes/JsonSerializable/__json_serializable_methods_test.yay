@@ -16,8 +16,14 @@ $(macro :unsafe) {
             $sequence = [$value, self::getRandomUtf8String(), $value];
         }
         $<!String>{
-            $value = self::getRandomValue();
-            $sequence = [$value, self::getRandomValue(), $value];
+            $<Signed>{
+                $value = self::getRandomSignedInteger(false);
+                $sequence = [$value, self::getRandomSignedInteger(true), $value];
+            }
+            $<!Signed>{
+                $value = self::getRandomValue();
+                $sequence = [$value, self::getRandomValue(), $value];
+            }
         }
         foreach ($sequence as $value) {
             $vector[] = $value;

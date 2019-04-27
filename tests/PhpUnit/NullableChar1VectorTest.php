@@ -125,8 +125,8 @@ final class NullableChar1VectorTest extends TestCase
         $value0 = self::getRandomValue();
         $vector[] = $value0;
         $value2 = self::getRandomValue();
-        $vector[2] = $value2;
         $value3 = self::getRandomValue();
+        $vector[2] = $value2;
         $vector[] = $value3;
         self::assertTrue(isset($vector[0]));
         self::assertTrue(isset($vector[1]));
@@ -252,6 +252,29 @@ final class NullableChar1VectorTest extends TestCase
         self::assertNativeJson([null, "\0", null], $vector);
     }
 
+    public static function corruptedSerializationProvider(): \Generator
+    {
+        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";i:[0-9]+;s:0:"";\\}\\}$)~', "1:\"\0"], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;(i:[0-9]+;s:0:"";){2}\\}\\}$)~', '-1']];
+    }
+
+    /**
+     * @dataProvider corruptedSerializationProvider
+     */
+    public function testThrowsIfUnserializesCorrupted(string $expectedException, string $pattern, string $replacement): void
+    {
+        $this->expectException($expectedException);
+        $serialized = \serialize(self::getInstance());
+        $serialized = (string) \preg_replace($pattern, $replacement, $serialized, 1);
+        \preg_match('~^(C:[0-9]+:[^:]+:)([0-9]+)(.*)~', $serialized, $match);
+        $serialized = $match[1].(\strlen($match[3]) - \strlen(':{}')).$match[3];
+        self::unserializeVector($serialized);
+    }
+
+    /**
+     * @depends testArrayAccess
+     * @depends testCountable
+     * @depends testIteratorAggregate
+     */
     public function testSerializable(): void
     {
         $vector = self::getInstance();
@@ -571,11 +594,16 @@ final class NullableChar1VectorTest extends TestCase
 
     private static function assertSerialization($expected, string $serialized): void
     {
-        $actualUnserialized = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar1Vector', '\\')]]);
+        $actualUnserialized = self::unserializeVector($serialized);
         $actual = [];
         foreach ($actualUnserialized as $index => $element) {
             $actual[$index] = $element;
         }
         self::assertSame($expected, $actual);
+    }
+
+    private static function unserializeVector(string $serialized)
+    {
+        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar1Vector', '\\')]]);
     }
 }

@@ -144,10 +144,16 @@ $(macro :unsafe) {
         $value0 = self::getRandomValue();
         $vector[] = $value0;
         
-        $value2 = self::getRandomValue();
+        $<Signed>{
+            $value2 = self::getRandomSignedInteger(false);
+            $value3 = self::getRandomSignedInteger(true);
+        }
+        $<!Signed>{
+            $value2 = self::getRandomValue();
+            $value3 = self::getRandomValue();
+            
+        }
         $vector[2] = $value2;
-        
-        $value3 = self::getRandomValue();
         $vector[] = $value3;
         
         self::assertTrue(isset($vector[0]));
@@ -184,6 +190,26 @@ $(macro :unsafe) {
                 self::assertNull($vector[1]);
             }
         ))
+    }
+        
+    $<Boolean>{
+        /**
+         * @depends testArrayAccess
+         */
+        public function testOffsetSetWithBooleanGap(): void
+        {
+            $vector = self::getInstance();
+            $vector[8] = false;
+            $vector[16] = true;
+            for ($i = 0; $i < 16; ++$i) {
+                if (8 === $i) {
+                    self::assertFalse($vector[$i]);
+                } else {
+                    self::assertSame($[DefaultValue], $vector[$i]);
+                }
+            }
+            self::assertTrue($vector[16]);
+        }
     }
 
     $$(expand(
