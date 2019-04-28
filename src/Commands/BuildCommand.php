@@ -95,6 +95,12 @@ YAY;
         self::DIR_PHPBENCH,
     ];
 
+    private const TARGETS = [
+        self::DIR_DIST,
+        self::DIR_PHPUNIT,
+        self::DIR_PHPBENCH,
+    ];
+
     private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
     private /* LoggerInterface */ $logger;
     private /* Parser */ $parser;
@@ -161,11 +167,12 @@ YAY;
 
         $this->prettyPrintFiles();
         $this->lintFiles();
+        $this->touchFiles();
     }
 
     private function cleanDist(): void
     {
-        foreach ([self::DIR_DIST, self::DIR_PHPUNIT, self::DIR_PHPBENCH] as $path) {
+        foreach (self::TARGETS as $path) {
             $this->logger->debug('Cleaning '.\realpath($path));
             foreach (self::generateFiles($path) as $pathname) {
                 \unlink($pathname);
@@ -290,7 +297,7 @@ YAY;
     private function prettyPrintFiles(): void
     {
         $this->logger->info('Pretty-printing');
-        foreach ([self::DIR_DIST, self::DIR_PHPUNIT] as $path) {
+        foreach (self::TARGETS as $path) {
             foreach (self::generateFiles($path) as $filename => $pathname) {
                 $this->logger->debug('Pretty-printing '.$filename);
                 $code = \file_get_contents($pathname);
@@ -305,6 +312,17 @@ YAY;
     {
         $this->logger->info('Linting');
         (new Process(self::PROCESS_PHP_CS_FIXER))->run();
+    }
+
+    private function touchFiles(): void
+    {
+        $this->logger->info('Touching');
+        foreach (self::TARGETS as $path) {
+            foreach (self::generateFiles($path) as $filename => $pathname) {
+                $this->logger->debug('Touching '.$filename);
+                \touch($pathname);
+            }
+        }
     }
 
     private static function generateFiles(string $directory): iterable

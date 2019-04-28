@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpBench;
 
 require_once __DIR__.'/../../vendor/autoload.php';
-
 /**
  * @BeforeMethods({"setUp"})
  *
@@ -22,46 +21,31 @@ require_once __DIR__.'/../../vendor/autoload.php';
  */
 final class Char3VectorBench
 {
-    private const INVALID_VALUE =
-        0
-    ;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetGetRandomAccess;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetOverwriting;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithoutGap;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithGap;
-    private /* int */ $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetPopping;
-    private /* int */ $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetShifting;
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtHead;
-
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtTail;
-    private /* array */ $batchForInsert = [];
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtHead;
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtTail;
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertUnshifting;
-    private /* \Vectory\VectorInterface */ $vectorForIteratorAggregate;
-    private /* \Vectory\VectorInterface */ $vectorForJsonSerializable;
-    private /* \Vectory\VectorInterface */ $vectorForSerializableSerialize;
-
-    private /* string */ $serializedVectorForSerializableUnserialize;
+    private const INVALID_VALUE = 0;
+    private $vectorForArrayAccessOffsetGetRandomAccess;
+    private $vectorForArrayAccessOffsetSetOverwriting;
+    private $vectorForArrayAccessOffsetSetPushingWithoutGap;
+    private $vectorForArrayAccessOffsetSetPushingWithGap;
+    private $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
+    private $vectorForArrayAccessOffsetUnsetPopping;
+    private $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
+    private $vectorForArrayAccessOffsetUnsetShifting;
+    private $vectorForDeleteAtHead;
+    private $vectorForDeleteAtTail;
+    private $batchForInsert = [];
+    private $vectorForInsertAtHead;
+    private $vectorForInsertAtTail;
+    private $vectorForInsertUnshifting;
+    private $vectorForIteratorAggregate;
+    private $vectorForJsonSerializable;
+    private $vectorForSerializableSerialize;
+    private $serializedVectorForSerializableUnserialize;
 
     public function setUp(): void
     {
         \error_reporting(\E_ALL);
-
         \ini_set('precision', '14');
         \ini_set('serialize_precision', '14');
-
         $this->setUpArrayAccessBenchmark();
         $this->setUpDeleteBenchmark();
         $this->setUpInsertBenchmark();
@@ -83,7 +67,7 @@ final class Char3VectorBench
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->vectorForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\x0\x0\x0";
+        $this->vectorForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\0\0\0";
     }
 
     /**
@@ -91,7 +75,7 @@ final class Char3VectorBench
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->vectorForArrayAccessOffsetSetPushingWithoutGap[] = "\x0\x0\x0";
+        $this->vectorForArrayAccessOffsetSetPushingWithoutGap[] = "\0\0\0";
     }
 
     /**
@@ -99,9 +83,7 @@ final class Char3VectorBench
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->vectorForArrayAccessOffsetSetPushingWithGap[
-            $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100
-        ] = "\x0\x0\x0";
+        $this->vectorForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = "\0\0\0";
     }
 
     /**
@@ -109,9 +91,7 @@ final class Char3VectorBench
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        unset($this->vectorForArrayAccessOffsetUnsetPopping[
-            $this->lastIndexOfArrayAccessOffsetUnsetPopping--
-        ]);
+        unset($this->vectorForArrayAccessOffsetUnsetPopping[$this->lastIndexOfArrayAccessOffsetUnsetPopping--]);
     }
 
     /**
@@ -159,7 +139,7 @@ final class Char3VectorBench
      */
     public function benchInsertUnshifting(): void
     {
-        $this->vectorForInsertUnshifting->insert(["\x0\x0\x0"], 0);
+        $this->vectorForInsertUnshifting->insert(["\0\0\0"], 0);
     }
 
     /**
@@ -192,71 +172,58 @@ final class Char3VectorBench
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize(
-            $this->serializedVectorForSerializableUnserialize,
-            ['allowed_classes' => [\ltrim('\\Vectory\\Char3Vector', '\\')]]
-        );
+        \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Char3Vector', '\\')]]);
     }
 
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->vectorForArrayAccessOffsetGetRandomAccess[10000] = "\x0\x0\x0";
-
+        $this->vectorForArrayAccessOffsetGetRandomAccess[10000] = "\0\0\0";
         $this->vectorForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->vectorForArrayAccessOffsetSetOverwriting[10000] = "\x0\x0\x0";
-
+        $this->vectorForArrayAccessOffsetSetOverwriting[10000] = "\0\0\0";
         $this->vectorForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
-
         $this->vectorForArrayAccessOffsetSetPushingWithGap = self::getInstance();
-
         $this->vectorForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetPopping[10000] = "\x0\x0\x0";
+        $this->vectorForArrayAccessOffsetUnsetPopping[10000] = "\0\0\0";
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-
         $this->vectorForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetShifting[10000] = "\x0\x0\x0";
+        $this->vectorForArrayAccessOffsetUnsetShifting[10000] = "\0\0\0";
     }
 
     private function setUpDeleteBenchmark(): void
     {
         $this->vectorForDeleteAtHead = self::getInstance();
-        $this->vectorForDeleteAtHead[10000] = "\x0\x0\x0";
-
+        $this->vectorForDeleteAtHead[10000] = "\0\0\0";
         $this->vectorForDeleteAtTail = self::getInstance();
-        $this->vectorForDeleteAtTail[10000] = "\x0\x0\x0";
+        $this->vectorForDeleteAtTail[10000] = "\0\0\0";
     }
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 50, "\x0\x0\x0");
-
+        $this->batchForInsert = \array_fill(0, 50, "\0\0\0");
         $this->vectorForInsertAtHead = self::getInstance();
-
         $this->vectorForInsertAtTail = self::getInstance();
-
         $this->vectorForInsertUnshifting = self::getInstance();
     }
 
     private function setUpIteratorAggregateBenchmark(): void
     {
         $this->vectorForIteratorAggregate = self::getInstance();
-        $this->vectorForIteratorAggregate[10000] = "\x0\x0\x0";
+        $this->vectorForIteratorAggregate[10000] = "\0\0\0";
     }
 
     private function setUpJsonSerializableBenchmark(): void
     {
         $this->vectorForJsonSerializable = self::getInstance();
-        $this->vectorForJsonSerializable[10000] = "\x0\x0\x0";
+        $this->vectorForJsonSerializable[10000] = "\0\0\0";
     }
 
     private function setUpSerializableBenchmark(): void
     {
         $this->vectorForSerializableSerialize = self::getInstance();
-        $this->vectorForSerializableSerialize[10000] = "\x0\x0\x0";
-
+        $this->vectorForSerializableSerialize[10000] = "\0\0\0";
         $vector = self::getInstance();
-        $vector[10000] = "\x0\x0\x0";
+        $vector[10000] = "\0\0\0";
         $this->serializedVectorForSerializableUnserialize = \serialize($vector);
     }
 
@@ -283,23 +250,23 @@ final class Char3VectorBench
             $characterMaxLength = \min(4, 3 - \strlen($string));
             $character = '';
             switch (\mt_rand(1, $characterMaxLength)) {
-                        case 1:
-                            $character = \mb_chr(\mt_rand(0x0, 0x7f));
+                case 1:
+                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
 
-                            break;
-                        case 2:
-                            $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+                    break;
+                case 2:
+                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
 
-                            break;
-                        case 3:
-                            $character = \mb_chr(\mt_rand(0x800, 0xffff));
+                    break;
+                case 3:
+                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
 
-                            break;
-                        case 4:
-                            $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+                    break;
+                case 4:
+                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
 
-                            break;
-                    }
+                    break;
+            }
             $string .= $character;
         }
 

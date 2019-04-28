@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Vectory\Tests\PhpBench;
 
 require_once __DIR__.'/../../vendor/autoload.php';
-
 /**
  * @BeforeMethods({"setUp"})
  *
@@ -22,46 +21,31 @@ require_once __DIR__.'/../../vendor/autoload.php';
  */
 final class Uint32VectorBench
 {
-    private const INVALID_VALUE = '0'
-
-    ;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetGetRandomAccess;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetOverwriting;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithoutGap;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithGap;
-    private /* int */ $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetPopping;
-    private /* int */ $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
-
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetShifting;
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtHead;
-
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtTail;
-    private /* array */ $batchForInsert = [];
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtHead;
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtTail;
-
-    private /* \Vectory\VectorInterface */ $vectorForInsertUnshifting;
-    private /* \Vectory\VectorInterface */ $vectorForIteratorAggregate;
-    private /* \Vectory\VectorInterface */ $vectorForJsonSerializable;
-    private /* \Vectory\VectorInterface */ $vectorForSerializableSerialize;
-
-    private /* string */ $serializedVectorForSerializableUnserialize;
+    private const INVALID_VALUE = '0';
+    private $vectorForArrayAccessOffsetGetRandomAccess;
+    private $vectorForArrayAccessOffsetSetOverwriting;
+    private $vectorForArrayAccessOffsetSetPushingWithoutGap;
+    private $vectorForArrayAccessOffsetSetPushingWithGap;
+    private $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
+    private $vectorForArrayAccessOffsetUnsetPopping;
+    private $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
+    private $vectorForArrayAccessOffsetUnsetShifting;
+    private $vectorForDeleteAtHead;
+    private $vectorForDeleteAtTail;
+    private $batchForInsert = [];
+    private $vectorForInsertAtHead;
+    private $vectorForInsertAtTail;
+    private $vectorForInsertUnshifting;
+    private $vectorForIteratorAggregate;
+    private $vectorForJsonSerializable;
+    private $vectorForSerializableSerialize;
+    private $serializedVectorForSerializableUnserialize;
 
     public function setUp(): void
     {
         \error_reporting(\E_ALL);
-
         \ini_set('precision', '14');
         \ini_set('serialize_precision', '14');
-
         $this->setUpArrayAccessBenchmark();
         $this->setUpDeleteBenchmark();
         $this->setUpInsertBenchmark();
@@ -99,9 +83,7 @@ final class Uint32VectorBench
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->vectorForArrayAccessOffsetSetPushingWithGap[
-            $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100
-        ] = 0;
+        $this->vectorForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = 0;
     }
 
     /**
@@ -109,9 +91,7 @@ final class Uint32VectorBench
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        unset($this->vectorForArrayAccessOffsetUnsetPopping[
-            $this->lastIndexOfArrayAccessOffsetUnsetPopping--
-        ]);
+        unset($this->vectorForArrayAccessOffsetUnsetPopping[$this->lastIndexOfArrayAccessOffsetUnsetPopping--]);
     }
 
     /**
@@ -192,28 +172,20 @@ final class Uint32VectorBench
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize(
-            $this->serializedVectorForSerializableUnserialize,
-            ['allowed_classes' => [\ltrim('\\Vectory\\Uint32Vector', '\\')]]
-        );
+        \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Uint32Vector', '\\')]]);
     }
 
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
         $this->vectorForArrayAccessOffsetGetRandomAccess[10000] = 0;
-
         $this->vectorForArrayAccessOffsetSetOverwriting = self::getInstance();
         $this->vectorForArrayAccessOffsetSetOverwriting[10000] = 0;
-
         $this->vectorForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
-
         $this->vectorForArrayAccessOffsetSetPushingWithGap = self::getInstance();
-
         $this->vectorForArrayAccessOffsetUnsetPopping = self::getInstance();
         $this->vectorForArrayAccessOffsetUnsetPopping[10000] = 0;
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-
         $this->vectorForArrayAccessOffsetUnsetShifting = self::getInstance();
         $this->vectorForArrayAccessOffsetUnsetShifting[10000] = 0;
     }
@@ -222,7 +194,6 @@ final class Uint32VectorBench
     {
         $this->vectorForDeleteAtHead = self::getInstance();
         $this->vectorForDeleteAtHead[10000] = 0;
-
         $this->vectorForDeleteAtTail = self::getInstance();
         $this->vectorForDeleteAtTail[10000] = 0;
     }
@@ -230,11 +201,8 @@ final class Uint32VectorBench
     private function setUpInsertBenchmark(): void
     {
         $this->batchForInsert = \array_fill(0, 50, 0);
-
         $this->vectorForInsertAtHead = self::getInstance();
-
         $this->vectorForInsertAtTail = self::getInstance();
-
         $this->vectorForInsertUnshifting = self::getInstance();
     }
 
@@ -254,7 +222,6 @@ final class Uint32VectorBench
     {
         $this->vectorForSerializableSerialize = self::getInstance();
         $this->vectorForSerializableSerialize[10000] = 0;
-
         $vector = self::getInstance();
         $vector[10000] = 0;
         $this->serializedVectorForSerializableUnserialize = \serialize($vector);
@@ -268,7 +235,6 @@ final class Uint32VectorBench
     private static function getRandomValue()
     {
         $value = \dechex(\mt_rand(0x0, 0xff));
-
         for ($i = 1; $i < 4; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
         }
