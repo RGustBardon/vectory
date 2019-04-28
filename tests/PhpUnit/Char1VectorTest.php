@@ -234,8 +234,7 @@ final class Char1VectorTest extends TestCase
         $this->expectException($expectedException);
         $serialized = \serialize(self::getInstance());
         $serialized = (string) \preg_replace($pattern, $replacement, $serialized, 1);
-        \preg_match('~^(C:[0-9]+:[^:]+:)([0-9]+)(.*)~', $serialized, $match);
-        $serialized = $match[1].(\strlen($match[3]) - \strlen(':{}')).$match[3];
+        $serialized = self::fixSerializedLength($serialized);
         self::unserializeVector($serialized);
     }
 
@@ -256,6 +255,32 @@ final class Char1VectorTest extends TestCase
         $vector[4] = "\0";
         \array_push($sequence, "\0", "\0");
         self::assertSerialization($sequence, \serialize($vector));
+    }
+
+    /**
+     * @depends testSerializable
+     * @depends testThrowsIfUnserializesCorrupted
+     */
+    public function testSerializableNotCorruptedAfterFailure(): void
+    {
+        $vector1 = self::getInstance();
+        $value1 = self::getRandomValue();
+        $vector1[0] = $value1;
+        $vector2 = self::getInstance();
+        $vector2[0] = self::getRandomValue();
+        $vector2[1] = self::getRandomValue();
+        $serialized = \serialize($vector2);
+        $serialized = \preg_replace_callback('~(?<=s:)([0-9]+)(:")~', static function (array $matches): string {
+            return 1 + $matches[1].$matches[2]."\0";
+        }, $serialized, 1);
+        $serialized = self::fixSerializedLength((string) $serialized);
+
+        try {
+            $vector1->unserialize($serialized);
+        } catch (\LengthException $e) {
+        }
+        self::assertCount(1, $vector1);
+        self::assertSame($value1, $vector1[0]);
     }
 
     public static function deletionProvider(): \Generator
@@ -561,6 +586,13 @@ final class Char1VectorTest extends TestCase
             $actual[$index] = $element;
         }
         self::assertSame($expected, $actual);
+    }
+
+    private static function fixSerializedLength(string $serialized): string
+    {
+        \preg_match('~^(C:[0-9]+:[^:]+:)([0-9]+)(.*)~s', $serialized, $match);
+
+        return $match[1].(\strlen($match[3]) - \strlen(':{}')).$match[3];
     }
 
     private static function unserializeVector(string $serialized)

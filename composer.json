@@ -54,7 +54,7 @@
             "php bin/build -vvv",
             "@composer dumpautoload",
             "phpstan analyse --level=max --memory-limit=256M dist tests",
-            "phpunit tests/PhpUnit"
+            "phpunit --stop-on-defect --stop-on-error --stop-on-failure --stop-on-warning --stop-on-risky --stop-on-skipped --stop-on-incomplete --bootstrap=tests/bootstrap.php tests/PhpUnit"
         ],
         "bench": [
             "phpbench run tests/PhpBench"
