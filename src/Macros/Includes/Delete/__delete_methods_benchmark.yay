@@ -1,0 +1,10 @@
+<?php
+
+$(macro :unsafe) {
+    __delete_methods_benchmark()
+} >> {
+    private function setUpDeleteBenchmark(): void
+    {
+        
+    }
+}

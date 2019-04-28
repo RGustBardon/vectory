@@ -1,0 +1,10 @@
+<?php
+
+$(macro :unsafe) {
+    __insert_methods_benchmark()
+} >> {
+    private function setUpInsertBenchmark(): void
+    {
+        
+    }
+}

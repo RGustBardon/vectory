@@ -1,0 +1,10 @@
+<?php
+
+$(macro :unsafe) {
+    __iterator_aggregate_methods_benchmark()
+} >> {
+    private function setUpIteratorAggregateBenchmark(): void
+    {
+        
+    }
+}

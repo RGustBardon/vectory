@@ -12,22 +12,23 @@ require_once __DIR__.'/../../vendor/autoload.php';
  */
 final class _
 {
-    private $value;
-    private /* \Vectory\Interface */ $vector;
-    
     public function setUp(): void {
         \mt_srand(0);
 
-        $this->value = self::getRandomValue();
+        $this->setUpArrayAccessBenchmark();
+        $this->setUpDeleteBenchmark();
+        $this->setUpInsertBenchmark();
+        $this->setUpIteratorAggregateBenchmark();
+        $this->setUpJsonSerializableBenchmark();
+        $this->setUpSerializableBenchmark();
     }
 
-    /**
-     * @Revs(10000)
-     */
-    public function benchPushing(): void
-    {
-        $this->vector[] = $this->value;
-    }
+    __array_access_methods_benchmark()
+    __delete_methods_benchmark()
+    __insert_methods_benchmark()
+    __iterator_aggregate_methods_benchmark()
+    __json_serializable_methods_benchmark()
+    __serializable_methods_benchmark()
 
     __instantiation_methods()
 }

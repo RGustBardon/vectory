@@ -1,0 +1,10 @@
+<?php
+
+$(macro :unsafe) {
+    __serializable_methods_benchmark()
+} >> {
+    private function setUpSerializableBenchmark(): void
+    {
+        
+    }
+}
