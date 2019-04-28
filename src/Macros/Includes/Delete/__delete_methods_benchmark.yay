@@ -3,8 +3,32 @@
 $(macro :unsafe) {
     __delete_methods_benchmark()
 } >> {
+    private /* \Vectory\VectorInterface */ $vectorForDeleteAtHead;
+    
+    private /* \Vectory\VectorInterface */ $vectorForDeleteAtTail;
+    
     private function setUpDeleteBenchmark(): void
     {
+        $this->vectorForDeleteAtHead = self::getInstance();
+        $this->vectorForDeleteAtHead[10000] = $[DefaultValue];
         
+        $this->vectorForDeleteAtTail = self::getInstance();
+        $this->vectorForDeleteAtTail[10000] = $[DefaultValue];
+    }
+    
+    /**
+     * @Revs(100)
+     */
+    public function benchDeleteAtHead(): void
+    {
+        $this->vectorForDeleteAtHead->delete(0, \mt_rand(0, 100));
+    }
+    
+    /**
+     * @Revs(100)
+     */
+    public function benchDeleteAtTail(): void
+    {
+        $this->vectorForDeleteAtHead->delete(-\mt_rand(0, 100));
     }
 }

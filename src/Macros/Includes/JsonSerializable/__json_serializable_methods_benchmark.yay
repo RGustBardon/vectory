@@ -3,8 +3,19 @@
 $(macro :unsafe) {
     __json_serializable_methods_benchmark()
 } >> {
+    private /* \Vectory\VectorInterface */ $vectorForJsonSerializable;
+    
     private function setUpJsonSerializableBenchmark(): void
     {
-        
+        $this->vectorForJsonSerializable = self::getInstance();
+        $this->vectorForJsonSerializable[10000] = $[DefaultValue];
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchJsonSerializable(): void
+    {
+        \json_encode($this->vectorForJsonSerializable);
     }
 }

@@ -3,8 +3,46 @@
 $(macro :unsafe) {
     __insert_methods_benchmark()
 } >> {
+    private /* array */ $batchForInsert = [];
+    
+    private /* \Vectory\VectorInterface */ $vectorForInsertAtHead;
+    
+    private /* \Vectory\VectorInterface */ $vectorForInsertAtTail;
+    
+    private /* \Vectory\VectorInterface */ $vectorForInsertUnshifting;
+    
     private function setUpInsertBenchmark(): void
     {
+        $this->batchForInsert = \array_fill(0, 50, $[DefaultValue]);
         
+        $this->vectorForInsertAtHead = self::getInstance();
+        
+        $this->vectorForInsertAtTail = self::getInstance();
+        
+        $this->vectorForInsertUnshifting = self::getInstance();
+    }
+
+    /**
+     * @Revs(100)
+     */
+    public function benchInsertAtHead(): void
+    {
+        $this->vectorForInsertAtHead->insert($this->batchForInsert, 0);
+    }
+    
+    /**
+     * @Revs(100)
+     */
+    public function benchInsertAtTail(): void
+    {
+        $this->vectorForInsertAtTail->insert($this->batchForInsert);
+    }
+    
+    /**
+     * @Revs(10000)
+     */
+    public function benchInsertUnshifting(): void
+    {
+        $this->vectorForInsertUnshifting->insert([$[DefaultValue]], 0);
     }
 }

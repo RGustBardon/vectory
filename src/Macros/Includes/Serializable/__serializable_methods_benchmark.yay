@@ -3,8 +3,36 @@
 $(macro :unsafe) {
     __serializable_methods_benchmark()
 } >> {
+    private /* \Vectory\VectorInterface */ $vectorForSerializableSerialize;
+    
+    private /* string */ $serializedVectorForSerializableUnserialize;
+    
     private function setUpSerializableBenchmark(): void
     {
+        $this->vectorForSerializableSerialize = self::getInstance();
+        $this->vectorForSerializableSerialize[10000] = $[DefaultValue];
         
+        $vector = self::getInstance();
+        $vector[10000] = $[DefaultValue];
+        $this->serializedVectorForSerializableUnserialize = \serialize($vector);
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchSerializableSerialize(): void
+    {
+        \serialize($this->vectorForSerializableSerialize);
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchSerializableUnserialize(): void
+    {
+        \unserialize(
+            $this->serializedVectorForSerializableUnserialize,
+            ['allowed_classes' => [\ltrim($[FullyQualifiedClassName], '\\')]]
+        );
     }
 }

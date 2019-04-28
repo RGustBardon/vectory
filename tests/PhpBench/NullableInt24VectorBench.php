@@ -39,10 +39,28 @@ final class NullableInt24VectorBench
     private /* int */ $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
 
     private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetShifting;
+    private /* \Vectory\VectorInterface */ $vectorForDeleteAtHead;
+
+    private /* \Vectory\VectorInterface */ $vectorForDeleteAtTail;
+    private /* array */ $batchForInsert = [];
+
+    private /* \Vectory\VectorInterface */ $vectorForInsertAtHead;
+
+    private /* \Vectory\VectorInterface */ $vectorForInsertAtTail;
+
+    private /* \Vectory\VectorInterface */ $vectorForInsertUnshifting;
+    private /* \Vectory\VectorInterface */ $vectorForIteratorAggregate;
+    private /* \Vectory\VectorInterface */ $vectorForJsonSerializable;
+    private /* \Vectory\VectorInterface */ $vectorForSerializableSerialize;
+
+    private /* string */ $serializedVectorForSerializableUnserialize;
 
     public function setUp(): void
     {
-        \mt_srand(0);
+        \error_reporting(\E_ALL);
+
+        \ini_set('precision', '14');
+        \ini_set('serialize_precision', '14');
 
         $this->setUpArrayAccessBenchmark();
         $this->setUpDeleteBenchmark();
@@ -104,6 +122,82 @@ final class NullableInt24VectorBench
         unset($this->vectorForArrayAccessOffsetUnsetShifting[0]);
     }
 
+    /**
+     * @Revs(100)
+     */
+    public function benchDeleteAtHead(): void
+    {
+        $this->vectorForDeleteAtHead->delete(0, \mt_rand(0, 100));
+    }
+
+    /**
+     * @Revs(100)
+     */
+    public function benchDeleteAtTail(): void
+    {
+        $this->vectorForDeleteAtHead->delete(-\mt_rand(0, 100));
+    }
+
+    /**
+     * @Revs(100)
+     */
+    public function benchInsertAtHead(): void
+    {
+        $this->vectorForInsertAtHead->insert($this->batchForInsert, 0);
+    }
+
+    /**
+     * @Revs(100)
+     */
+    public function benchInsertAtTail(): void
+    {
+        $this->vectorForInsertAtTail->insert($this->batchForInsert);
+    }
+
+    /**
+     * @Revs(10000)
+     */
+    public function benchInsertUnshifting(): void
+    {
+        $this->vectorForInsertUnshifting->insert([0], 0);
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchIteratorAggregate(): void
+    {
+        foreach ($this->vectorForIteratorAggregate as $element) {
+        }
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchJsonSerializable(): void
+    {
+        \json_encode($this->vectorForJsonSerializable);
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchSerializableSerialize(): void
+    {
+        \serialize($this->vectorForSerializableSerialize);
+    }
+
+    /**
+     * @Iterations(5)
+     */
+    public function benchSerializableUnserialize(): void
+    {
+        \unserialize(
+            $this->serializedVectorForSerializableUnserialize,
+            ['allowed_classes' => [\ltrim('\\Vectory\\NullableInt24Vector', '\\')]]
+        );
+    }
+
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
@@ -126,22 +220,44 @@ final class NullableInt24VectorBench
 
     private function setUpDeleteBenchmark(): void
     {
+        $this->vectorForDeleteAtHead = self::getInstance();
+        $this->vectorForDeleteAtHead[10000] = 0;
+
+        $this->vectorForDeleteAtTail = self::getInstance();
+        $this->vectorForDeleteAtTail[10000] = 0;
     }
 
     private function setUpInsertBenchmark(): void
     {
+        $this->batchForInsert = \array_fill(0, 50, 0);
+
+        $this->vectorForInsertAtHead = self::getInstance();
+
+        $this->vectorForInsertAtTail = self::getInstance();
+
+        $this->vectorForInsertUnshifting = self::getInstance();
     }
 
     private function setUpIteratorAggregateBenchmark(): void
     {
+        $this->vectorForIteratorAggregate = self::getInstance();
+        $this->vectorForIteratorAggregate[10000] = 0;
     }
 
     private function setUpJsonSerializableBenchmark(): void
     {
+        $this->vectorForJsonSerializable = self::getInstance();
+        $this->vectorForJsonSerializable[10000] = 0;
     }
 
     private function setUpSerializableBenchmark(): void
     {
+        $this->vectorForSerializableSerialize = self::getInstance();
+        $this->vectorForSerializableSerialize[10000] = 0;
+
+        $vector = self::getInstance();
+        $vector[10000] = 0;
+        $this->serializedVectorForSerializableUnserialize = \serialize($vector);
     }
 
     private static function getInstance(): \Vectory\VectorInterface
