@@ -192,7 +192,7 @@ class NullableUint8Vector implements VectorInterface
                 $packedInteger = $clone->primarySource[$getIteratorIndex];
                 $result = \ord($packedInteger);
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

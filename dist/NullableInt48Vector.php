@@ -203,7 +203,7 @@ class NullableInt48Vector implements VectorInterface
                     $result = 140737488355327 - $result;
                 }
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

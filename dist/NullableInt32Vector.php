@@ -197,7 +197,7 @@ class NullableInt32Vector implements VectorInterface
                 $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 4, 4);
                 $result = \unpack('l', $packedInteger)[1];
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

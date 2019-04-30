@@ -230,6 +230,21 @@ final class Int48VectorTest extends TestCase
         self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
     }
 
+    /**
+     * @depends testIteratorAggregate
+     */
+    public function testIteratorAggregateWithMoreElements(): void
+    {
+        $vector = self::getInstance();
+        $elements = [];
+        for ($i = 0; $i < 1031; ++$i) {
+            $element = self::getRandomValue();
+            $elements[] = $element;
+            $vector[$i] = $element;
+        }
+        self::assertSame($elements, \iterator_to_array($vector));
+    }
+
     public function testJsonSerializable(): void
     {
         $vector = self::getInstance();

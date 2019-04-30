@@ -196,7 +196,7 @@ class NullableUint48Vector implements VectorInterface
                 $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 6, 6);
                 $result = \unpack('P', $packedInteger."\0\0")[1];
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

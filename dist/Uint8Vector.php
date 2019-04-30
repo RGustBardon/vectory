@@ -121,12 +121,8 @@ class Uint8Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = $clone->primarySource[$getIteratorIndex];
-            $result = \ord($packedInteger);
-            (yield $getIteratorIndex => $result);
+        foreach (\unpack('C*', $this->primarySource) as $element) {
+            (yield $element);
         }
     }
 

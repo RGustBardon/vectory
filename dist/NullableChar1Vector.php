@@ -188,7 +188,7 @@ class NullableChar1Vector implements VectorInterface
             } else {
                 $result = $clone->primarySource[$getIteratorIndex];
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

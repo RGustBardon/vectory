@@ -237,6 +237,21 @@ final class NullableBoolVectorTest extends TestCase
         self::assertSame([null, false, null], \iterator_to_array($vector));
     }
 
+    /**
+     * @depends testIteratorAggregate
+     */
+    public function testIteratorAggregateWithMoreElements(): void
+    {
+        $vector = self::getInstance();
+        $elements = [];
+        for ($i = 0; $i < 1031; ++$i) {
+            $element = \mt_rand(0, 5) > 0 ? self::getRandomValue() : null;
+            $elements[] = $element;
+            $vector[$i] = $element;
+        }
+        self::assertSame($elements, \iterator_to_array($vector));
+    }
+
     public function testJsonSerializable(): void
     {
         $vector = self::getInstance();

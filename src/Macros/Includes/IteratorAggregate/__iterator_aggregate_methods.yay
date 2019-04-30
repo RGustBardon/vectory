@@ -5,13 +5,168 @@ $(macro :unsafe) {
 } >> {
     public function getIterator(): \Traversable
     {
-        $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $$(expand(
-                $$(expand(__get_value($clone, primary, $getIteratorIndex, $result)))
-            ));
-            yield $getIteratorIndex => $result;
+        $<Nullable>{
+            $elementCount = $this->elementCount;
+            $clone = clone $this;
+            for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
+                $$(expand(
+                    $$(expand(__get_value($clone, primary, $getIteratorIndex, $result)))
+                ));
+                yield $result;
+            }
+        }
+        $<!Nullable>{
+            $<Boolean>{
+                static $mask = ["\x1", "\x2", "\x4", "\x8", "\x10", "\x20", "\x40", "\x80"];
+                
+                $elementCount = $this->elementCount;
+                $primarySource = $this->primarySource;
+                for (
+                    $bitIndex = 0, $byteIndex = 0, $lastByteIndex = (($elementCount + 7) >> 3) - 1;
+                    $byteIndex < $lastByteIndex;
+                    ++$byteIndex
+                ) {
+                    $byte = $primarySource[$byteIndex];
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x01");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x02");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x04");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x08");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x10");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x20");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x40");
+                    yield $bitIndex++ => "\x0" !== ($byte & "\x80");
+                }
+                
+                if ($lastByteIndex >= 0) {
+                    for ($bit = 0, $byte = $primarySource[$lastByteIndex], $bitCount = $elementCount; $bitIndex < $bitCount; ++$bitIndex, ++$bit) {
+                        yield $bitIndex => "\x0" !== ($byte & $mask[$bit]);
+                    }
+                }
+            }
+            $<Integer>{
+                $<Takes1>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('c*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('C*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes2>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('s*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('v*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes3>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $index => $element) {
+                                yield $index - 1 => $element > $[MaximumValue] ? $[MaximumValue] - $element : $element; 
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes4>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('l*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('V*', $this->primarySource) as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes5>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0") as $index => $element) {
+                                yield $index - 1 => $element > $[MaximumValue] ? $[MaximumValue] - $element : $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0") as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes6>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 6, "\0\0")."\0\0") as $index => $element) {
+                                yield $index - 1 => $element > $[MaximumValue] ? $[MaximumValue] - $element : $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 6, "\0\0")."\0\0") as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes7>{
+                    $$(expand(
+                        $<Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $index => $element) {
+                                yield $index - 1 => $element > $[MaximumValue] ? $[MaximumValue] - $element : $element;
+                            }
+                        }
+                        $<!Signed>{
+                            foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
+                                yield $element;
+                            }
+                        }
+                    ))
+                }
+                $<Takes8>{
+                    foreach (\unpack('q*', $this->primarySource) as $element) {
+                        yield $element;
+                    }
+                }
+            }
+            $<String>{
+                $elementCount = $this->elementCount;
+                $primarySource = $this->primarySource;
+                
+                $<Takes1>{
+                    for ($i = 0; $i < $elementCount; ++$i) {
+                        yield $i => $primarySource[$i];
+                    }
+                }
+                $<!Takes1>{
+                    $batchSize = 256 * $[BytesPerElement];
+                    for ($index = 0; $index < $elementCount; $index += 256) {
+                        yield from \array_combine(
+                            \range($index, \min($elementCount, $index + 256) - 1),
+                            (array) \str_split(\substr($primarySource, $index * $[BytesPerElement], $batchSize), $[BytesPerElement])
+                        );
+                    }
+                }
+            }
         }
     }
 }

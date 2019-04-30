@@ -203,7 +203,7 @@ class NullableInt24Vector implements VectorInterface
                     $result = 8388607 - $result;
                 }
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

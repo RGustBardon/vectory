@@ -192,7 +192,7 @@ class NullableChar4Vector implements VectorInterface
             } else {
                 $result = \substr($clone->primarySource, $getIteratorIndex * 4, 4);
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

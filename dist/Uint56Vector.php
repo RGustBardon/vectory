@@ -125,12 +125,8 @@ class Uint56Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 7, 7);
-            $result = \unpack('P', $packedInteger."\0")[1];
-            (yield $getIteratorIndex => $result);
+        foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
+            (yield $element);
         }
     }
 

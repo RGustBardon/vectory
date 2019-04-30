@@ -119,10 +119,9 @@ class Char1Vector implements VectorInterface
     public function getIterator(): \Traversable
     {
         $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $result = $clone->primarySource[$getIteratorIndex];
-            (yield $getIteratorIndex => $result);
+        $primarySource = $this->primarySource;
+        for ($i = 0; $i < $elementCount; ++$i) {
+            (yield $i => $primarySource[$i]);
         }
     }
 

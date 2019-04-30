@@ -192,7 +192,7 @@ class NullableChar3Vector implements VectorInterface
             } else {
                 $result = \substr($clone->primarySource, $getIteratorIndex * 3, 3);
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

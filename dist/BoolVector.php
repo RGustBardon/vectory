@@ -152,14 +152,24 @@ class BoolVector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
-            $byteIndex = $getIteratorIndex >> 3;
-            $result = $clone->primarySource[$byteIndex];
-            $result = "\0" !== ($result & $mask[$getIteratorIndex & 7]);
-            (yield $getIteratorIndex => $result);
+        $primarySource = $this->primarySource;
+        for ($bitIndex = 0, $byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
+            $byte = $primarySource[$byteIndex];
+            (yield $bitIndex++ => "\0" !== ($byte & "\1"));
+            (yield $bitIndex++ => "\0" !== ($byte & "\2"));
+            (yield $bitIndex++ => "\0" !== ($byte & "\4"));
+            (yield $bitIndex++ => "\0" !== ($byte & "\10"));
+            (yield $bitIndex++ => "\0" !== ($byte & "\20"));
+            (yield $bitIndex++ => "\0" !== ($byte & ' '));
+            (yield $bitIndex++ => "\0" !== ($byte & '@'));
+            (yield $bitIndex++ => "\0" !== ($byte & "\200"));
+        }
+        if ($lastByteIndex >= 0) {
+            for ($bit = 0, $byte = $primarySource[$lastByteIndex], $bitCount = $elementCount; $bitIndex < $bitCount; ++$bitIndex, ++$bit) {
+                (yield $bitIndex => "\0" !== ($byte & $mask[$bit]));
+            }
         }
     }
 

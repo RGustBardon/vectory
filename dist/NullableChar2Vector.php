@@ -192,7 +192,7 @@ class NullableChar2Vector implements VectorInterface
             } else {
                 $result = \substr($clone->primarySource, $getIteratorIndex * 2, 2);
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

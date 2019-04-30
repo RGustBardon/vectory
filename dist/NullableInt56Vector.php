@@ -203,7 +203,7 @@ class NullableInt56Vector implements VectorInterface
                     $result = 36028797018963967 - $result;
                 }
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 

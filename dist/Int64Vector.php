@@ -123,12 +123,8 @@ class Int64Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 8, 8);
-            $result = \unpack('q', $packedInteger)[1];
-            (yield $getIteratorIndex => $result);
+        foreach (\unpack('q*', $this->primarySource) as $element) {
+            (yield $element);
         }
     }
 

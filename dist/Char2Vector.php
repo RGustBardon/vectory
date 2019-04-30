@@ -123,10 +123,10 @@ class Char2Vector implements VectorInterface
     public function getIterator(): \Traversable
     {
         $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $result = \substr($clone->primarySource, $getIteratorIndex * 2, 2);
-            (yield $getIteratorIndex => $result);
+        $primarySource = $this->primarySource;
+        $batchSize = 256 * 2;
+        for ($index = 0; $index < $elementCount; $index += 256) {
+            yield from \array_combine(\range($index, \min($elementCount, $index + 256) - 1), (array) \str_split(\substr($primarySource, $index * 2, $batchSize), 2));
         }
     }
 

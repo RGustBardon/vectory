@@ -125,12 +125,8 @@ class Uint24Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 3, 3);
-            $result = \unpack('V', $packedInteger."\0")[1];
-            (yield $getIteratorIndex => $result);
+        foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $element) {
+            (yield $element);
         }
     }
 

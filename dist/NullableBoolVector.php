@@ -218,7 +218,7 @@ class NullableBoolVector implements VectorInterface
                 $result = $clone->primarySource[$byteIndex];
                 $result = "\0" !== ($result & $mask[$getIteratorIndex & 7]);
             }
-            (yield $getIteratorIndex => $result);
+            (yield $result);
         }
     }
 
