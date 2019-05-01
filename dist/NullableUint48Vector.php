@@ -183,7 +183,10 @@ class NullableUint48Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
+        $nullabilitySource = $this->nullabilitySource;
+        $primarySource = $this->primarySource;
         $clone = clone $this;
         for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
             static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];

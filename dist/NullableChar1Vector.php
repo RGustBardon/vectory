@@ -176,19 +176,33 @@ class NullableChar1Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
-            $byteIndex = $getIteratorIndex >> 3;
-            $isNull = $clone->nullabilitySource[$byteIndex];
-            $isNull = "\0" !== ($isNull & $mask[$getIteratorIndex & 7]);
-            if ($isNull) {
-                $result = null;
-            } else {
-                $result = $clone->primarySource[$getIteratorIndex];
+        $nullabilitySource = $this->nullabilitySource;
+        $primarySource = $this->primarySource;
+        for ($index = 0, $lastIndex = $elementCount & ~7; $index < $lastIndex;) {
+            $batchSize = \min(256, $lastIndex - $index);
+            $nullabilityBatch = \substr($nullabilitySource, $index >> 3, $batchSize >> 3);
+            $primaryBatch = \substr($primarySource, $index, $batchSize);
+            for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
+                $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
+                (yield "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null);
+                (yield "\0" === ($nullabilityByte & "\2") ? $primaryBatch[$batchIndex + 1] : null);
+                (yield "\0" === ($nullabilityByte & "\4") ? $primaryBatch[$batchIndex + 2] : null);
+                (yield "\0" === ($nullabilityByte & "\10") ? $primaryBatch[$batchIndex + 3] : null);
+                (yield "\0" === ($nullabilityByte & "\20") ? $primaryBatch[$batchIndex + 4] : null);
+                (yield "\0" === ($nullabilityByte & ' ') ? $primaryBatch[$batchIndex + 5] : null);
+                (yield "\0" === ($nullabilityByte & '@') ? $primaryBatch[$batchIndex + 6] : null);
+                (yield "\0" === ($nullabilityByte & "\200") ? $primaryBatch[$batchIndex + 7] : null);
             }
-            (yield $result);
+            $index += $batchSize;
+        }
+        for (; $index < $elementCount; ++$index) {
+            if ("\0" === ($nullabilitySource[$index >> 3] & $mask[$index & 7])) {
+                (yield $primarySource[$index]);
+            } else {
+                yield;
+            }
         }
     }
 

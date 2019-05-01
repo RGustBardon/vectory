@@ -4,5 +4,6 @@ includes:
 
 parameters:
     ignoreErrors:
-        - '~assertFalse\(\) with true will always evaluate to false~'
-        - '~If condition is always true~'
+       - '~and int will always evaluate to false~'
+       - '~assertFalse\(\) with true will always evaluate to false~'
+       - '~If condition is always true~'
