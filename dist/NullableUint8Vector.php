@@ -196,23 +196,7 @@ class NullableUint8Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $result = [];
-        $elementCount = $this->elementCount;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
-            $byteIndex = $getIteratorIndex >> 3;
-            $isNull = $this->nullabilitySource[$byteIndex];
-            $isNull = "\0" !== ($isNull & $mask[$getIteratorIndex & 7]);
-            if ($isNull) {
-                $element = null;
-            } else {
-                $packedInteger = $this->primarySource[$getIteratorIndex];
-                $element = \ord($packedInteger);
-            }
-            $result[] = $element;
-        }
-
-        return $result;
+        return \iterator_to_array($this);
     }
 
     public function serialize(): string

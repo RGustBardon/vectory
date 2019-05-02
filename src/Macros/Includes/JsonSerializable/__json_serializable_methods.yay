@@ -5,14 +5,6 @@ $(macro :unsafe) {
 } >> {
     public function jsonSerialize(): array
     {
-        $result = [];
-        $elementCount = $this->elementCount;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $$(expand(
-                $$(expand(__get_value($this, primary, $getIteratorIndex, $element)))
-            ));
-            $result[] = $element;
-        }
-        return $result;
+        return \iterator_to_array($this);
     }
 }

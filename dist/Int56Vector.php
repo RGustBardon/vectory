@@ -137,18 +137,7 @@ class Int56Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $result = [];
-        $elementCount = $this->elementCount;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = \substr($this->primarySource, $getIteratorIndex * 7, 7);
-            $element = \unpack('P', $packedInteger."\0")[1];
-            if ($element > 36028797018963967) {
-                $element = 36028797018963967 - $element;
-            }
-            $result[] = $element;
-        }
-
-        return $result;
+        return \iterator_to_array($this);
     }
 
     public function serialize(): string

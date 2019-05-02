@@ -175,17 +175,7 @@ class BoolVector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $result = [];
-        $elementCount = $this->elementCount;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
-            $byteIndex = $getIteratorIndex >> 3;
-            $element = $this->primarySource[$byteIndex];
-            $element = "\0" !== ($element & $mask[$getIteratorIndex & 7]);
-            $result[] = $element;
-        }
-
-        return $result;
+        return \iterator_to_array($this);
     }
 
     public function serialize(): string

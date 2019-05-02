@@ -132,15 +132,7 @@ class Uint32Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $result = [];
-        $elementCount = $this->elementCount;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            $packedInteger = \substr($this->primarySource, $getIteratorIndex * 4, 4);
-            $element = \unpack('V', $packedInteger)[1];
-            $result[] = $element;
-        }
-
-        return $result;
+        return \iterator_to_array($this);
     }
 
     public function serialize(): string
