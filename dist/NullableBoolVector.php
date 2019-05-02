@@ -208,23 +208,23 @@ class NullableBoolVector implements VectorInterface
         $elementCount = $this->elementCount;
         $nullabilitySource = $this->nullabilitySource;
         $primarySource = $this->primarySource;
-        for ($bitIndex = 0, $byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
+        for ($byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
             $primaryByte = $primarySource[$byteIndex];
             $nullabilityByte = $nullabilitySource[$byteIndex];
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\1") ? "\0" !== ($primaryByte & "\1") : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\2") ? "\0" !== ($primaryByte & "\2") : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\4") ? "\0" !== ($primaryByte & "\4") : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\10") ? "\0" !== ($primaryByte & "\10") : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\20") ? "\0" !== ($primaryByte & "\20") : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & ' ') ? "\0" !== ($primaryByte & ' ') : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & '@') ? "\0" !== ($primaryByte & '@') : null);
-            (yield $bitIndex++ => "\0" === ($nullabilityByte & "\200") ? "\0" !== ($primaryByte & "\200") : null);
+            (yield "\0" === ($nullabilityByte & "\1") ? "\0" !== ($primaryByte & "\1") : null);
+            (yield "\0" === ($nullabilityByte & "\2") ? "\0" !== ($primaryByte & "\2") : null);
+            (yield "\0" === ($nullabilityByte & "\4") ? "\0" !== ($primaryByte & "\4") : null);
+            (yield "\0" === ($nullabilityByte & "\10") ? "\0" !== ($primaryByte & "\10") : null);
+            (yield "\0" === ($nullabilityByte & "\20") ? "\0" !== ($primaryByte & "\20") : null);
+            (yield "\0" === ($nullabilityByte & ' ') ? "\0" !== ($primaryByte & ' ') : null);
+            (yield "\0" === ($nullabilityByte & '@') ? "\0" !== ($primaryByte & '@') : null);
+            (yield "\0" === ($nullabilityByte & "\200") ? "\0" !== ($primaryByte & "\200") : null);
         }
         if ($lastByteIndex >= 0) {
             $primaryByte = $primarySource[$lastByteIndex];
             $nullabilityByte = $nullabilitySource[$lastByteIndex];
-            for ($bit = 0, $bitCount = $elementCount; $bitIndex < $bitCount; ++$bitIndex, ++$bit) {
-                (yield $bitIndex => "\0" === ($nullabilityByte & $mask[$bit]) ? "\0" !== ($primaryByte & $mask[$bit]) : null);
+            for ($bit = 0, $bitIndex = $lastByteIndex << 3; $bitIndex < $elementCount; ++$bitIndex, ++$bit) {
+                (yield "\0" === ($nullabilityByte & $mask[$bit]) ? "\0" !== ($primaryByte & $mask[$bit]) : null);
             }
         }
     }

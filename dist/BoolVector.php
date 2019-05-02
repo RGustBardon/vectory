@@ -155,20 +155,20 @@ class BoolVector implements VectorInterface
         static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
-        for ($bitIndex = 0, $byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
+        for ($byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
             $byte = $primarySource[$byteIndex];
-            (yield $bitIndex++ => "\0" !== ($byte & "\1"));
-            (yield $bitIndex++ => "\0" !== ($byte & "\2"));
-            (yield $bitIndex++ => "\0" !== ($byte & "\4"));
-            (yield $bitIndex++ => "\0" !== ($byte & "\10"));
-            (yield $bitIndex++ => "\0" !== ($byte & "\20"));
-            (yield $bitIndex++ => "\0" !== ($byte & ' '));
-            (yield $bitIndex++ => "\0" !== ($byte & '@'));
-            (yield $bitIndex++ => "\0" !== ($byte & "\200"));
+            (yield "\0" !== ($byte & "\1"));
+            (yield "\0" !== ($byte & "\2"));
+            (yield "\0" !== ($byte & "\4"));
+            (yield "\0" !== ($byte & "\10"));
+            (yield "\0" !== ($byte & "\20"));
+            (yield "\0" !== ($byte & ' '));
+            (yield "\0" !== ($byte & '@'));
+            (yield "\0" !== ($byte & "\200"));
         }
         if ($lastByteIndex >= 0) {
-            for ($bit = 0, $byte = $primarySource[$lastByteIndex], $bitCount = $elementCount; $bitIndex < $bitCount; ++$bitIndex, ++$bit) {
-                (yield $bitIndex => "\0" !== ($byte & $mask[$bit]));
+            for ($bit = 0, $byte = $primarySource[$lastByteIndex], $bitIndex = $lastByteIndex << 3; $bitIndex < $elementCount; ++$bitIndex, ++$bit) {
+                (yield "\0" !== ($byte & $mask[$bit]));
             }
         }
     }

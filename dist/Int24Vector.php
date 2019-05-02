@@ -130,8 +130,8 @@ class Int24Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $index => $element) {
-            (yield $index - 1 => $element > 8388607 ? 8388607 - $element : $element);
+        foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $element) {
+            (yield $element > 8388607 ? 8388607 - $element : $element);
         }
     }
 

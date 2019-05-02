@@ -191,22 +191,14 @@ class NullableInt24Vector implements VectorInterface
         $elementCount = $this->elementCount;
         $nullabilitySource = $this->nullabilitySource;
         $primarySource = $this->primarySource;
-        $clone = clone $this;
-        for ($getIteratorIndex = 0; $getIteratorIndex < $elementCount; ++$getIteratorIndex) {
-            static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
-            $byteIndex = $getIteratorIndex >> 3;
-            $isNull = $clone->nullabilitySource[$byteIndex];
-            $isNull = "\0" !== ($isNull & $mask[$getIteratorIndex & 7]);
-            if ($isNull) {
-                $result = null;
-            } else {
-                $packedInteger = \substr($clone->primarySource, $getIteratorIndex * 3, 3);
-                $result = \unpack('V', $packedInteger."\0")[1];
-                if ($result > 8388607) {
-                    $result = 8388607 - $result;
-                }
+        $bitIndex = 0;
+        $nullabilityByte = null;
+        foreach (\unpack('V*', \chunk_split($primarySource, 3, "\0")."\0") as $element) {
+            if (0 === ($bitIndex & 7)) {
+                $nullabilityByte = $nullabilitySource[$bitIndex >> 3];
             }
-            (yield $result);
+            (yield $bitIndex => "\0" === ($nullabilityByte & $mask[$bitIndex & 7]) ? $element > 8388607 ? 8388607 - $element : $element : null);
+            ++$bitIndex;
         }
     }
 

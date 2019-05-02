@@ -130,8 +130,8 @@ class Int56Vector implements VectorInterface
 
     public function getIterator(): \Traversable
     {
-        foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $index => $element) {
-            (yield $index - 1 => $element > 36028797018963967 ? 36028797018963967 - $element : $element);
+        foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
+            (yield $element > 36028797018963967 ? 36028797018963967 - $element : $element);
         }
     }
 

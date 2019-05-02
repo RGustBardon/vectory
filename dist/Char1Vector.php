@@ -121,7 +121,7 @@ class Char1Vector implements VectorInterface
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
         for ($i = 0; $i < $elementCount; ++$i) {
-            (yield $i => $primarySource[$i]);
+            (yield $primarySource[$i]);
         }
     }
 
