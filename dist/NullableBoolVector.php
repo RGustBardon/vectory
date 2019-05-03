@@ -231,7 +231,32 @@ class NullableBoolVector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
+        $elementCount = $this->elementCount;
+        $nullabilitySource = $this->nullabilitySource;
+        $primarySource = $this->primarySource;
+        for ($byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
+            $primaryByte = $primarySource[$byteIndex];
+            $nullabilityByte = $nullabilitySource[$byteIndex];
+            $jsonData[] = "\0" === ($nullabilityByte & "\1") ? "\0" !== ($primaryByte & "\1") : null;
+            $jsonData[] = "\0" === ($nullabilityByte & "\2") ? "\0" !== ($primaryByte & "\2") : null;
+            $jsonData[] = "\0" === ($nullabilityByte & "\4") ? "\0" !== ($primaryByte & "\4") : null;
+            $jsonData[] = "\0" === ($nullabilityByte & "\10") ? "\0" !== ($primaryByte & "\10") : null;
+            $jsonData[] = "\0" === ($nullabilityByte & "\20") ? "\0" !== ($primaryByte & "\20") : null;
+            $jsonData[] = "\0" === ($nullabilityByte & ' ') ? "\0" !== ($primaryByte & ' ') : null;
+            $jsonData[] = "\0" === ($nullabilityByte & '@') ? "\0" !== ($primaryByte & '@') : null;
+            $jsonData[] = "\0" === ($nullabilityByte & "\200") ? "\0" !== ($primaryByte & "\200") : null;
+        }
+        if ($lastByteIndex >= 0) {
+            $primaryByte = $primarySource[$lastByteIndex];
+            $nullabilityByte = $nullabilitySource[$lastByteIndex];
+            for ($bit = 0, $bitIndex = $lastByteIndex << 3; $bitIndex < $elementCount; ++$bitIndex, ++$bit) {
+                $jsonData[] = "\0" === ($nullabilityByte & $mask[$bit]) ? "\0" !== ($primaryByte & $mask[$bit]) : null;
+            }
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

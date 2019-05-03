@@ -212,7 +212,37 @@ class NullableChar4Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
+        $elementCount = $this->elementCount;
+        $nullabilitySource = $this->nullabilitySource;
+        $primarySource = $this->primarySource;
+        for ($index = 0, $lastIndex = $elementCount & ~7; $index < $lastIndex;) {
+            $batchSize = \min(256, $lastIndex - $index);
+            $nullabilityBatch = \substr($nullabilitySource, $index >> 3, $batchSize >> 3);
+            $primaryBatch = \str_split(\substr($primarySource, $index * 4, $batchSize * 4), 4);
+            for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
+                $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
+                $jsonData[] = "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & "\2") ? $primaryBatch[$batchIndex + 1] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & "\4") ? $primaryBatch[$batchIndex + 2] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & "\10") ? $primaryBatch[$batchIndex + 3] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & "\20") ? $primaryBatch[$batchIndex + 4] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & ' ') ? $primaryBatch[$batchIndex + 5] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & '@') ? $primaryBatch[$batchIndex + 6] : null;
+                $jsonData[] = "\0" === ($nullabilityByte & "\200") ? $primaryBatch[$batchIndex + 7] : null;
+            }
+            $index += $batchSize;
+        }
+        for (; $index < $elementCount; ++$index) {
+            if ("\0" === ($nullabilitySource[$index >> 3] & $mask[$index & 7])) {
+                $jsonData[] = \substr($primarySource, $index * 4, 4);
+            } else {
+                $jsonData[] = null;
+            }
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

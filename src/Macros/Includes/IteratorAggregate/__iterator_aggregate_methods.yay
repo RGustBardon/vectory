@@ -1,34 +1,6 @@
 <?php
 
 $(macro :unsafe) {
-    __iterate_over_nullable_signed_integer($(layer() as unpackedElements))
-    $(optional(token(';')))
-} >> {
-    foreach ($(unpackedElements) as $element) {
-        if (0 === ($bitIndex & 7)) {
-            $nullabilityByte = $nullabilitySource[$bitIndex >> 3];
-        }
-        yield $bitIndex => ("\x0" === ($nullabilityByte & $mask[$bitIndex & 7])) ? (
-            $element > $[MaximumValue] ? $[MaximumValue] - $element : $element
-        ) : null;
-        ++$bitIndex;
-    }
-}
-
-$(macro :unsafe) {
-    __do_iterate_nullable_unsigned_integer($(layer() as unpackedElements))
-    $(optional(token(';')))
-} >> {
-    foreach ($(unpackedElements) as $element) {
-        if (0 === ($bitIndex & 7)) {
-            $nullabilityByte = $nullabilitySource[$bitIndex >> 3];
-        }
-        yield $bitIndex => ("\x0" === ($nullabilityByte & $mask[$bitIndex & 7])) ? $element : null;
-        ++$bitIndex;
-    }
-}    
-
-$(macro :unsafe) {
     __iterator_aggregate_methods()
 } >> {
     public function getIterator(): \Traversable

@@ -129,7 +129,12 @@ class Int8Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        foreach (\unpack('c*', $this->primarySource) as $element) {
+            $jsonData[] = $element;
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

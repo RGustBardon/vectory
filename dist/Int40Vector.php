@@ -137,7 +137,12 @@ class Int40Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        foreach (\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0") as $element) {
+            $jsonData[] = $element > 549755813887 ? 549755813887 - $element : $element;
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

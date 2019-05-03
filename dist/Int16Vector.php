@@ -133,7 +133,12 @@ class Int16Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        foreach (\unpack('s*', $this->primarySource) as $element) {
+            $jsonData[] = $element;
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

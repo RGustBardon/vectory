@@ -204,7 +204,22 @@ class NullableInt56Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
+        $elementCount = $this->elementCount;
+        $nullabilitySource = $this->nullabilitySource;
+        $primarySource = $this->primarySource;
+        $bitIndex = 0;
+        $nullabilityByte = null;
+        foreach (\unpack('P*', \chunk_split($primarySource, 7, "\0")."\0") as $element) {
+            if (0 === ($bitIndex & 7)) {
+                $nullabilityByte = $nullabilitySource[$bitIndex >> 3];
+            }
+            $jsonData[] = "\0" === ($nullabilityByte & $mask[$bitIndex & 7]) ? $element > 36028797018963967 ? 36028797018963967 - $element : $element : null;
+            ++$bitIndex;
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

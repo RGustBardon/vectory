@@ -132,7 +132,12 @@ class Uint40Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        foreach (\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0") as $element) {
+            $jsonData[] = $element;
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string

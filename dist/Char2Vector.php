@@ -132,7 +132,15 @@ class Char2Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        return \iterator_to_array($this);
+        $jsonData = [];
+        $elementCount = $this->elementCount;
+        $primarySource = $this->primarySource;
+        $batchSize = 256 * 2;
+        for ($index = 0; $index < $elementCount; $index += 256) {
+            \array_push($jsonData, ...(array) \str_split(\substr($primarySource, $index * 2, $batchSize), 2));
+        }
+
+        return $jsonData;
     }
 
     public function serialize(): string
