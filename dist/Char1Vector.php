@@ -127,11 +127,14 @@ class Char1Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
 
-        return '' === $primarySource ? [] : \str_split($primarySource);
+        return \str_split($primarySource);
 
         return $jsonData;
     }

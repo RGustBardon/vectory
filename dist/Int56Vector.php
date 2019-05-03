@@ -137,6 +137,9 @@ class Int56Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
             $jsonData[] = $element > 36028797018963967 ? 36028797018963967 - $element : $element;

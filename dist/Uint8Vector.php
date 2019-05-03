@@ -128,10 +128,11 @@ class Uint8Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $jsonData = [];
-        foreach (\unpack('C*', $this->primarySource) as $element) {
-            $jsonData[] = $element;
+        if ('' === $this->primarySource) {
+            return [];
         }
+        $jsonData = [];
+        \array_push($jsonData, ...\unpack('C*', $this->primarySource));
 
         return $jsonData;
     }

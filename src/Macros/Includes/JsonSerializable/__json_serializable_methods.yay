@@ -5,6 +5,10 @@ $(macro :unsafe) {
 } >> {
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
+
         $jsonData = [];
 
         $<Nullable>{
@@ -20,14 +24,17 @@ $(macro :unsafe) {
                 ) {
                     $primaryByte = $primarySource[$byteIndex];
                     $nullabilityByte = $nullabilitySource[$byteIndex];
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x01")) ? ("\x0" !== ($primaryByte & "\x01")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x02")) ? ("\x0" !== ($primaryByte & "\x02")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x04")) ? ("\x0" !== ($primaryByte & "\x04")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x08")) ? ("\x0" !== ($primaryByte & "\x08")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x10")) ? ("\x0" !== ($primaryByte & "\x10")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x20")) ? ("\x0" !== ($primaryByte & "\x20")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x40")) ? ("\x0" !== ($primaryByte & "\x40")) : null;
-                    $jsonData[] = ("\x0" === ($nullabilityByte & "\x80")) ? ("\x0" !== ($primaryByte & "\x80")) : null;
+                    \array_push(
+                        $jsonData,
+                        ("\x0" === ($nullabilityByte & "\x01")) ? ("\x0" !== ($primaryByte & "\x01")) : null,
+                        ("\x0" === ($nullabilityByte & "\x02")) ? ("\x0" !== ($primaryByte & "\x02")) : null,
+                        ("\x0" === ($nullabilityByte & "\x04")) ? ("\x0" !== ($primaryByte & "\x04")) : null,
+                        ("\x0" === ($nullabilityByte & "\x08")) ? ("\x0" !== ($primaryByte & "\x08")) : null,
+                        ("\x0" === ($nullabilityByte & "\x10")) ? ("\x0" !== ($primaryByte & "\x10")) : null,
+                        ("\x0" === ($nullabilityByte & "\x20")) ? ("\x0" !== ($primaryByte & "\x20")) : null,
+                        ("\x0" === ($nullabilityByte & "\x40")) ? ("\x0" !== ($primaryByte & "\x40")) : null,
+                        ("\x0" === ($nullabilityByte & "\x80")) ? ("\x0" !== ($primaryByte & "\x80")) : null
+                    );
                 }
                 
                 if ($lastByteIndex >= 0) {
@@ -108,14 +115,17 @@ $(macro :unsafe) {
                     
                     for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
                         $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x01")) ? $primaryBatch[$batchIndex] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x02")) ? $primaryBatch[$batchIndex + 1] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x04")) ? $primaryBatch[$batchIndex + 2] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x08")) ? $primaryBatch[$batchIndex + 3] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x10")) ? $primaryBatch[$batchIndex + 4] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x20")) ? $primaryBatch[$batchIndex + 5] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x40")) ? $primaryBatch[$batchIndex + 6] : null;
-                        $jsonData[] = ("\x0" === ($nullabilityByte & "\x80")) ? $primaryBatch[$batchIndex + 7] : null;
+                        \array_push(
+                            $jsonData,
+                            ("\x0" === ($nullabilityByte & "\x01")) ? $primaryBatch[$batchIndex] : null,
+                            ("\x0" === ($nullabilityByte & "\x02")) ? $primaryBatch[$batchIndex + 1] : null,
+                            ("\x0" === ($nullabilityByte & "\x04")) ? $primaryBatch[$batchIndex + 2] : null,
+                            ("\x0" === ($nullabilityByte & "\x08")) ? $primaryBatch[$batchIndex + 3] : null,
+                            ("\x0" === ($nullabilityByte & "\x10")) ? $primaryBatch[$batchIndex + 4] : null,
+                            ("\x0" === ($nullabilityByte & "\x20")) ? $primaryBatch[$batchIndex + 5] : null,
+                            ("\x0" === ($nullabilityByte & "\x40")) ? $primaryBatch[$batchIndex + 6] : null,
+                            ("\x0" === ($nullabilityByte & "\x80")) ? $primaryBatch[$batchIndex + 7] : null
+                        );
                     }
                     $index += $batchSize;
                 }
@@ -146,14 +156,17 @@ $(macro :unsafe) {
                     ++$byteIndex
                 ) {
                     $byte = $primarySource[$byteIndex];
-                    $jsonData[] = "\x0" !== ($byte & "\x01");
-                    $jsonData[] = "\x0" !== ($byte & "\x02");
-                    $jsonData[] = "\x0" !== ($byte & "\x04");
-                    $jsonData[] = "\x0" !== ($byte & "\x08");
-                    $jsonData[] = "\x0" !== ($byte & "\x10");
-                    $jsonData[] = "\x0" !== ($byte & "\x20");
-                    $jsonData[] = "\x0" !== ($byte & "\x40");
-                    $jsonData[] = "\x0" !== ($byte & "\x80");
+                    \array_push(
+                        $jsonData,
+                        "\x0" !== ($byte & "\x01"),
+                        "\x0" !== ($byte & "\x02"),
+                        "\x0" !== ($byte & "\x04"),
+                        "\x0" !== ($byte & "\x08"),
+                        "\x0" !== ($byte & "\x10"),
+                        "\x0" !== ($byte & "\x20"),
+                        "\x0" !== ($byte & "\x40"),
+                        "\x0" !== ($byte & "\x80")
+                    );
                 }
                 
                 if ($lastByteIndex >= 0) {
@@ -166,28 +179,20 @@ $(macro :unsafe) {
                 $<Takes1>{
                     $$(expand(
                         $<Signed>{
-                            foreach (\unpack('c*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('c*', $this->primarySource));
                         }
                         $<!Signed>{
-                            foreach (\unpack('C*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('C*', $this->primarySource));
                         }
                     ))
                 }
                 $<Takes2>{
                     $$(expand(
                         $<Signed>{
-                            foreach (\unpack('s*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('s*', $this->primarySource));
                         }
                         $<!Signed>{
-                            foreach (\unpack('v*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('v*', $this->primarySource));
                         }
                     ))
                 }
@@ -199,23 +204,17 @@ $(macro :unsafe) {
                             }
                         }
                         $<!Signed>{
-                            foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0"));
                         }
                     ))
                 }
                 $<Takes4>{
                     $$(expand(
                         $<Signed>{
-                            foreach (\unpack('l*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('l*', $this->primarySource));
                         }
                         $<!Signed>{
-                            foreach (\unpack('V*', $this->primarySource) as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('V*', $this->primarySource));
                         }
                     ))
                 }
@@ -227,9 +226,7 @@ $(macro :unsafe) {
                             }
                         }
                         $<!Signed>{
-                            foreach (\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0") as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('P*', \chunk_split($this->primarySource, 5, "\0\0\0")."\0\0\0"));
                         }
                     ))
                 }
@@ -241,9 +238,7 @@ $(macro :unsafe) {
                             }
                         }
                         $<!Signed>{
-                            foreach (\unpack('P*', \chunk_split($this->primarySource, 6, "\0\0")."\0\0") as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('P*', \chunk_split($this->primarySource, 6, "\0\0")."\0\0"));
                         }
                     ))
                 }
@@ -255,16 +250,12 @@ $(macro :unsafe) {
                             }
                         }
                         $<!Signed>{
-                            foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
-                                $jsonData[] = $element;
-                            }
+                            \array_push($jsonData, ...\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0"));
                         }
                     ))
                 }
                 $<Takes8>{
-                    foreach (\unpack('q*', $this->primarySource) as $element) {
-                        $jsonData[] = $element;
-                    }
+                    \array_push($jsonData, ...\unpack('q*', $this->primarySource));
                 }
             }
             $<String>{
@@ -272,7 +263,7 @@ $(macro :unsafe) {
                 $primarySource = $this->primarySource;
                 
                 $<Takes1>{
-                    return '' === $primarySource ? [] : \str_split($primarySource);
+                    return \str_split($primarySource);
                 }
                 $<!Takes1>{
                     $batchSize = 256 * $[BytesPerElement];

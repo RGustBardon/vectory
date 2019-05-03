@@ -133,10 +133,11 @@ class Int32Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $jsonData = [];
-        foreach (\unpack('l*', $this->primarySource) as $element) {
-            $jsonData[] = $element;
+        if ('' === $this->primarySource) {
+            return [];
         }
+        $jsonData = [];
+        \array_push($jsonData, ...\unpack('l*', $this->primarySource));
 
         return $jsonData;
     }

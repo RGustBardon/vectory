@@ -175,20 +175,16 @@ class BoolVector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
         for ($byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
             $byte = $primarySource[$byteIndex];
-            $jsonData[] = "\0" !== ($byte & "\1");
-            $jsonData[] = "\0" !== ($byte & "\2");
-            $jsonData[] = "\0" !== ($byte & "\4");
-            $jsonData[] = "\0" !== ($byte & "\10");
-            $jsonData[] = "\0" !== ($byte & "\20");
-            $jsonData[] = "\0" !== ($byte & ' ');
-            $jsonData[] = "\0" !== ($byte & '@');
-            $jsonData[] = "\0" !== ($byte & "\200");
+            \array_push($jsonData, "\0" !== ($byte & "\1"), "\0" !== ($byte & "\2"), "\0" !== ($byte & "\4"), "\0" !== ($byte & "\10"), "\0" !== ($byte & "\20"), "\0" !== ($byte & ' '), "\0" !== ($byte & '@'), "\0" !== ($byte & "\200"));
         }
         if ($lastByteIndex >= 0) {
             for ($bit = 0, $byte = $primarySource[$lastByteIndex], $bitIndex = $lastByteIndex << 3; $bitIndex < $elementCount; ++$bitIndex, ++$bit) {

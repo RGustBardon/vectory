@@ -208,6 +208,9 @@ class NullableChar1Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
@@ -219,14 +222,7 @@ class NullableChar1Vector implements VectorInterface
             $primaryBatch = \substr($primarySource, $index, $batchSize);
             for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
                 $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
-                $jsonData[] = "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & "\2") ? $primaryBatch[$batchIndex + 1] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & "\4") ? $primaryBatch[$batchIndex + 2] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & "\10") ? $primaryBatch[$batchIndex + 3] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & "\20") ? $primaryBatch[$batchIndex + 4] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & ' ') ? $primaryBatch[$batchIndex + 5] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & '@') ? $primaryBatch[$batchIndex + 6] : null;
-                $jsonData[] = "\0" === ($nullabilityByte & "\200") ? $primaryBatch[$batchIndex + 7] : null;
+                \array_push($jsonData, "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null, "\0" === ($nullabilityByte & "\2") ? $primaryBatch[$batchIndex + 1] : null, "\0" === ($nullabilityByte & "\4") ? $primaryBatch[$batchIndex + 2] : null, "\0" === ($nullabilityByte & "\10") ? $primaryBatch[$batchIndex + 3] : null, "\0" === ($nullabilityByte & "\20") ? $primaryBatch[$batchIndex + 4] : null, "\0" === ($nullabilityByte & ' ') ? $primaryBatch[$batchIndex + 5] : null, "\0" === ($nullabilityByte & '@') ? $primaryBatch[$batchIndex + 6] : null, "\0" === ($nullabilityByte & "\200") ? $primaryBatch[$batchIndex + 7] : null);
             }
             $index += $batchSize;
         }

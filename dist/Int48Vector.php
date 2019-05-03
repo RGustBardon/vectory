@@ -137,6 +137,9 @@ class Int48Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         foreach (\unpack('P*', \chunk_split($this->primarySource, 6, "\0\0")."\0\0") as $element) {
             $jsonData[] = $element > 140737488355327 ? 140737488355327 - $element : $element;

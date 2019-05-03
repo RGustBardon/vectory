@@ -132,6 +132,9 @@ class Char4Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;

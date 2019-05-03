@@ -196,6 +196,9 @@ class NullableUint8Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;

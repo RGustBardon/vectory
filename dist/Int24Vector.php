@@ -137,6 +137,9 @@ class Int24Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         foreach (\unpack('V*', \chunk_split($this->primarySource, 3, "\0")."\0") as $element) {
             $jsonData[] = $element > 8388607 ? 8388607 - $element : $element;

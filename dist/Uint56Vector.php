@@ -132,10 +132,11 @@ class Uint56Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        $jsonData = [];
-        foreach (\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0") as $element) {
-            $jsonData[] = $element;
+        if ('' === $this->primarySource) {
+            return [];
         }
+        $jsonData = [];
+        \array_push($jsonData, ...\unpack('P*', \chunk_split($this->primarySource, 7, "\0")."\0"));
 
         return $jsonData;
     }

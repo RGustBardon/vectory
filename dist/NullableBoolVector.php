@@ -231,6 +231,9 @@ class NullableBoolVector implements VectorInterface
 
     public function jsonSerialize(): array
     {
+        if ('' === $this->primarySource) {
+            return [];
+        }
         $jsonData = [];
         static $mask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
         $elementCount = $this->elementCount;
@@ -239,14 +242,7 @@ class NullableBoolVector implements VectorInterface
         for ($byteIndex = 0, $lastByteIndex = ($elementCount + 7 >> 3) - 1; $byteIndex < $lastByteIndex; ++$byteIndex) {
             $primaryByte = $primarySource[$byteIndex];
             $nullabilityByte = $nullabilitySource[$byteIndex];
-            $jsonData[] = "\0" === ($nullabilityByte & "\1") ? "\0" !== ($primaryByte & "\1") : null;
-            $jsonData[] = "\0" === ($nullabilityByte & "\2") ? "\0" !== ($primaryByte & "\2") : null;
-            $jsonData[] = "\0" === ($nullabilityByte & "\4") ? "\0" !== ($primaryByte & "\4") : null;
-            $jsonData[] = "\0" === ($nullabilityByte & "\10") ? "\0" !== ($primaryByte & "\10") : null;
-            $jsonData[] = "\0" === ($nullabilityByte & "\20") ? "\0" !== ($primaryByte & "\20") : null;
-            $jsonData[] = "\0" === ($nullabilityByte & ' ') ? "\0" !== ($primaryByte & ' ') : null;
-            $jsonData[] = "\0" === ($nullabilityByte & '@') ? "\0" !== ($primaryByte & '@') : null;
-            $jsonData[] = "\0" === ($nullabilityByte & "\200") ? "\0" !== ($primaryByte & "\200") : null;
+            \array_push($jsonData, "\0" === ($nullabilityByte & "\1") ? "\0" !== ($primaryByte & "\1") : null, "\0" === ($nullabilityByte & "\2") ? "\0" !== ($primaryByte & "\2") : null, "\0" === ($nullabilityByte & "\4") ? "\0" !== ($primaryByte & "\4") : null, "\0" === ($nullabilityByte & "\10") ? "\0" !== ($primaryByte & "\10") : null, "\0" === ($nullabilityByte & "\20") ? "\0" !== ($primaryByte & "\20") : null, "\0" === ($nullabilityByte & ' ') ? "\0" !== ($primaryByte & ' ') : null, "\0" === ($nullabilityByte & '@') ? "\0" !== ($primaryByte & '@') : null, "\0" === ($nullabilityByte & "\200") ? "\0" !== ($primaryByte & "\200") : null);
         }
         if ($lastByteIndex >= 0) {
             $primaryByte = $primarySource[$lastByteIndex];
