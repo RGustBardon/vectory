@@ -20,21 +20,21 @@ $(macro :unsafe) {
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->vectorForArrayAccessOffsetGetRandomAccess[10000] = $[DefaultValue];
+        $this->vectorForArrayAccessOffsetGetRandomAccess[9999] = $[DefaultValue];
         
         $this->vectorForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->vectorForArrayAccessOffsetSetOverwriting[10000] = $[DefaultValue];
+        $this->vectorForArrayAccessOffsetSetOverwriting[9999] = $[DefaultValue];
         
         $this->vectorForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
 
         $this->vectorForArrayAccessOffsetSetPushingWithGap = self::getInstance();
 
         $this->vectorForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetPopping[10000] = $[DefaultValue];
+        $this->vectorForArrayAccessOffsetUnsetPopping[9999] = $[DefaultValue];
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
         
         $this->vectorForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetShifting[10000] = $[DefaultValue];
+        $this->vectorForArrayAccessOffsetUnsetShifting[9999] = $[DefaultValue];
     }
     
     /**
@@ -42,7 +42,8 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
-        $this->vectorForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        static $_;
+        $_ = $this->vectorForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
     }
     
     /**

@@ -46,6 +46,7 @@ final class Uint16VectorBench
         \error_reporting(\E_ALL);
         \ini_set('precision', '14');
         \ini_set('serialize_precision', '14');
+        \mt_srand(0);
         $this->setUpArrayAccessBenchmark();
         $this->setUpDeleteBenchmark();
         $this->setUpInsertBenchmark();
@@ -59,7 +60,8 @@ final class Uint16VectorBench
      */
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
-        $this->vectorForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        static $_;
+        $_ = $this->vectorForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
     }
 
     /**
@@ -178,16 +180,16 @@ final class Uint16VectorBench
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->vectorForArrayAccessOffsetGetRandomAccess[10000] = 0;
+        $this->vectorForArrayAccessOffsetGetRandomAccess[9999] = 0;
         $this->vectorForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->vectorForArrayAccessOffsetSetOverwriting[10000] = 0;
+        $this->vectorForArrayAccessOffsetSetOverwriting[9999] = 0;
         $this->vectorForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
         $this->vectorForArrayAccessOffsetSetPushingWithGap = self::getInstance();
         $this->vectorForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetPopping[10000] = 0;
+        $this->vectorForArrayAccessOffsetUnsetPopping[9999] = 0;
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
         $this->vectorForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetShifting[10000] = 0;
+        $this->vectorForArrayAccessOffsetUnsetShifting[9999] = 0;
     }
 
     private function setUpDeleteBenchmark(): void

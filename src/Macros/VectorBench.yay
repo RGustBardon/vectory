@@ -18,6 +18,8 @@ final class _
         \ini_set('precision', '14');
         \ini_set('serialize_precision', '14');
         
+        \mt_srand(0);
+        
         $this->setUpArrayAccessBenchmark();
         $this->setUpDeleteBenchmark();
         $this->setUpInsertBenchmark();

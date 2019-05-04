@@ -101,6 +101,11 @@ YAY;
         self::DIR_PHPBENCH,
     ];
 
+    private const CLEANING_BLACKLIST = [
+        'VectorInterface.php',
+        'ArrayBench.php',
+    ];
+
     private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
     private /* LoggerInterface */ $logger;
     private /* Parser */ $parser;
@@ -174,8 +179,10 @@ YAY;
     {
         foreach (self::TARGETS as $path) {
             $this->logger->debug('Cleaning '.\realpath($path));
-            foreach (self::generateFiles($path) as $pathname) {
-                \unlink($pathname);
+            foreach (self::generateFiles($path) as $filename => $pathname) {
+                if (!\in_array($filename, self::CLEANING_BLACKLIST, true)) {
+                    \unlink($pathname);
+                }
             }
         }
     }
