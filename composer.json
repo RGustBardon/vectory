@@ -58,6 +58,9 @@
         ],
         "bench": [
             "phpbench run tests/PhpBench"
+        ],
+        "calculate": [
+            "php bin/build -vvv calculate"
         ]
     }
 }

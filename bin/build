@@ -16,6 +16,7 @@ namespace Vectory;
 
 use Symfony\Component\Console\Application;
 use Vectory\Commands\BuildCommand;
+use Vectory\Commands\CalculateCommand;
 use Vectory\Factories\VectorDefinitionFactory;
 use Vectory\Services\VectorDefinitionGenerator;
 
@@ -25,9 +26,10 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 $vectorDefinitionFactory = new VectorDefinitionFactory();
 $vectorDefinitionGenerator = new VectorDefinitionGenerator($vectorDefinitionFactory);
-$command = new BuildCommand($vectorDefinitionGenerator);
+$buildCommand = new BuildCommand($vectorDefinitionGenerator);
 
 $application = new Application();
-$application->add($command);
-$application->setDefaultCommand($command->getName());
+$application->add(new CalculateCommand($vectorDefinitionGenerator));
+$application->add($buildCommand);
+$application->setDefaultCommand($buildCommand->getName());
 $application->run();
