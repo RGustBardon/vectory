@@ -104,6 +104,7 @@ YAY;
     private const CLEANING_BLACKLIST = [
         'VectorInterface.php',
         'ArrayBench.php',
+        'SplFixedArrayBench.php',
     ];
 
     private /* VectorDefinitionGeneratorInterface */ $vectorDefinitionGenerator;
