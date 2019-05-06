@@ -16,27 +16,32 @@ declare(strict_types=1);
 
 \gc_disable();
 
+\ini_set('memory_limit', '-1');
+
 if (4 !== $GLOBALS['argc'] || \array_intersect(['-h', '--help'], $GLOBALS['argv'])) {
     \fprintf(
         STDERR,
-        'usage: %s [data-structure-id] [serialized-value] [how-many]'.\PHP_EOL,
+        'usage: %s [data-structure-id] [benchmark-id] [how-many]'.\PHP_EOL,
         \basename(__FILE__)
     );
     exit(2);
 }
 
-(static function (string $dataStructureId, string $jsonValue, string $howMany): void {
+$calculate = static function (string $dataStructureId, string $benchmark, string $howMany): void {
     if (!\preg_match('~^(0|[1-9][0-9]*)$~', $howMany)) {
         \fwrite(STDERR, 'Invalid number of elements.'.\PHP_EOL);
         exit(1);
     }
     $howMany = (int) $howMany;
 
-    $value = \json_decode($jsonValue, true);
-    if (\JSON_ERROR_NONE !== \json_last_error()) {
-        \fwrite(STDERR, 'Invalid JSON value.'.\PHP_EOL);
+    $path = __DIR__.'/../tests/PhpBench/'.$benchmark.'.php';
+    if (!\preg_match('~^[\\\\A-z0-9]+$~', $benchmark) || !\file_exists($path)) {
+        \fwrite(STDERR, 'Invalid benchmark.'.\PHP_EOL);
         exit(1);
     }
+
+    require_once __DIR__.'/../Tests/PhpBench/'.$benchmark.'.php';
+    $benchmark = '\\Vectory\\Tests\\PhpBench\\'.$benchmark;
     
     switch ($dataStructureId) {
         case 'array':
@@ -69,21 +74,26 @@ if (4 !== $GLOBALS['argc'] || \array_intersect(['-h', '--help'], $GLOBALS['argv'
             break;
     }
     
-    for ($i = 0; $i <= 5; ++$i) {
-        if (5 === $i) {
-            $memoryUsageAfterWarmup = \memory_get_usage(true);
-            $elementCountAfterWarmup = \count($dataStructure);
-        }
-        $memoryUsageBeforeLoop = \memory_get_usage(true);
-        while (\memory_get_usage(true) === $memoryUsageBeforeLoop) {
+    \mt_srand(0);
+    $memoryAllocationGroups = [];
+    $elementCountDeltaBeforeLoop = 0;
+    $memoryUsageDeltaBeforeLoop = 0;
+    $maximumMemoryUsageDelta = 0;
+    
+    while (true) {
+        $elementCountBeforeLoop = \count($dataStructure);
+        $memoryUsageBeforeLoop = \memory_get_usage();
+        
+        while (\memory_get_usage() === $memoryUsageBeforeLoop) {
+            $value = $benchmark::getRandomValue();
             switch ($dataStructureId) {
                 case 'array':
                     $dataStructure[] = $value;
                     break;
                     
                 case \Ds\Deque::class;
-                    $dataStructure->push($value);
-                    break;
+                $dataStructure->push($value);
+                break;
                 
                 case \Ds\Vector::class:
                     $dataStructure->push($value);
@@ -99,15 +109,35 @@ if (4 !== $GLOBALS['argc'] || \array_intersect(['-h', '--help'], $GLOBALS['argv'
                     break;
             }
         }
+
+        $elementCountAfterLoop = \count($dataStructure);
+        $memoryUsageAfterLoop = \memory_get_usage();
+        
+        $elementCountDeltaAfterLoop = $elementCountAfterLoop - $elementCountBeforeLoop;
+        $memoryUsageDeltaAfterLoop = $memoryUsageAfterLoop - $memoryUsageBeforeLoop;
+        
+        if ($memoryUsageDeltaAfterLoop >= $maximumMemoryUsageDelta) {
+            $maximumMemoryUsageDelta = $memoryUsageDeltaAfterLoop;
+            $memoryAllocationGroups[] = [$elementCountDeltaAfterLoop, $memoryUsageDeltaAfterLoop];
+        } else {
+            $index = \count($memoryAllocationGroups) - 1;
+            $memoryAllocationGroups[$index][0] += $elementCountDeltaAfterLoop;
+            $memoryAllocationGroups[$index][1] += $memoryUsageDeltaAfterLoop;
+        }
+        $memoryUsageBeforeLoop = $memoryUsageAfterLoop;
+        $elementCountBeforeLoop = $elementCountAfterLoop;
+        $memoryUsageDeltaBeforeLoop = $memoryUsageDeltaAfterLoop;
+
+        if ($memoryUsageAfterLoop >= 512 * 1024 * 1024 || $elementCountAfterLoop >= 10000000) {
+            break;
+        }
     }
-    $memoryUsageAfterBenchmark = \memory_get_usage(true);
-    $elementCountAfterBenchmark = \count($dataStructure);
-    $result = ($howMany * ($memoryUsageAfterBenchmark - $memoryUsageAfterWarmup) /
-        ($elementCountAfterBenchmark - $elementCountAfterWarmup));
     
-    echo $result >= 1 ? \round($result, 0) : $result, \PHP_EOL;
-})(
-    $GLOBALS['argv'][1],
-    $GLOBALS['argv'][2],
-    $GLOBALS['argv'][3]
-);
+    $bytesPerElement =
+        \array_sum(\array_column($memoryAllocationGroups, 1)) /
+            \array_sum(\array_column($memoryAllocationGroups, 0));
+    
+    echo \number_format($bytesPerElement * $howMany, 3, '.', ''), \PHP_EOL;
+};
+
+$calculate(...\array_slice($GLOBALS['argv'], 1));

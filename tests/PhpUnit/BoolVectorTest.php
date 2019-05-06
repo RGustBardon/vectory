@@ -25,6 +25,11 @@ final class BoolVectorTest extends TestCase
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
 
+    public static function getRandomValue()
+    {
+        return [false, true][\mt_rand(0, 1)];
+    }
+
     public function testThrowsIfIndexRetrievedOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
@@ -514,11 +519,6 @@ final class BoolVectorTest extends TestCase
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\BoolVector();
-    }
-
-    private static function getRandomValue()
-    {
-        return [false, true][\mt_rand(0, 1)];
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

@@ -177,6 +177,16 @@ final class Uint48VectorBench
         \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Uint48Vector', '\\')]]);
     }
 
+    public static function getRandomValue()
+    {
+        $value = \dechex(\mt_rand(0x0, 0xff));
+        for ($i = 1; $i < 6; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+
+        return \hexdec($value);
+    }
+
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
@@ -232,15 +242,5 @@ final class Uint48VectorBench
     private static function getInstance(): \Vectory\VectorInterface
     {
         return new \Vectory\Uint48Vector();
-    }
-
-    private static function getRandomValue()
-    {
-        $value = \dechex(\mt_rand(0x0, 0xff));
-        for ($i = 1; $i < 6; ++$i) {
-            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
-        }
-
-        return \hexdec($value);
     }
 }

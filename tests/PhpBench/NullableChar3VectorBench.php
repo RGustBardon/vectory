@@ -177,6 +177,47 @@ final class NullableChar3VectorBench
         \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar3Vector', '\\')]]);
     }
 
+    public static function getRandomValue()
+    {
+        $value = '';
+        for ($i = 0; $i < 3; ++$i) {
+            $value .= \chr(\mt_rand(0x0, 0xff));
+        }
+
+        return $value;
+    }
+
+    public static function getRandomUtf8String(): string
+    {
+        \assert(0x10ffff <= \mt_getrandmax());
+        $string = '';
+        while (\strlen($string) < 3) {
+            $characterMaxLength = \min(4, 3 - \strlen($string));
+            $character = '';
+            switch (\mt_rand(1, $characterMaxLength)) {
+                case 1:
+                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
+
+                    break;
+                case 2:
+                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+
+                    break;
+                case 3:
+                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
+
+                    break;
+                case 4:
+                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+
+                    break;
+            }
+            $string .= $character;
+        }
+
+        return $string;
+    }
+
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
@@ -232,46 +273,5 @@ final class NullableChar3VectorBench
     private static function getInstance(): \Vectory\VectorInterface
     {
         return new \Vectory\NullableChar3Vector();
-    }
-
-    private static function getRandomValue()
-    {
-        $value = '';
-        for ($i = 0; $i < 3; ++$i) {
-            $value .= \chr(\mt_rand(0x0, 0xff));
-        }
-
-        return $value;
-    }
-
-    private static function getRandomUtf8String(): string
-    {
-        \assert(0x10ffff <= \mt_getrandmax());
-        $string = '';
-        while (\strlen($string) < 3) {
-            $characterMaxLength = \min(4, 3 - \strlen($string));
-            $character = '';
-            switch (\mt_rand(1, $characterMaxLength)) {
-                case 1:
-                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
-
-                    break;
-                case 2:
-                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
-
-                    break;
-                case 3:
-                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
-
-                    break;
-                case 4:
-                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
-
-                    break;
-            }
-            $string .= $character;
-        }
-
-        return $string;
     }
 }

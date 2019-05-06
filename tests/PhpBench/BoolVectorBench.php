@@ -177,6 +177,11 @@ final class BoolVectorBench
         \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\BoolVector', '\\')]]);
     }
 
+    public static function getRandomValue()
+    {
+        return [false, true][\mt_rand(0, 1)];
+    }
+
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
@@ -232,10 +237,5 @@ final class BoolVectorBench
     private static function getInstance(): \Vectory\VectorInterface
     {
         return new \Vectory\BoolVector();
-    }
-
-    private static function getRandomValue()
-    {
-        return [false, true][\mt_rand(0, 1)];
     }
 }

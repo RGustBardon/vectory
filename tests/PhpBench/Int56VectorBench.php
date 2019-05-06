@@ -177,6 +177,30 @@ final class Int56VectorBench
         \unserialize($this->serializedVectorForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Int56Vector', '\\')]]);
     }
 
+    public static function getRandomValue()
+    {
+        $positive = 0 === \mt_rand(0, 1);
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < 7; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+
+        return $positive ? $value : -$value;
+    }
+
+    public static function getRandomSignedInteger(bool $negative): int
+    {
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < 7; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+        $value = $negative ? $value < 0 ? -$value : -36028797018963968 : $value;
+
+        return (int) $value;
+    }
+
     private function setUpArrayAccessBenchmark(): void
     {
         $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
@@ -232,29 +256,5 @@ final class Int56VectorBench
     private static function getInstance(): \Vectory\VectorInterface
     {
         return new \Vectory\Int56Vector();
-    }
-
-    private static function getRandomValue()
-    {
-        $positive = 0 === \mt_rand(0, 1);
-        $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < 7; ++$i) {
-            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
-        }
-        $value = \hexdec($value);
-
-        return $positive ? $value : -$value;
-    }
-
-    private static function getRandomSignedInteger(bool $negative): int
-    {
-        $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < 7; ++$i) {
-            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
-        }
-        $value = \hexdec($value);
-        $value = $negative ? $value < 0 ? -$value : -36028797018963968 : $value;
-
-        return (int) $value;
     }
 }

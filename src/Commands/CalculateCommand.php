@@ -55,10 +55,11 @@ final class CalculateCommand extends Command
                 $command = [
                     __DIR__.'/../../bin/calculate',
                     $dataStructureId,
-                    \json_encode($vectorDefinition->getDefaultValue()),
+                    $vectorDefinition->getClassName().'Bench',
                     1,
                 ];
                 $process = new Process($command);
+                $process->setTimeout(3600);
                 $process->run();
                 if (!$process->isSuccessful()) {
                     throw new \RuntimeException(\trim($process->getErrorOutput()));

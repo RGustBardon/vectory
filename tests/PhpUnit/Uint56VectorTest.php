@@ -25,6 +25,16 @@ final class Uint56VectorTest extends TestCase
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = '0';
 
+    public static function getRandomValue()
+    {
+        $value = \dechex(\mt_rand(0x0, 0xff));
+        for ($i = 1; $i < 7; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+
+        return \hexdec($value);
+    }
+
     public function testThrowsIfIndexRetrievedOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
@@ -543,16 +553,6 @@ final class Uint56VectorTest extends TestCase
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\Uint56Vector();
-    }
-
-    private static function getRandomValue()
-    {
-        $value = \dechex(\mt_rand(0x0, 0xff));
-        for ($i = 1; $i < 7; ++$i) {
-            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
-        }
-
-        return \hexdec($value);
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

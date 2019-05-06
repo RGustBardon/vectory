@@ -25,6 +25,47 @@ final class Char1VectorTest extends TestCase
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
 
+    public static function getRandomValue()
+    {
+        $value = '';
+        for ($i = 0; $i < 1; ++$i) {
+            $value .= \chr(\mt_rand(0x0, 0xff));
+        }
+
+        return $value;
+    }
+
+    public static function getRandomUtf8String(): string
+    {
+        \assert(0x10ffff <= \mt_getrandmax());
+        $string = '';
+        while (\strlen($string) < 1) {
+            $characterMaxLength = \min(4, 1 - \strlen($string));
+            $character = '';
+            switch (\mt_rand(1, $characterMaxLength)) {
+                case 1:
+                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
+
+                    break;
+                case 2:
+                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+
+                    break;
+                case 3:
+                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
+
+                    break;
+                case 4:
+                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+
+                    break;
+            }
+            $string .= $character;
+        }
+
+        return $string;
+    }
+
     public function testThrowsIfIndexRetrievedOfInvalidType(): void
     {
         $this->expectException(\TypeError::class);
@@ -513,47 +554,6 @@ final class Char1VectorTest extends TestCase
     private static function getInstance(): VectorInterface
     {
         return new \Vectory\Char1Vector();
-    }
-
-    private static function getRandomValue()
-    {
-        $value = '';
-        for ($i = 0; $i < 1; ++$i) {
-            $value .= \chr(\mt_rand(0x0, 0xff));
-        }
-
-        return $value;
-    }
-
-    private static function getRandomUtf8String(): string
-    {
-        \assert(0x10ffff <= \mt_getrandmax());
-        $string = '';
-        while (\strlen($string) < 1) {
-            $characterMaxLength = \min(4, 1 - \strlen($string));
-            $character = '';
-            switch (\mt_rand(1, $characterMaxLength)) {
-                case 1:
-                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
-
-                    break;
-                case 2:
-                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
-
-                    break;
-                case 3:
-                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
-
-                    break;
-                case 4:
-                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
-
-                    break;
-            }
-            $string .= $character;
-        }
-
-        return $string;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void
