@@ -3,38 +3,38 @@
 $(macro :unsafe) {
     __array_access_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetGetRandomAccess;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetGetRandomAccess;
     
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetOverwriting;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetOverwriting;
     
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithoutGap;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithoutGap;
 
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetSetPushingWithGap;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithGap;
     private /* int */ $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
     
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetPopping;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetUnsetPopping;
     private /* int */ $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
     
-    private /* \Vectory\VectorInterface */ $vectorForArrayAccessOffsetUnsetShifting;
+    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetUnsetShifting;
     
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->vectorForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->vectorForArrayAccessOffsetGetRandomAccess[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance();
+        $this->instanceForArrayAccessOffsetGetRandomAccess[9999] = $[DefaultValue];
         
-        $this->vectorForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->vectorForArrayAccessOffsetSetOverwriting[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance();
+        $this->instanceForArrayAccessOffsetSetOverwriting[9999] = $[DefaultValue];
         
-        $this->vectorForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
 
-        $this->vectorForArrayAccessOffsetSetPushingWithGap = self::getInstance();
+        $this->instanceForArrayAccessOffsetSetPushingWithGap = self::getInstance();
 
-        $this->vectorForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetPopping[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance();
+        $this->instanceForArrayAccessOffsetUnsetPopping[9999] = $[DefaultValue];
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
         
-        $this->vectorForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->vectorForArrayAccessOffsetUnsetShifting[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance();
+        $this->instanceForArrayAccessOffsetUnsetShifting[9999] = $[DefaultValue];
     }
     
     /**
@@ -43,7 +43,7 @@ $(macro :unsafe) {
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
         static $_;
-        $_ = $this->vectorForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        $_ = $this->instanceForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
     }
     
     /**
@@ -51,7 +51,7 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->vectorForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = $[DefaultValue];
     }
     
     /**
@@ -59,7 +59,7 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->vectorForArrayAccessOffsetSetPushingWithoutGap[] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = $[DefaultValue];
     }
 
     /**
@@ -67,7 +67,7 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->vectorForArrayAccessOffsetSetPushingWithGap[
+        $this->instanceForArrayAccessOffsetSetPushingWithGap[
             $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100
         ] = $[DefaultValue];
     }
@@ -77,7 +77,7 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        unset($this->vectorForArrayAccessOffsetUnsetPopping[
+        unset($this->instanceForArrayAccessOffsetUnsetPopping[
             $this->lastIndexOfArrayAccessOffsetUnsetPopping--
         ]);
     }
@@ -87,6 +87,6 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetUnsetShifting(): void
     {
-        unset($this->vectorForArrayAccessOffsetUnsetShifting[0]);
+        unset($this->instanceForArrayAccessOffsetUnsetShifting[0]);
     }    
 }

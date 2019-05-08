@@ -3,12 +3,12 @@
 $(macro :unsafe) {
     __json_serializable_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $vectorForJsonSerializable;
+    private /* \Vectory\VectorInterface */ $instanceForJsonSerializable;
     
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->vectorForJsonSerializable = self::getInstance();
-        $this->vectorForJsonSerializable[10000] = $[DefaultValue];
+        $this->instanceForJsonSerializable = self::getInstance();
+        $this->instanceForJsonSerializable[10000] = $[DefaultValue];
     }
 
     /**
@@ -16,6 +16,6 @@ $(macro :unsafe) {
      */
     public function benchJsonSerializable(): void
     {
-        \json_encode($this->vectorForJsonSerializable);
+        \json_encode($this->instanceForJsonSerializable);
     }
 }

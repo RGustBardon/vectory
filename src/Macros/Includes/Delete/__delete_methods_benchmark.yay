@@ -3,17 +3,17 @@
 $(macro :unsafe) {
     __delete_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtHead;
+    private /* \Vectory\VectorInterface */ $instanceForDeleteAtHead;
     
-    private /* \Vectory\VectorInterface */ $vectorForDeleteAtTail;
+    private /* \Vectory\VectorInterface */ $instanceForDeleteAtTail;
     
     private function setUpDeleteBenchmark(): void
     {
-        $this->vectorForDeleteAtHead = self::getInstance();
-        $this->vectorForDeleteAtHead[10000] = $[DefaultValue];
+        $this->instanceForDeleteAtHead = self::getInstance();
+        $this->instanceForDeleteAtHead[10000] = $[DefaultValue];
         
-        $this->vectorForDeleteAtTail = self::getInstance();
-        $this->vectorForDeleteAtTail[10000] = $[DefaultValue];
+        $this->instanceForDeleteAtTail = self::getInstance();
+        $this->instanceForDeleteAtTail[10000] = $[DefaultValue];
     }
     
     /**
@@ -21,7 +21,7 @@ $(macro :unsafe) {
      */
     public function benchDeleteAtHead(): void
     {
-        $this->vectorForDeleteAtHead->delete(0, \mt_rand(0, 100));
+        $this->instanceForDeleteAtHead->delete(0, \mt_rand(0, 100));
     }
     
     /**
@@ -29,6 +29,6 @@ $(macro :unsafe) {
      */
     public function benchDeleteAtTail(): void
     {
-        $this->vectorForDeleteAtHead->delete(-\mt_rand(0, 100));
+        $this->instanceForDeleteAtHead->delete(-\mt_rand(0, 100));
     }
 }

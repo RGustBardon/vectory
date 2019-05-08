@@ -21,26 +21,26 @@ namespace Vectory\Tests\PhpBench;
 final class SplFixedArrayBench
 {
     private const INVALID_VALUE = 0;
-    private $splFixedArrayForArrayAccessOffsetGetRandomAccess;
-    private $splFixedArrayForArrayAccessOffsetSetOverwriting;
-    private $splFixedArrayForArrayAccessOffsetSetPushingWithoutGap;
+    private $instanceForArrayAccessOffsetGetRandomAccess;
+    private $instanceForArrayAccessOffsetSetOverwriting;
+    private $instanceForArrayAccessOffsetSetPushingWithoutGap;
     private $lastIndexOfArrayAccessOffsetSetPushingWithoutGap = 0;
-    private $splFixedArrayForArrayAccessOffsetSetPushingWithGap;
+    private $instanceForArrayAccessOffsetSetPushingWithGap;
     private $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
-    private $splFixedArrayForArrayAccessOffsetUnsetPopping;
+    private $instanceForArrayAccessOffsetUnsetPopping;
     private $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
-    private $splFixedArrayForArrayAccessOffsetUnsetShifting;
-    private $splFixedArrayForDeleteAtHead;
-    private $splFixedArrayForDeleteAtTail;
+    private $instanceForArrayAccessOffsetUnsetShifting;
+    private $instanceForDeleteAtHead;
+    private $instanceForDeleteAtTail;
     private $batchForInsert = [];
-    private $splFixedArrayForInsertAtHead;
-    private $splFixedArrayForInsertAtTail;
-    private $splFixedArrayForInsertUnshifting;
-    private $splFixedArrayForIteratorAggregate;
-    private $splFixedArrayForJsonSerializable;
-    private $splFixedArrayForSerializableSerialize;
-    private $serializedSplFixedArrayForSerializableUnserialize;
-    
+    private $instanceForInsertAtHead;
+    private $instanceForInsertAtTail;
+    private $instanceForInsertUnshifting;
+    private $instanceForIteratorAggregate;
+    private $instanceForJsonSerializable;
+    private $instanceForSerializableSerialize;
+    private $serializedInstanceForSerializableUnserialize;
+
     public function setUp(): void
     {
         \error_reporting(\E_ALL);
@@ -54,189 +54,185 @@ final class SplFixedArrayBench
         $this->setUpJsonSerializableBenchmark();
         $this->setUpSerializableBenchmark();
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
         static $_;
-        $_ = $this->splFixedArrayForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        $_ = $this->instanceForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->splFixedArrayForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithoutGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap + 1);
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithoutGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap++] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap + 1);
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap++] = false;
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
         $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100;
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithGap + 1);
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithGap + 1);
+        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap] = false;
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        $this->splFixedArrayForArrayAccessOffsetUnsetPopping->setSize($this->lastIndexOfArrayAccessOffsetUnsetPopping--);
+        $this->instanceForArrayAccessOffsetUnsetPopping->setSize($this->lastIndexOfArrayAccessOffsetUnsetPopping--);
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchArrayAccessOffsetUnsetShifting(): void
     {
-        $elements = $this->splFixedArrayForArrayAccessOffsetUnsetShifting->toArray();
+        $elements = $this->instanceForArrayAccessOffsetUnsetShifting->toArray();
         unset($elements[0]);
-        $this->splFixedArrayForArrayAccessOffsetUnsetShifting = \SplFixedArray::fromArray($elements, false);
+        $this->instanceForArrayAccessOffsetUnsetShifting = \SplFixedArray::fromArray($elements, false);
     }
-    
+
     /**
      * @Revs(100)
      */
     public function benchDeleteAtHead(): void
-    {   
-        $this->splFixedArrayForDeleteAtHead =
-            \SplFixedArray::fromArray(\array_slice($this->splFixedArrayForDeleteAtHead->toArray(), \mt_rand(1, 100)), false);
+    {
+        $this->instanceForDeleteAtHead = \SplFixedArray::fromArray(\array_slice($this->instanceForDeleteAtHead->toArray(), \mt_rand(1, 100)), false);
     }
-    
+
     /**
      * @Revs(100)
      */
     public function benchDeleteAtTail(): void
     {
-        $this->splFixedArrayForDeleteAtTail->setSize(\count($this->splFixedArrayForDeleteAtTail) -\mt_rand(1, 100));
+        $this->instanceForDeleteAtTail->setSize(\count($this->instanceForDeleteAtTail) - \mt_rand(1, 100));
     }
-    
+
     /**
      * @Revs(100)
      */
     public function benchInsertAtHead(): void
     {
         $insertedElements = $this->batchForInsert;
-        if (\count($this->splFixedArrayForInsertAtHead) > 0) {
-            \array_push($insertedElements, ...$this->splFixedArrayForInsertAtHead->toArray());
+        if (\count($this->instanceForInsertAtHead) > 0) {
+            \array_push($insertedElements, ...$this->instanceForInsertAtHead->toArray());
         }
-        $this->splFixedArrayForInsertAtHead = \SplFixedArray::fromArray($insertedElements, false);
+        $this->instanceForInsertAtHead = \SplFixedArray::fromArray($insertedElements, false);
     }
-    
+
     /**
      * @Revs(100)
      */
     public function benchInsertAtTail(): void
     {
-        $elementCount = \count($this->splFixedArrayForInsertAtTail);
-        $this->splFixedArrayForInsertAtTail->setSize($elementCount + \count($this->batchForInsert));
+        $elementCount = \count($this->instanceForInsertAtTail);
+        $this->instanceForInsertAtTail->setSize($elementCount + \count($this->batchForInsert));
         foreach ($this->batchForInsert as $element) {
-            $this->splFixedArrayForInsertAtTail[$elementCount++] = $element;
+            $this->instanceForInsertAtTail[$elementCount++] = $element;
         }
     }
-    
+
     /**
      * @Revs(10000)
      */
     public function benchInsertUnshifting(): void
     {
-        $elements = $this->splFixedArrayForInsertUnshifting->toArray();
+        $elements = $this->instanceForInsertUnshifting->toArray();
         \array_unshift($elements, false);
-        $this->splFixedArrayForInsertUnshifting = \SplFixedArray::fromArray($elements, false);
+        $this->instanceForInsertUnshifting = \SplFixedArray::fromArray($elements, false);
     }
-    
+
     /**
      * @Iterations(5)
      */
     public function benchIteratorAggregate(): void
     {
-        foreach ($this->splFixedArrayForIteratorAggregate as $element) {
+        foreach ($this->instanceForIteratorAggregate as $element) {
         }
     }
-    
+
     /**
      * @Iterations(5)
      */
     public function benchJsonSerializable(): void
     {
-        \json_encode($this->splFixedArrayForJsonSerializable);
+        \json_encode($this->instanceForJsonSerializable);
     }
-    
+
     /**
      * @Iterations(5)
      */
     public function benchSerializableSerialize(): void
     {
-        \serialize($this->splFixedArrayForSerializableSerialize);
+        \serialize($this->instanceForSerializableSerialize);
     }
-    
+
     /**
      * @Iterations(5)
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize(
-            $this->serializedSplFixedArrayForSerializableUnserialize,
-            ['allowed_classes' => [\SplFixedArray::class]]
-        )->__wakeup();
+        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\SplFixedArray::class]])->__wakeup();
     }
-    
+
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->splFixedArrayForArrayAccessOffsetGetRandomAccess = self::createFilledSplFixedArray();
-        $this->splFixedArrayForArrayAccessOffsetSetOverwriting = self::createFilledSplFixedArray();
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithoutGap = new \SplFixedArray();
-        $this->splFixedArrayForArrayAccessOffsetSetPushingWithGap = new \SplFixedArray();
-        $this->splFixedArrayForArrayAccessOffsetUnsetPopping = self::createFilledSplFixedArray();
+        $this->instanceForArrayAccessOffsetGetRandomAccess = self::createFilledSplFixedArray();
+        $this->instanceForArrayAccessOffsetSetOverwriting = self::createFilledSplFixedArray();
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap = new \SplFixedArray();
+        $this->instanceForArrayAccessOffsetSetPushingWithGap = new \SplFixedArray();
+        $this->instanceForArrayAccessOffsetUnsetPopping = self::createFilledSplFixedArray();
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-        $this->splFixedArrayForArrayAccessOffsetUnsetShifting = self::createFilledSplFixedArray();
+        $this->instanceForArrayAccessOffsetUnsetShifting = self::createFilledSplFixedArray();
     }
-    
+
     private function setUpDeleteBenchmark(): void
     {
-        $this->splFixedArrayForDeleteAtHead = self::createFilledSplFixedArray();
-        $this->splFixedArrayForDeleteAtTail = self::createFilledSplFixedArray();
+        $this->instanceForDeleteAtHead = self::createFilledSplFixedArray();
+        $this->instanceForDeleteAtTail = self::createFilledSplFixedArray();
     }
-    
+
     private function setUpInsertBenchmark(): void
     {
         $this->batchForInsert = \array_fill(0, 50, false);
-        $this->splFixedArrayForInsertAtHead = new \SplFixedArray();
-        $this->splFixedArrayForInsertAtTail = new \SplFixedArray();
-        $this->splFixedArrayForInsertUnshifting = new \SplFixedArray();
+        $this->instanceForInsertAtHead = new \SplFixedArray();
+        $this->instanceForInsertAtTail = new \SplFixedArray();
+        $this->instanceForInsertUnshifting = new \SplFixedArray();
     }
-    
+
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->splFixedArrayForIteratorAggregate = self::createFilledSplFixedArray();
+        $this->instanceForIteratorAggregate = self::createFilledSplFixedArray();
     }
-    
+
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->splFixedArrayForJsonSerializable = self::createFilledSplFixedArray();
+        $this->instanceForJsonSerializable = self::createFilledSplFixedArray();
     }
-    
+
     private function setUpSerializableBenchmark(): void
     {
-        $this->splFixedArrayForSerializableSerialize = self::createFilledSplFixedArray();
-        $this->serializedSplFixedArrayForSerializableUnserialize = \serialize(self::createFilledSplFixedArray());
+        $this->instanceForSerializableSerialize = self::createFilledSplFixedArray();
+        $this->serializedInstanceForSerializableUnserialize = \serialize(self::createFilledSplFixedArray());
     }
-    
+
     private static function createFilledSplFixedArray(): \SplFixedArray
     {
         $splFixedArray = new \SplFixedArray();
@@ -244,9 +240,10 @@ final class SplFixedArrayBench
         for ($i = 0; $i < 10000; ++$i) {
             $splFixedArray[$i] = false;
         }
+
         return $splFixedArray;
     }
-    
+
     private static function getRandomValue()
     {
         return [false, true][\mt_rand(0, 1)];

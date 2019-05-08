@@ -3,12 +3,12 @@
 $(macro :unsafe) {
     __iterator_aggregate_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $vectorForIteratorAggregate;
+    private /* \Vectory\VectorInterface */ $instanceForIteratorAggregate;
     
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->vectorForIteratorAggregate = self::getInstance();
-        $this->vectorForIteratorAggregate[10000] = $[DefaultValue];
+        $this->instanceForIteratorAggregate = self::getInstance();
+        $this->instanceForIteratorAggregate[10000] = $[DefaultValue];
     }
     
     /**
@@ -16,7 +16,7 @@ $(macro :unsafe) {
      */
     public function benchIteratorAggregate(): void
     {
-        foreach ($this->vectorForIteratorAggregate as $element) {
+        foreach ($this->instanceForIteratorAggregate as $element) {
         }
     }
 }

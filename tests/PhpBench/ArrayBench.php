@@ -21,24 +21,24 @@ namespace Vectory\Tests\PhpBench;
 final class ArrayBench
 {
     private const INVALID_VALUE = 0;
-    private $arrayForArrayAccessOffsetGetRandomAccess;
-    private $arrayForArrayAccessOffsetSetOverwriting;
-    private $arrayForArrayAccessOffsetSetPushingWithoutGap;
-    private $arrayForArrayAccessOffsetSetPushingWithGap;
+    private $instanceForArrayAccessOffsetGetRandomAccess;
+    private $instanceForArrayAccessOffsetSetOverwriting;
+    private $instanceForArrayAccessOffsetSetPushingWithoutGap;
+    private $instanceForArrayAccessOffsetSetPushingWithGap;
     private $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
-    private $arrayForArrayAccessOffsetUnsetPopping;
+    private $instanceForArrayAccessOffsetUnsetPopping;
     private $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
-    private $arrayForArrayAccessOffsetUnsetShifting;
-    private $arrayForDeleteAtHead;
-    private $arrayForDeleteAtTail;
+    private $instanceForArrayAccessOffsetUnsetShifting;
+    private $instanceForDeleteAtHead;
+    private $instanceForDeleteAtTail;
     private $batchForInsert = [];
-    private $arrayForInsertAtHead;
-    private $arrayForInsertAtTail;
-    private $arrayForInsertUnshifting;
-    private $arrayForIteratorAggregate;
-    private $arrayForJsonSerializable;
-    private $arrayForSerializableSerialize;
-    private $serializedarrayForSerializableUnserialize;
+    private $instanceForInsertAtHead;
+    private $instanceForInsertAtTail;
+    private $instanceForInsertUnshifting;
+    private $instanceForIteratorAggregate;
+    private $instanceForJsonSerializable;
+    private $instanceForSerializableSerialize;
+    private $serializedInstanceForSerializableUnserialize;
 
     public function setUp(): void
     {
@@ -60,7 +60,7 @@ final class ArrayBench
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
         static $_;
-        $_ = $this->arrayForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        $_ = $this->instanceForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
     }
 
     /**
@@ -68,7 +68,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->arrayForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
     }
 
     /**
@@ -76,7 +76,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->arrayForArrayAccessOffsetSetPushingWithoutGap[] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = false;
     }
 
     /**
@@ -84,7 +84,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->arrayForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = false;
     }
 
     /**
@@ -92,7 +92,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        unset($this->arrayForArrayAccessOffsetUnsetPopping[$this->lastIndexOfArrayAccessOffsetUnsetPopping--]);
+        unset($this->instanceForArrayAccessOffsetUnsetPopping[$this->lastIndexOfArrayAccessOffsetUnsetPopping--]);
     }
 
     /**
@@ -100,7 +100,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetUnsetShifting(): void
     {
-        unset($this->arrayForArrayAccessOffsetUnsetShifting[0]);
+        unset($this->instanceForArrayAccessOffsetUnsetShifting[0]);
     }
 
     /**
@@ -108,7 +108,7 @@ final class ArrayBench
      */
     public function benchDeleteAtHead(): void
     {
-        \array_splice($this->arrayForDeleteAtHead, 0, \mt_rand(1, 100));
+        \array_splice($this->instanceForDeleteAtHead, 0, \mt_rand(1, 100));
     }
 
     /**
@@ -116,7 +116,7 @@ final class ArrayBench
      */
     public function benchDeleteAtTail(): void
     {
-        \array_splice($this->arrayForDeleteAtTail, -\mt_rand(1, 100));
+        \array_splice($this->instanceForDeleteAtTail, -\mt_rand(1, 100));
     }
 
     /**
@@ -124,7 +124,7 @@ final class ArrayBench
      */
     public function benchInsertAtHead(): void
     {
-        \array_unshift($this->arrayForInsertAtHead, ...$this->batchForInsert);
+        \array_unshift($this->instanceForInsertAtHead, ...$this->batchForInsert);
     }
 
     /**
@@ -132,7 +132,7 @@ final class ArrayBench
      */
     public function benchInsertAtTail(): void
     {
-        \array_push($this->arrayForInsertAtTail, ...$this->batchForInsert);
+        \array_push($this->instanceForInsertAtTail, ...$this->batchForInsert);
     }
 
     /**
@@ -140,7 +140,7 @@ final class ArrayBench
      */
     public function benchInsertUnshifting(): void
     {
-        \array_unshift($this->arrayForInsertUnshifting, false);
+        \array_unshift($this->instanceForInsertUnshifting, false);
     }
 
     /**
@@ -148,7 +148,7 @@ final class ArrayBench
      */
     public function benchIteratorAggregate(): void
     {
-        foreach ($this->arrayForIteratorAggregate as $element) {
+        foreach ($this->instanceForIteratorAggregate as $element) {
         }
     }
 
@@ -157,7 +157,7 @@ final class ArrayBench
      */
     public function benchJsonSerializable(): void
     {
-        \json_encode($this->arrayForJsonSerializable);
+        \json_encode($this->instanceForJsonSerializable);
     }
 
     /**
@@ -165,7 +165,7 @@ final class ArrayBench
      */
     public function benchSerializableSerialize(): void
     {
-        \serialize($this->arrayForSerializableSerialize);
+        \serialize($this->instanceForSerializableSerialize);
     }
 
     /**
@@ -173,48 +173,48 @@ final class ArrayBench
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize($this->serializedarrayForSerializableUnserialize, ['allowed_classes' => false]);
+        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => false]);
     }
 
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->arrayForArrayAccessOffsetGetRandomAccess = \array_fill(0, 10000, false);
-        $this->arrayForArrayAccessOffsetSetOverwriting = \array_fill(0, 10000, false);
-        $this->arrayForArrayAccessOffsetSetPushingWithoutGap = [];
-        $this->arrayForArrayAccessOffsetSetPushingWithGap = [];
-        $this->arrayForArrayAccessOffsetUnsetPopping = \array_fill(0, 10000, false);
+        $this->instanceForArrayAccessOffsetGetRandomAccess = \array_fill(0, 10000, false);
+        $this->instanceForArrayAccessOffsetSetOverwriting = \array_fill(0, 10000, false);
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap = [];
+        $this->instanceForArrayAccessOffsetSetPushingWithGap = [];
+        $this->instanceForArrayAccessOffsetUnsetPopping = \array_fill(0, 10000, false);
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-        $this->arrayForArrayAccessOffsetUnsetShifting = \array_fill(0, 10000, false);
+        $this->instanceForArrayAccessOffsetUnsetShifting = \array_fill(0, 10000, false);
     }
 
     private function setUpDeleteBenchmark(): void
     {
-        $this->arrayForDeleteAtHead = \array_fill(0, 10000, false);
-        $this->arrayForDeleteAtTail = \array_fill(0, 10000, false);
+        $this->instanceForDeleteAtHead = \array_fill(0, 10000, false);
+        $this->instanceForDeleteAtTail = \array_fill(0, 10000, false);
     }
 
     private function setUpInsertBenchmark(): void
     {
         $this->batchForInsert = \array_fill(0, 50, false);
-        $this->arrayForInsertAtHead = [];
-        $this->arrayForInsertAtTail = [];
-        $this->arrayForInsertUnshifting = [];
+        $this->instanceForInsertAtHead = [];
+        $this->instanceForInsertAtTail = [];
+        $this->instanceForInsertUnshifting = [];
     }
 
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->arrayForIteratorAggregate = \array_fill(0, 10000, false);
+        $this->instanceForIteratorAggregate = \array_fill(0, 10000, false);
     }
 
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->arrayForJsonSerializable = \array_fill(0, 10000, false);
+        $this->instanceForJsonSerializable = \array_fill(0, 10000, false);
     }
 
     private function setUpSerializableBenchmark(): void
     {
-        $this->arrayForSerializableSerialize = \array_fill(0, 10000, false);
-        $this->serializedarrayForSerializableUnserialize = \serialize(\array_fill(0, 10000, false));
+        $this->instanceForSerializableSerialize = \array_fill(0, 10000, false);
+        $this->serializedInstanceForSerializableUnserialize = \serialize(\array_fill(0, 10000, false));
     }
 
     private static function getRandomValue()

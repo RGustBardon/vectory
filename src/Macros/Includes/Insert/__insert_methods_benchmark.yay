@@ -5,21 +5,21 @@ $(macro :unsafe) {
 } >> {
     private /* array */ $batchForInsert = [];
     
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtHead;
+    private /* \Vectory\VectorInterface */ $instanceForInsertAtHead;
     
-    private /* \Vectory\VectorInterface */ $vectorForInsertAtTail;
+    private /* \Vectory\VectorInterface */ $instanceForInsertAtTail;
     
-    private /* \Vectory\VectorInterface */ $vectorForInsertUnshifting;
+    private /* \Vectory\VectorInterface */ $instanceForInsertUnshifting;
     
     private function setUpInsertBenchmark(): void
     {
         $this->batchForInsert = \array_fill(0, 50, $[DefaultValue]);
         
-        $this->vectorForInsertAtHead = self::getInstance();
+        $this->instanceForInsertAtHead = self::getInstance();
         
-        $this->vectorForInsertAtTail = self::getInstance();
+        $this->instanceForInsertAtTail = self::getInstance();
         
-        $this->vectorForInsertUnshifting = self::getInstance();
+        $this->instanceForInsertUnshifting = self::getInstance();
     }
 
     /**
@@ -27,7 +27,7 @@ $(macro :unsafe) {
      */
     public function benchInsertAtHead(): void
     {
-        $this->vectorForInsertAtHead->insert($this->batchForInsert, 0);
+        $this->instanceForInsertAtHead->insert($this->batchForInsert, 0);
     }
     
     /**
@@ -35,7 +35,7 @@ $(macro :unsafe) {
      */
     public function benchInsertAtTail(): void
     {
-        $this->vectorForInsertAtTail->insert($this->batchForInsert);
+        $this->instanceForInsertAtTail->insert($this->batchForInsert);
     }
     
     /**
@@ -43,6 +43,6 @@ $(macro :unsafe) {
      */
     public function benchInsertUnshifting(): void
     {
-        $this->vectorForInsertUnshifting->insert([$[DefaultValue]], 0);
+        $this->instanceForInsertUnshifting->insert([$[DefaultValue]], 0);
     }
 }

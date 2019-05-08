@@ -3,18 +3,18 @@
 $(macro :unsafe) {
     __serializable_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $vectorForSerializableSerialize;
+    private /* \Vectory\VectorInterface */ $instanceForSerializableSerialize;
     
-    private /* string */ $serializedVectorForSerializableUnserialize;
+    private /* string */ $serializedInstanceForSerializableUnserialize;
     
     private function setUpSerializableBenchmark(): void
     {
-        $this->vectorForSerializableSerialize = self::getInstance();
-        $this->vectorForSerializableSerialize[10000] = $[DefaultValue];
+        $this->instanceForSerializableSerialize = self::getInstance();
+        $this->instanceForSerializableSerialize[10000] = $[DefaultValue];
         
         $vector = self::getInstance();
         $vector[10000] = $[DefaultValue];
-        $this->serializedVectorForSerializableUnserialize = \serialize($vector);
+        $this->serializedInstanceForSerializableUnserialize = \serialize($vector);
     }
 
     /**
@@ -22,7 +22,7 @@ $(macro :unsafe) {
      */
     public function benchSerializableSerialize(): void
     {
-        \serialize($this->vectorForSerializableSerialize);
+        \serialize($this->instanceForSerializableSerialize);
     }
 
     /**
@@ -31,7 +31,7 @@ $(macro :unsafe) {
     public function benchSerializableUnserialize(): void
     {
         \unserialize(
-            $this->serializedVectorForSerializableUnserialize,
+            $this->serializedInstanceForSerializableUnserialize,
             ['allowed_classes' => [\ltrim($[FullyQualifiedClassName], '\\')]]
         );
     }
