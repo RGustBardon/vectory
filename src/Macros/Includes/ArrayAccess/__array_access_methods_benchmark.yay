@@ -8,6 +8,9 @@ $(macro :unsafe) {
     private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetOverwriting;
     
     private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithoutGap;
+    $<PoweredBySplFixedArray>{
+        private $lastIndexOfArrayAccessOffsetSetPushingWithoutGap = 0;
+    }
 
     private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithGap;
     private /* int */ $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
@@ -19,22 +22,18 @@ $(macro :unsafe) {
     
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->instanceForArrayAccessOffsetGetRandomAccess[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance(true);
         
-        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->instanceForArrayAccessOffsetSetOverwriting[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance(true);
         
         $this->instanceForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
 
         $this->instanceForArrayAccessOffsetSetPushingWithGap = self::getInstance();
 
-        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->instanceForArrayAccessOffsetUnsetPopping[9999] = $[DefaultValue];
-        $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
+        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance(true);
+        $this->lastIndexOfArrayAccessOffsetUnsetPopping = $[FilledLastIndex];
         
-        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->instanceForArrayAccessOffsetUnsetShifting[9999] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance(true);
     }
     
     /**
@@ -43,7 +42,7 @@ $(macro :unsafe) {
     public function benchArrayAccessOffsetGetRandomAccess(): void
     {
         static $_;
-        $_ = $this->instanceForArrayAccessOffsetGetRandomAccess[\mt_rand(0, 9999)];
+        $_ = $this->instanceForArrayAccessOffsetGetRandomAccess[\mt_rand(0, $[FilledLastIndex])];
     }
     
     /**
@@ -51,7 +50,7 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = $[DefaultValue];
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, $[FilledLastIndex])] = $[DefaultValue];
     }
     
     /**
@@ -59,7 +58,13 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = $[DefaultValue];
+        $<PoweredBySplFixedArray>{
+            $this->instanceForArrayAccessOffsetSetPushingWithoutGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap + 1);
+            $this->instanceForArrayAccessOffsetSetPushingWithoutGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap++] = $[DefaultValue];
+        }
+        $<!PoweredBySplFixedArray>{
+            $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = $[DefaultValue];
+        }
     }
 
     /**
@@ -67,9 +72,27 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->instanceForArrayAccessOffsetSetPushingWithGap[
-            $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100
-        ] = $[DefaultValue];
+        $<PoweredByArray>{
+            $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += $[BatchSize]] = false;
+        }
+        $<PoweredByDsSequence>{
+            $count = \count($this->instanceForArrayAccessOffsetSetPushingWithGap);
+            $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += $[BatchSize];
+            $this->instanceForArrayAccessOffsetSetPushingWithGap->allocate($this->lastIndexOfArrayAccessOffsetSetPushingWithGap);
+            $elements = \array_fill(0, (int) ($this->lastIndexOfArrayAccessOffsetSetPushingWithGap - $count - 1), false);
+            $elements[] = false;
+            $this->instanceForArrayAccessOffsetSetPushingWithGap->push(...$elements);
+        }
+        $<PoweredBySplFixedArray>{
+            $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += $[BatchSize];
+            $this->instanceForArrayAccessOffsetSetPushingWithGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithGap + 1);
+            $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap] = $[DefaultValue];
+        }
+        $<PoweredByString>{
+            $this->instanceForArrayAccessOffsetSetPushingWithGap[
+                $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += $[BatchSize]
+            ] = $[DefaultValue];
+        }
     }
 
     /**
@@ -77,9 +100,12 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetUnsetPopping(): void
     {
-        unset($this->instanceForArrayAccessOffsetUnsetPopping[
-            $this->lastIndexOfArrayAccessOffsetUnsetPopping--
-        ]);
+        $<PoweredBySplFixedArray>{
+            $this->instanceForArrayAccessOffsetUnsetPopping->setSize($this->lastIndexOfArrayAccessOffsetUnsetPopping--);
+        }
+        $<!PoweredBySplFixedArray>{
+            unset($this->instanceForArrayAccessOffsetUnsetPopping[$this->lastIndexOfArrayAccessOffsetUnsetPopping--]);
+        }
     }
     
     /**
@@ -87,6 +113,19 @@ $(macro :unsafe) {
      */
     public function benchArrayAccessOffsetUnsetShifting(): void
     {
-        unset($this->instanceForArrayAccessOffsetUnsetShifting[0]);
+        $<PoweredByArray>{
+            unset($this->instanceForArrayAccessOffsetUnsetShifting[0]);
+        }
+        $<PoweredByDsSequence>{
+            $this->instanceForArrayAccessOffsetUnsetShifting->shift();
+        }
+        $<PoweredBySplFixedArray>{
+            $elements = $this->instanceForArrayAccessOffsetUnsetShifting->toArray();
+            unset($elements[0]);
+            $this->instanceForArrayAccessOffsetUnsetShifting = \SplFixedArray::fromArray($elements, false);
+        }
+        $<PoweredByString>{
+            unset($this->instanceForArrayAccessOffsetUnsetShifting[0]);
+        }
     }    
 }

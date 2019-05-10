@@ -15,13 +15,21 @@ namespace Vectory\ValueObjects;
 
 interface VectorDefinitionInterface
 {
+    public const IMPLEMENTATION_ARRAY = 'array';
+    public const IMPLEMENTATION_DS_VECTOR = \Ds\Vector::class;
+    public const IMPLEMENTATION_DS_DEQUE = \Ds\Deque::class;
+    public const IMPLEMENTATION_SPL_FIXED_ARRAY = \SplFixedArray::class;
+    public const IMPLEMENTATION_STRING = 'string';
+
     public const TYPE_BOOLEAN = 'bool';
     public const TYPE_INTEGER = 'int';
     public const TYPE_STRING = 'string';
 
     public function export(): array;
 
-    public function getBytesPerElement(): int;
+    public function getImplementationId(): string;
+
+    public function getBytesPerElement(): ?int;
 
     public function hasBitArithmetic(): bool;
 
@@ -35,15 +43,15 @@ interface VectorDefinitionInterface
 
     public function isString(): bool;
 
-    public function getType(): string;
+    public function getType(): ?string;
 
     public function getDefaultValue();
 
-    public function getMinimumValue(): int;
+    public function getMinimumValue(): ?int;
 
-    public function getMaximumValue(): int;
+    public function getMaximumValue(): ?int;
 
     public function getClassName(): string;
 
-    public function getFullyQualifiedClassName(): string;
+    public function getFullyQualifiedClassName(): ?string;
 }

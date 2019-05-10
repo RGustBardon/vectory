@@ -117,7 +117,7 @@ final class Char2VectorBench
      */
     public function benchDeleteAtTail(): void
     {
-        $this->instanceForDeleteAtHead->delete(-\mt_rand(0, 100));
+        $this->instanceForDeleteAtTail->delete(-\mt_rand(0, 100));
     }
 
     /**
@@ -220,30 +220,24 @@ final class Char2VectorBench
 
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance();
-        $this->instanceForArrayAccessOffsetGetRandomAccess[9999] = "\0\0";
-        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance();
-        $this->instanceForArrayAccessOffsetSetOverwriting[9999] = "\0\0";
+        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance(true);
+        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance(true);
         $this->instanceForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
         $this->instanceForArrayAccessOffsetSetPushingWithGap = self::getInstance();
-        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance();
-        $this->instanceForArrayAccessOffsetUnsetPopping[9999] = "\0\0";
+        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance(true);
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance();
-        $this->instanceForArrayAccessOffsetUnsetShifting[9999] = "\0\0";
+        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance(true);
     }
 
     private function setUpDeleteBenchmark(): void
     {
-        $this->instanceForDeleteAtHead = self::getInstance();
-        $this->instanceForDeleteAtHead[10000] = "\0\0";
-        $this->instanceForDeleteAtTail = self::getInstance();
-        $this->instanceForDeleteAtTail[10000] = "\0\0";
+        $this->instanceForDeleteAtHead = self::getInstance(true);
+        $this->instanceForDeleteAtTail = self::getInstance(true);
     }
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 50, "\0\0");
+        $this->batchForInsert = \array_fill(0, 100 / 2, "\0\0");
         $this->instanceForInsertAtHead = self::getInstance();
         $this->instanceForInsertAtTail = self::getInstance();
         $this->instanceForInsertUnshifting = self::getInstance();
@@ -251,27 +245,27 @@ final class Char2VectorBench
 
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->instanceForIteratorAggregate = self::getInstance();
-        $this->instanceForIteratorAggregate[10000] = "\0\0";
+        $this->instanceForIteratorAggregate = self::getInstance(true);
     }
 
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->instanceForJsonSerializable = self::getInstance();
-        $this->instanceForJsonSerializable[10000] = "\0\0";
+        $this->instanceForJsonSerializable = self::getInstance(true);
     }
 
     private function setUpSerializableBenchmark(): void
     {
-        $this->instanceForSerializableSerialize = self::getInstance();
-        $this->instanceForSerializableSerialize[10000] = "\0\0";
-        $vector = self::getInstance();
-        $vector[10000] = "\0\0";
-        $this->serializedInstanceForSerializableUnserialize = \serialize($vector);
+        $this->instanceForSerializableSerialize = self::getInstance(true);
+        $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
     }
 
-    private static function getInstance(): \Vectory\VectorInterface
+    private static function getInstance(bool $filled = false): \Vectory\VectorInterface
     {
-        return new \Vectory\Char2Vector();
+        $instance = new \Vectory\Char2Vector();
+        if ($filled) {
+            $instance[9999] = "\0\0";
+        }
+
+        return $instance;
     }
 }

@@ -33,6 +33,7 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
     {
         foreach ([false, true] as $nullable) {
             yield $this->vectorDefinitionFactory->create(
+                VectorDefinitionInterface::IMPLEMENTATION_STRING,
                 null,
                 $nullable,
                 null,
@@ -42,6 +43,7 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
             foreach ([false, true] as $signed) {
                 for ($bytesPerElement = 1; $bytesPerElement <= 7; ++$bytesPerElement) {
                     yield $this->vectorDefinitionFactory->create(
+                        VectorDefinitionInterface::IMPLEMENTATION_STRING,
                         $bytesPerElement,
                         $nullable,
                         $signed,
@@ -51,6 +53,7 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
             }
 
             yield $this->vectorDefinitionFactory->create(
+                VectorDefinitionInterface::IMPLEMENTATION_STRING,
                 8,
                 $nullable,
                 true,
@@ -59,10 +62,26 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
 
             for ($bytesPerElement = 1; $bytesPerElement <= 4; ++$bytesPerElement) {
                 yield $this->vectorDefinitionFactory->create(
+                    VectorDefinitionInterface::IMPLEMENTATION_STRING,
                     $bytesPerElement,
                     $nullable,
                     null,
                     VectorDefinitionInterface::TYPE_STRING
+                );
+            }
+
+            foreach ([
+                VectorDefinitionInterface::IMPLEMENTATION_ARRAY,
+                VectorDefinitionInterface::IMPLEMENTATION_DS_DEQUE,
+                VectorDefinitionInterface::IMPLEMENTATION_DS_VECTOR,
+                VectorDefinitionInterface::IMPLEMENTATION_SPL_FIXED_ARRAY,
+            ] as $implementationId) {
+                yield $this->vectorDefinitionFactory->create(
+                    $implementationId,
+                    null,
+                    true,
+                    true,
+                    null
                 );
             }
         }

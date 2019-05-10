@@ -516,9 +516,14 @@ final class BoolVectorTest extends TestCase
         self::assertSequence($expectedSequence, $vector);
     }
 
-    private static function getInstance(): VectorInterface
+    private static function getInstance(bool $filled = false): VectorInterface
     {
-        return new \Vectory\BoolVector();
+        $instance = new \Vectory\BoolVector();
+        if ($filled) {
+            $instance[9999] = false;
+        }
+
+        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

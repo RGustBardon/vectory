@@ -210,19 +210,24 @@ YAY;
             self::MAIN_MACRO_PHPUNIT => self::PATH_FORMAT_PHPUNIT,
             self::MAIN_MACRO_PHPBENCH => self::PATH_FORMAT_PHPBENCH,
         ] as $mainMacro => $pathFormat) {
-            $concatenatedMacros =
+            if (
+                self::MAIN_MACRO_PHPBENCH === $mainMacro
+                || VectorDefinitionInterface::IMPLEMENTATION_STRING === $vectorDefinition->getImplementationId()
+            ) {
+                $concatenatedMacros =
                 $this->concatenateMacros($vectorDefinition, $mainMacro);
-            $targetPath = \sprintf($pathFormat, $target);
+                $targetPath = \sprintf($pathFormat, $target);
 
-            $this->logger->debug('Expanding to '.$target);
-            $expansion = (new Engine())->expand(
-                $concatenatedMacros,
-                $targetPath,
-                Engine::GC_ENGINE_DISABLED
-            );
+                $this->logger->debug('Expanding to '.$target);
+                $expansion = (new Engine())->expand(
+                    $concatenatedMacros,
+                    $targetPath,
+                    Engine::GC_ENGINE_DISABLED
+                );
 
-            $this->logger->debug('Built '.\realpath($targetPath));
-            \file_put_contents($targetPath, $expansion);
+                $this->logger->debug('Built '.\realpath($targetPath));
+                \file_put_contents($targetPath, $expansion);
+            }
         }
     }
 
@@ -263,14 +268,19 @@ YAY;
 
         $flags = [
             'HasBitArithmetic' => $vectorDefinition->hasBitArithmetic(),
-            'HasMinimumMaximum' => $vectorDefinition->isInteger() &&
-            $vectorDefinition->getBytesPerElement() < 8,
+            'HasMinimumMaximum' => $vectorDefinition->isInteger() && $vectorDefinition->getBytesPerElement() < 8,
             'Nullable' => $vectorDefinition->isNullable(),
-            'Signed' => $vectorDefinition->isInteger() &&
-            $vectorDefinition->isSigned(),
+            'Signed' => $vectorDefinition->isInteger() && $vectorDefinition->isSigned(),
             'Boolean' => $vectorDefinition->isBoolean(),
             'Integer' => $vectorDefinition->isInteger(),
             'String' => $vectorDefinition->isString(),
+            'PoweredByArray' => VectorDefinitionInterface::IMPLEMENTATION_ARRAY === $vectorDefinition->getImplementationId(),
+            'PoweredByDsDeque' => VectorDefinitionInterface::IMPLEMENTATION_DS_DEQUE === $vectorDefinition->getImplementationId(),
+            'PoweredByDsSequence' => VectorDefinitionInterface::IMPLEMENTATION_DS_DEQUE === $vectorDefinition->getImplementationId()
+            || VectorDefinitionInterface::IMPLEMENTATION_DS_VECTOR === $vectorDefinition->getImplementationId(),
+            'PoweredByDsVector' => VectorDefinitionInterface::IMPLEMENTATION_DS_VECTOR === $vectorDefinition->getImplementationId(),
+            'PoweredBySplFixedArray' => VectorDefinitionInterface::IMPLEMENTATION_SPL_FIXED_ARRAY === $vectorDefinition->getImplementationId(),
+            'PoweredByString' => VectorDefinitionInterface::IMPLEMENTATION_STRING === $vectorDefinition->getImplementationId(),
         ];
 
         for ($i = 1; $i <= 8; ++$i) {

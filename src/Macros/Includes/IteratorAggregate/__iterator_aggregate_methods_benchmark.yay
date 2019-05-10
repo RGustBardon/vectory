@@ -7,8 +7,7 @@ $(macro :unsafe) {
     
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->instanceForIteratorAggregate = self::getInstance();
-        $this->instanceForIteratorAggregate[10000] = $[DefaultValue];
+        $this->instanceForIteratorAggregate = self::getInstance(true);
     }
     
     /**

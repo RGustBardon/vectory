@@ -603,9 +603,14 @@ final class NullableInt8VectorTest extends TestCase
         self::assertSequence($expectedSequence, $vector);
     }
 
-    private static function getInstance(): VectorInterface
+    private static function getInstance(bool $filled = false): VectorInterface
     {
-        return new \Vectory\NullableInt8Vector();
+        $instance = new \Vectory\NullableInt8Vector();
+        if ($filled) {
+            $instance[9999] = 0;
+        }
+
+        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

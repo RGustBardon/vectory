@@ -25,24 +25,41 @@ namespace Vectory\ValueObjects;
     private const NAME_TOKEN_STRING = 'Char';
     private const NAME_TOKEN_SUFFIX = 'Vector';
 
+    private const IMPLEMENTATION_ID_TO_CLASS = [
+        self::IMPLEMENTATION_ARRAY => 'Array',
+        self::IMPLEMENTATION_DS_DEQUE => 'DsDeque',
+        self::IMPLEMENTATION_DS_VECTOR => 'DsVector',
+        self::IMPLEMENTATION_SPL_FIXED_ARRAY => 'SplFixedArray',
+    ];
+
+    private const IMPLEMENTATION_ID_TO_FQN = [
+        self::IMPLEMENTATION_ARRAY => null,
+        self::IMPLEMENTATION_DS_DEQUE => \Ds\Deque::class,
+        self::IMPLEMENTATION_DS_VECTOR => \Ds\Vector::class,
+        self::IMPLEMENTATION_SPL_FIXED_ARRAY => \SplFixedArray::class,
+    ];
+
+    private /* string */ $implementationId;
     private /* ?int */ $bytesPerElement;
     private /* bool */ $nullable;
     private /* ?bool */ $signed;
-    private /* string */ $type;
+    private /* ?string */ $type;
 
     private $defaultValue;
     private /* bool */ $bitArithmetic;
     private /* ?int */ $minimumValue;
     private /* ?int */ $maximumValue;
     private /* string */ $className;
-    private /* string */ $fullyQualifiedClassName;
+    private /* ?string */ $fullyQualifiedClassName;
 
     public function __construct(
+        string $implementationId,
         ?int $bytesPerElement,
         bool $nullable,
         ?bool $signed,
-        string $type
+        ?string $type
     ) {
+        $this->implementationId = $implementationId;
         $this->bytesPerElement = $bytesPerElement;
         $this->nullable = $nullable;
         $this->signed = $signed;
@@ -65,7 +82,12 @@ namespace Vectory\ValueObjects;
         return $properties;
     }
 
-    public function getBytesPerElement(): int
+    public function getImplementationId(): string
+    {
+        return $this->implementationId;
+    }
+
+    public function getBytesPerElement(): ?int
     {
         return $this->bytesPerElement;
     }
@@ -87,20 +109,20 @@ namespace Vectory\ValueObjects;
 
     public function isBoolean(): bool
     {
-        return self::TYPE_BOOLEAN === $this->type;
+        return self::TYPE_BOOLEAN === $this->type || null === $this->type;
     }
 
     public function isInteger(): bool
     {
-        return self::TYPE_INTEGER === $this->type;
+        return self::TYPE_INTEGER === $this->type || null === $this->type;
     }
 
     public function isString(): bool
     {
-        return self::TYPE_STRING === $this->type;
+        return self::TYPE_STRING === $this->type || null === $this->type;
     }
 
-    public function getType(): string
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -110,12 +132,12 @@ namespace Vectory\ValueObjects;
         return $this->defaultValue;
     }
 
-    public function getMinimumValue(): int
+    public function getMinimumValue(): ?int
     {
         return $this->minimumValue;
     }
 
-    public function getMaximumValue(): int
+    public function getMaximumValue(): ?int
     {
         return $this->maximumValue;
     }
@@ -125,7 +147,7 @@ namespace Vectory\ValueObjects;
         return $this->className;
     }
 
-    public function getFullyQualifiedClassName(): string
+    public function getFullyQualifiedClassName(): ?string
     {
         return $this->fullyQualifiedClassName;
     }
@@ -154,12 +176,23 @@ namespace Vectory\ValueObjects;
 
                 break;
             default:
-                throw new \DomainException('Invalid element type: '.$this->type);
+                break;
         }
     }
 
     private function deriveProperties(): void
     {
+        if (self::IMPLEMENTATION_STRING !== $this->implementationId) {
+            $this->bitArithmetic = false;
+            $this->defaultValue = false;
+            $this->minimumValue = \PHP_INT_MIN;
+            $this->maximumValue = \PHP_INT_MAX;
+            $this->className = self::IMPLEMENTATION_ID_TO_CLASS[$this->implementationId];
+            $this->fullyQualifiedClassName = self::IMPLEMENTATION_ID_TO_FQN[$this->implementationId];
+
+            return;
+        }
+
         $this->bitArithmetic = $this->nullable || $this->isBoolean();
         $this->className = '';
         if ($this->nullable) {

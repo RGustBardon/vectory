@@ -4,21 +4,15 @@ $(macro :unsafe) {
     __insert_methods_benchmark()
 } >> {
     private /* array */ $batchForInsert = [];
-    
-    private /* \Vectory\VectorInterface */ $instanceForInsertAtHead;
-    
-    private /* \Vectory\VectorInterface */ $instanceForInsertAtTail;
-    
-    private /* \Vectory\VectorInterface */ $instanceForInsertUnshifting;
+    private $instanceForInsertAtHead;
+    private $instanceForInsertAtTail;
+    private $instanceForInsertUnshifting;
     
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 50, $[DefaultValue]);
-        
+        $this->batchForInsert = \array_fill(0, $[BatchSize] / 2, $[DefaultValue]);
         $this->instanceForInsertAtHead = self::getInstance();
-        
         $this->instanceForInsertAtTail = self::getInstance();
-        
         $this->instanceForInsertUnshifting = self::getInstance();
     }
 
@@ -27,7 +21,22 @@ $(macro :unsafe) {
      */
     public function benchInsertAtHead(): void
     {
-        $this->instanceForInsertAtHead->insert($this->batchForInsert, 0);
+        $<PoweredByArray>{
+            \array_unshift($this->instanceForInsertAtHead, ...$this->batchForInsert);
+        }
+        $<PoweredByDsSequence>{
+            $this->instanceForInsertAtHead->unshift(...$this->batchForInsert);
+        }
+        $<PoweredBySplFixedArray>{
+            $insertedElements = $this->batchForInsert;
+            if (\count($this->instanceForInsertAtHead) > 0) {
+                \array_push($insertedElements, ...$this->instanceForInsertAtHead->toArray());
+            }
+            $this->instanceForInsertAtHead = \SplFixedArray::fromArray($insertedElements, false);
+        }
+        $<PoweredByString>{
+            $this->instanceForInsertAtHead->insert($this->batchForInsert, 0);
+        }
     }
     
     /**
@@ -35,7 +44,22 @@ $(macro :unsafe) {
      */
     public function benchInsertAtTail(): void
     {
-        $this->instanceForInsertAtTail->insert($this->batchForInsert);
+        $<PoweredByArray>{
+            \array_push($this->instanceForInsertAtTail, ...$this->batchForInsert);
+        }
+        $<PoweredByDsSequence>{
+            $this->instanceForInsertAtTail->push(...$this->batchForInsert);
+        }
+        $<PoweredBySplFixedArray>{
+            $elementCount = \count($this->instanceForInsertAtTail);
+            $this->instanceForInsertAtTail->setSize($elementCount + \count($this->batchForInsert));
+            foreach ($this->batchForInsert as $element) {
+                $this->instanceForInsertAtTail[$elementCount++] = $element;
+            }
+        }
+        $<PoweredByString>{
+            $this->instanceForInsertAtTail->insert($this->batchForInsert);
+        }
     }
     
     /**
@@ -43,6 +67,19 @@ $(macro :unsafe) {
      */
     public function benchInsertUnshifting(): void
     {
-        $this->instanceForInsertUnshifting->insert([$[DefaultValue]], 0);
+        $<PoweredByArray>{
+            \array_unshift($this->instanceForInsertUnshifting, $[DefaultValue]);
+        }
+        $<PoweredByDsSequence>{
+            $this->instanceForInsertUnshifting->unshift($[DefaultValue]);
+        }
+        $<PoweredBySplFixedArray>{
+            $elements = $this->instanceForInsertUnshifting->toArray();
+            \array_unshift($elements, $[DefaultValue]);
+            $this->instanceForInsertUnshifting = \SplFixedArray::fromArray($elements, false);
+        }
+        $<PoweredByString>{
+            $this->instanceForInsertUnshifting->insert([$[DefaultValue]], 0);
+        }
     }
 }

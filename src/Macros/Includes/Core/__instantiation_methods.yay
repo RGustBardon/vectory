@@ -1,16 +1,68 @@
 <?php
 
+$(macro) { $[BatchSize] } >> { 100 }
+$(macro) { $[FilledCount] } >> { 10000 }
+$(macro) { $[FilledLastIndex] } >> { 9999 }
+
 $(macro :unsafe) {
     __instantiation_methods()
 } >> {
-    private const INVALID_VALUE = $$(expand(
-        $<Integer>{ '0' }
-        $<!Integer>{ 0 }
-    ));
+    $<PoweredByString>{
+        private const INVALID_VALUE = $$(expand(
+            $<Integer>{ '0' }
+            $<!Integer>{ 0 }
+        ));
+    }
     
-    private static function getInstance(): \Vectory\VectorInterface
-    {
-        return new $[Fqn]();
+    $<PoweredByArray>{
+        private static function getInstance(bool $filled = false): array
+        {
+            return $filled ? \array_fill(0, $[FilledCount], $[DefaultValue]) : [];
+        }
+    }
+    $<PoweredByDsDeque>{
+        private static function getInstance(bool $filled = false): \Ds\Sequence
+        {
+            $instance = new \Ds\Deque();
+            if ($filled) {
+                $instance->push(...\array_fill(0, $[FilledCount], $[DefaultValue]));
+            }
+            return $instance;
+        }
+    }
+    $<PoweredByDsVector>{
+        private static function getInstance(bool $filled = false): \Ds\Sequence
+        {
+            $instance = new \Ds\Vector();
+            if ($filled) {
+                $instance->push(...\array_fill(0, $[FilledCount], $[DefaultValue]));
+            }
+            return $instance;
+        }
+    }
+    $<PoweredBySplFixedArray>{
+        private static function getInstance(bool $filled = false): \SplFixedArray
+        {
+            $instance = new \SplFixedArray();
+            if ($filled) {
+                $instance->setSize($[FilledCount]);
+                for ($i = 0; $i < $[FilledCount]; ++$i) {
+                    $instance[$i] = false;
+                }
+            }
+            
+            return $instance;
+        }
+    }
+    $<PoweredByString>{
+        private static function getInstance(bool $filled = false): \Vectory\VectorInterface
+        {
+            $instance = new $[Fqn]();
+            if ($filled) {
+                $instance[$[FilledLastIndex]] = $[DefaultValue];
+            }
+            return $instance;
+        }
     }
     
     public static function getRandomValue()

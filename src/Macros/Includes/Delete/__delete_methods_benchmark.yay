@@ -3,17 +3,14 @@
 $(macro :unsafe) {
     __delete_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $instanceForDeleteAtHead;
+    private $instanceForDeleteAtHead;
     
-    private /* \Vectory\VectorInterface */ $instanceForDeleteAtTail;
+    private $instanceForDeleteAtTail;
     
     private function setUpDeleteBenchmark(): void
     {
-        $this->instanceForDeleteAtHead = self::getInstance();
-        $this->instanceForDeleteAtHead[10000] = $[DefaultValue];
-        
-        $this->instanceForDeleteAtTail = self::getInstance();
-        $this->instanceForDeleteAtTail[10000] = $[DefaultValue];
+        $this->instanceForDeleteAtHead = self::getInstance(true);
+        $this->instanceForDeleteAtTail = self::getInstance(true);
     }
     
     /**
@@ -21,7 +18,18 @@ $(macro :unsafe) {
      */
     public function benchDeleteAtHead(): void
     {
-        $this->instanceForDeleteAtHead->delete(0, \mt_rand(0, 100));
+        $<PoweredByArray>{
+            \array_splice($this->instanceForDeleteAtHead, 0, \mt_rand(1, $[BatchSize]));
+        }
+        $<PoweredByDsSequence>{
+            $this->instanceForDeleteAtHead = $this->instanceForDeleteAtHead->slice(\mt_rand(1, $[BatchSize]));
+        }
+        $<PoweredBySplFixedArray>{
+            $this->instanceForDeleteAtHead = \SplFixedArray::fromArray(\array_slice($this->instanceForDeleteAtHead->toArray(), \mt_rand(1, $[BatchSize])), false);
+        }
+        $<PoweredByString>{
+            $this->instanceForDeleteAtHead->delete(0, \mt_rand(0, $[BatchSize]));
+        }
     }
     
     /**
@@ -29,6 +37,19 @@ $(macro :unsafe) {
      */
     public function benchDeleteAtTail(): void
     {
-        $this->instanceForDeleteAtHead->delete(-\mt_rand(0, 100));
+        $<PoweredByArray>{
+            \array_splice($this->instanceForDeleteAtTail, -\mt_rand(1, $[BatchSize]));
+        }
+        $<PoweredByDsSequence>{
+            for ($i = \mt_rand(1, $[BatchSize]); $i > 0; --$i) {
+                $this->instanceForDeleteAtTail->pop();
+            }
+        }
+        $<PoweredBySplFixedArray>{
+            $this->instanceForDeleteAtTail->setSize(\count($this->instanceForDeleteAtTail) - \mt_rand(1, $[BatchSize]));
+        }
+        $<PoweredByString>{
+            $this->instanceForDeleteAtTail->delete(-\mt_rand(0, $[BatchSize]));
+        }
     }
 }

@@ -7,8 +7,7 @@ $(macro :unsafe) {
     
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->instanceForJsonSerializable = self::getInstance();
-        $this->instanceForJsonSerializable[10000] = $[DefaultValue];
+        $this->instanceForJsonSerializable = self::getInstance(true);
     }
 
     /**

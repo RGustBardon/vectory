@@ -587,9 +587,14 @@ final class Int32VectorTest extends TestCase
         self::assertSequence($expectedSequence, $vector);
     }
 
-    private static function getInstance(): VectorInterface
+    private static function getInstance(bool $filled = false): VectorInterface
     {
-        return new \Vectory\Int32Vector();
+        $instance = new \Vectory\Int32Vector();
+        if ($filled) {
+            $instance[9999] = 0;
+        }
+
+        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

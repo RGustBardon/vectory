@@ -558,9 +558,14 @@ final class Char4VectorTest extends TestCase
         self::assertSequence($expectedSequence, $vector);
     }
 
-    private static function getInstance(): VectorInterface
+    private static function getInstance(bool $filled = false): VectorInterface
     {
-        return new \Vectory\Char4Vector();
+        $instance = new \Vectory\Char4Vector();
+        if ($filled) {
+            $instance[9999] = "\0\0\0\0";
+        }
+
+        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

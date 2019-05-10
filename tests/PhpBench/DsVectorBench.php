@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Vectory\Tests\PhpBench;
 
+require_once __DIR__.'/../../vendor/autoload.php';
 /**
  * @BeforeMethods({"setUp"})
  *
@@ -20,7 +21,7 @@ namespace Vectory\Tests\PhpBench;
  */
 final class DsVectorBench
 {
-    private const INVALID_VALUE = 0;
+    private const INVALID_VALUE = '0';
     private $instanceForArrayAccessOffsetGetRandomAccess;
     private $instanceForArrayAccessOffsetSetOverwriting;
     private $instanceForArrayAccessOffsetSetPushingWithoutGap;
@@ -180,53 +181,119 @@ final class DsVectorBench
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => ['Ds\\Vector']]);
+        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('Ds\\Vector', '\\')]]);
+    }
+
+    public static function getRandomValue()
+    {
+        return [false, true][\mt_rand(0, 1)];
+        $positive = 0 === \mt_rand(0, 1);
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < null; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+
+        return $positive ? $value : -$value;
+        $value = '';
+        for ($i = 0; $i < null; ++$i) {
+            $value .= \chr(\mt_rand(0x0, 0xff));
+        }
+
+        return $value;
+    }
+
+    public static function getRandomSignedInteger(bool $negative): int
+    {
+        $value = \dechex(\mt_rand(0x0, 0x7f));
+        for ($i = 1; $i < null; ++$i) {
+            $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
+        }
+        $value = \hexdec($value);
+        $value = $negative ? $value < 0 ? -$value : -9.223372036854776E+18 : $value;
+
+        return (int) $value;
+    }
+
+    public static function getRandomUtf8String(): string
+    {
+        \assert(0x10ffff <= \mt_getrandmax());
+        $string = '';
+        while (\strlen($string) < null) {
+            $characterMaxLength = \min(4, null - \strlen($string));
+            $character = '';
+            switch (\mt_rand(1, $characterMaxLength)) {
+                case 1:
+                    $character = \mb_chr(\mt_rand(0x0, 0x7f));
+
+                    break;
+                case 2:
+                    $character = \mb_chr(\mt_rand(0x80, 0x7ff));
+
+                    break;
+                case 3:
+                    $character = \mb_chr(\mt_rand(0x800, 0xffff));
+
+                    break;
+                case 4:
+                    $character = \mb_chr(\mt_rand(0x10000, 0x10ffff));
+
+                    break;
+            }
+            $string .= $character;
+        }
+
+        return $string;
     }
 
     private function setUpArrayAccessBenchmark(): void
     {
-        $this->instanceForArrayAccessOffsetGetRandomAccess = new \Ds\Vector();
-        $this->instanceForArrayAccessOffsetGetRandomAccess->push(...\array_fill(0, 10000, false));
-        $this->instanceForArrayAccessOffsetSetOverwriting = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
-        $this->instanceForArrayAccessOffsetSetPushingWithoutGap = new \Ds\Vector();
-        $this->instanceForArrayAccessOffsetSetPushingWithGap = new \Ds\Vector();
-        $this->instanceForArrayAccessOffsetUnsetPopping = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
+        $this->instanceForArrayAccessOffsetGetRandomAccess = self::getInstance(true);
+        $this->instanceForArrayAccessOffsetSetOverwriting = self::getInstance(true);
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap = self::getInstance();
+        $this->instanceForArrayAccessOffsetSetPushingWithGap = self::getInstance();
+        $this->instanceForArrayAccessOffsetUnsetPopping = self::getInstance(true);
         $this->lastIndexOfArrayAccessOffsetUnsetPopping = 9999;
-        $this->instanceForArrayAccessOffsetUnsetShifting = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
+        $this->instanceForArrayAccessOffsetUnsetShifting = self::getInstance(true);
     }
 
     private function setUpDeleteBenchmark(): void
     {
-        $this->instanceForDeleteAtHead = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
-        $this->instanceForDeleteAtTail = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
+        $this->instanceForDeleteAtHead = self::getInstance(true);
+        $this->instanceForDeleteAtTail = self::getInstance(true);
     }
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 50, false);
-        $this->instanceForInsertAtHead = new \Ds\Vector();
-        $this->instanceForInsertAtTail = new \Ds\Vector();
-        $this->instanceForInsertUnshifting = new \Ds\Vector();
+        $this->batchForInsert = \array_fill(0, 100 / 2, false);
+        $this->instanceForInsertAtHead = self::getInstance();
+        $this->instanceForInsertAtTail = self::getInstance();
+        $this->instanceForInsertUnshifting = self::getInstance();
     }
 
     private function setUpIteratorAggregateBenchmark(): void
     {
-        $this->instanceForIteratorAggregate = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
+        $this->instanceForIteratorAggregate = self::getInstance(true);
     }
 
     private function setUpJsonSerializableBenchmark(): void
     {
-        $this->instanceForJsonSerializable = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
+        $this->instanceForJsonSerializable = self::getInstance(true);
     }
 
     private function setUpSerializableBenchmark(): void
     {
-        $this->instanceForSerializableSerialize = clone $this->instanceForArrayAccessOffsetGetRandomAccess;
-        $this->serializedInstanceForSerializableUnserialize = \serialize($this->instanceForArrayAccessOffsetGetRandomAccess);
+        $this->instanceForSerializableSerialize = self::getInstance(true);
+        $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
     }
 
-    private static function getRandomValue()
+    private static function getInstance(bool $filled = false): \Ds\Sequence
     {
-        return [false, true][\mt_rand(0, 1)];
+        $instance = new \Ds\Vector();
+        if ($filled) {
+            $instance->push(...\array_fill(0, 10000, false));
+        }
+
+        return $instance;
     }
 }

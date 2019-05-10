@@ -19,11 +19,12 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
 /* final */ class VectorDefinitionFactory
 {
     public function create(
+        string $implementationId,
         ?int $bytesPerElement,
         bool $nullable,
         ?bool $signed,
-        string $type
+        ?string $type
     ): VectorDefinitionInterface {
-        return new VectorDefinition($bytesPerElement, $nullable, $signed, $type);
+        return new VectorDefinition($implementationId, $bytesPerElement, $nullable, $signed, $type);
     }
 }
