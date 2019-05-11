@@ -3,7 +3,7 @@
 $(macro :unsafe) {
     __iterator_aggregate_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $instanceForIteratorAggregate;
+    private $instanceForIteratorAggregate;
     
     private function setUpIteratorAggregateBenchmark(): void
     {

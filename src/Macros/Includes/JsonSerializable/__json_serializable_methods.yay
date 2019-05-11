@@ -41,7 +41,7 @@ $(macro :unsafe) {
                     $primaryByte = $primarySource[$lastByteIndex];
                     $nullabilityByte = $nullabilitySource[$lastByteIndex];
                     for ($bit = 0, $bitIndex = ($lastByteIndex << 3); $bitIndex < $elementCount; ++$bitIndex, ++$bit) {
-                        $jsonData[] = ("\x0" === ($nullabilityByte & $mask[$bit])) ? ("\x0" !== ($primaryByte & $mask[$bit])): null;
+                        $jsonData[] = ("\x0" === ($nullabilityByte & $mask[$bit])) ? ("\x0" !== ($primaryByte & $mask[$bit])) : null;
                     }
                 }
             }

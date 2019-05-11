@@ -21,7 +21,6 @@ require_once __DIR__.'/../../vendor/autoload.php';
  */
 final class SplFixedArrayBench
 {
-    private const INVALID_VALUE = '0';
     private $instanceForArrayAccessOffsetGetRandomAccess;
     private $instanceForArrayAccessOffsetSetOverwriting;
     private $instanceForArrayAccessOffsetSetPushingWithoutGap;

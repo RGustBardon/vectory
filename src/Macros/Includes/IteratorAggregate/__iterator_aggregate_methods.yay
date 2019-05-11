@@ -32,7 +32,7 @@ $(macro :unsafe) {
                     $primaryByte = $primarySource[$lastByteIndex];
                     $nullabilityByte = $nullabilitySource[$lastByteIndex];
                     for ($bit = 0, $bitIndex = ($lastByteIndex << 3); $bitIndex < $elementCount; ++$bitIndex, ++$bit) {
-                        yield ("\x0" === ($nullabilityByte & $mask[$bit])) ? ("\x0" !== ($primaryByte & $mask[$bit])): null;
+                        yield ("\x0" === ($nullabilityByte & $mask[$bit])) ? ("\x0" !== ($primaryByte & $mask[$bit])) : null;
                     }
                 }
             }

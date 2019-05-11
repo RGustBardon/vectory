@@ -3,7 +3,7 @@
 $(macro :unsafe) {
     __json_serializable_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $instanceForJsonSerializable;
+    private $instanceForJsonSerializable;
     
     private function setUpJsonSerializableBenchmark(): void
     {

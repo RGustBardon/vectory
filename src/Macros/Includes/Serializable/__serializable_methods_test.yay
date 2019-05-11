@@ -4,7 +4,7 @@ $(macro :unsafe) {
     __serializable_methods_test()
     $(_() as __context_AffectedByEndianness)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    if (Vectory::isInteger() && Vectory::isSigned() && \in_array(Vectory::getBytesperElement(), [2, 4, 8], true)) {
+    if (Vectory::isInteger() && Vectory::isSigned() && \in_array(Vectory::getBytesPerElement(), [2, 4, 8], true)) {
         $append = new \Yay\Ast('__context_AffectedByEndianness');
         $append->push(new \Yay\Ast());
         $ast->append($append);

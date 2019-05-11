@@ -21,7 +21,7 @@ $(macro :unsafe) {
         if (null === $index) {
             $index = $this->elementCount;
         } elseif (!\is_int($index)) {
-            $$(expand(__throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given')))
+            __throw(\TypeError, 'Index must be of type int, '.\gettype($index).' given')
         } elseif ($index < 0) {
             __throw(\OutOfRangeException, 'Negative index: '.$index);
         }

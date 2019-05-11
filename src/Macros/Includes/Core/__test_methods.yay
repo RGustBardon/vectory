@@ -13,7 +13,7 @@ $(macro :unsafe) {
                 $sequence[$index],
                 $element,
                 'Index: '.$index."\n".
-                    var_export($sequence, true)."\n".
+                    \var_export($sequence, true)."\n".
                     self::getVectorDump($vector)
             );
             ++$i;

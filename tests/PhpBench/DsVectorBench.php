@@ -21,7 +21,6 @@ require_once __DIR__.'/../../vendor/autoload.php';
  */
 final class DsVectorBench
 {
-    private const INVALID_VALUE = '0';
     private $instanceForArrayAccessOffsetGetRandomAccess;
     private $instanceForArrayAccessOffsetSetOverwriting;
     private $instanceForArrayAccessOffsetSetPushingWithoutGap;

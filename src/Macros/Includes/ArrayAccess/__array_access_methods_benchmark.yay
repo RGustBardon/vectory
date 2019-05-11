@@ -3,22 +3,22 @@
 $(macro :unsafe) {
     __array_access_methods_benchmark()
 } >> {
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetGetRandomAccess;
+    private $instanceForArrayAccessOffsetGetRandomAccess;
     
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetOverwriting;
+    private $instanceForArrayAccessOffsetSetOverwriting;
     
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithoutGap;
+    private $instanceForArrayAccessOffsetSetPushingWithoutGap;
     $<PoweredBySplFixedArray>{
         private $lastIndexOfArrayAccessOffsetSetPushingWithoutGap = 0;
     }
 
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetSetPushingWithGap;
+    private $instanceForArrayAccessOffsetSetPushingWithGap;
     private /* int */ $lastIndexOfArrayAccessOffsetSetPushingWithGap = 0;
     
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetUnsetPopping;
+    private $instanceForArrayAccessOffsetUnsetPopping;
     private /* int */ $lastIndexOfArrayAccessOffsetUnsetPopping = 0;
     
-    private /* \Vectory\VectorInterface */ $instanceForArrayAccessOffsetUnsetShifting;
+    private $instanceForArrayAccessOffsetUnsetShifting;
     
     private function setUpArrayAccessBenchmark(): void
     {
