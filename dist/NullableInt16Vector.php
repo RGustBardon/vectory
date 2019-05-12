@@ -201,7 +201,7 @@ class NullableInt16Vector implements VectorInterface
 
     public function jsonSerialize(): array
     {
-        if ('' === $this->primarySource) {
+        if (0 === $this->elementCount) {
             return [];
         }
         $jsonData = [];

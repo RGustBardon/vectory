@@ -205,14 +205,14 @@ class NullableChar2Vector implements VectorInterface
             if ("\0" === ($nullabilitySource[$index >> 3] & $mask[$index & 7])) {
                 (yield \substr($primarySource, $index * 2, 2));
             } else {
-                yield;
+                (yield null);
             }
         }
     }
 
     public function jsonSerialize(): array
     {
-        if ('' === $this->primarySource) {
+        if (0 === $this->elementCount) {
             return [];
         }
         $jsonData = [];
