@@ -12,7 +12,7 @@ $(macro :unsafe) {
     {
         __ensure_index($index);
         
-        __get_value($this, primary, $index, $value);
+        __get_value(primary, $index, $value);
         return $value;
     }
     
@@ -27,13 +27,13 @@ $(macro :unsafe) {
         }
         __ensure_value($value);
         
-        __set_value($this, primary, $index, $value);
+        __set_value(primary, $index, $value);
     }
     
     public function offsetUnset($index)
     {
         if (__is_index($index)) {
-            __unset_value($this, primary, $index);
+            __unset_value(primary, $index);
         }
     }
 }

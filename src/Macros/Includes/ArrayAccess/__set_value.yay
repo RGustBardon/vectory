@@ -2,7 +2,6 @@
 
 $(macro :unsafe) {
     __do_set_value_false(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index)
     )
@@ -11,17 +10,15 @@ $(macro :unsafe) {
     $byteIndex = $(index) >> 3;
     $$(expand(
         __do_set_value_string(
-            $(vector),
             $(prefix),
             $byteIndex,
-            (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") & $invertedMask[$(index) & 7])
+            (($this->$(prefix)Source[$byteIndex] ?? "\x0") & $invertedMask[$(index) & 7])
         )
     ))
 }
 
 $(macro :unsafe) {
     __do_set_value_true(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index)
     )
@@ -30,17 +27,15 @@ $(macro :unsafe) {
     $byteIndex = $(index) >> 3;
     $$(expand(
         __do_set_value_string(
-            $(vector),
             $(prefix),
             $byteIndex,
-            (($(vector)->$(prefix)Source[$byteIndex] ?? "\x0") | $originalMask[$(index) & 7])
+            (($this->$(prefix)Source[$byteIndex] ?? "\x0") | $originalMask[$(index) & 7])
         )
     ))
 }
 
 $(macro :unsafe) {
     __do_set_value_boolean(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
@@ -48,15 +43,14 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     if ($(value)) {
-        $$(expand(__do_set_value_true($(vector), $(prefix), $(index))))
+        $$(expand(__do_set_value_true($(prefix), $(index))))
     } else {
-        $$(expand(__do_set_value_false($(vector), $(prefix), $(index))))
+        $$(expand(__do_set_value_false($(prefix), $(index))))
     }
 }
 
 $(macro :unsafe) {
     __do_set_value_integer(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
@@ -66,13 +60,12 @@ $(macro :unsafe) {
     $unpackedInteger = ($(value));
     $$(expand(
         __pack_integer($unpackedInteger, $packedInteger);
-        __do_set_value_string($(vector), $(prefix), $(index), $packedInteger);
+        __do_set_value_string($(prefix), $(index), $packedInteger);
     ))
 }
 
 $(macro :unsafe) {
     __do_set_value_string(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
@@ -99,31 +92,30 @@ $(macro :unsafe) {
     $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, '\''.$defaultValue.'\'');
     $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
 } >> {
-    $unassignedCount = $(index) - \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
+    $unassignedCount = $(index) - \strlen($this->$(prefix)Source) / $(__context_BytesPerElement);
     if ($unassignedCount < 0) {
         // Case 1. Overwrite an existing item.
         $(__context_OneBytePerElement ? {
-            $(vector)->$(prefix)Source[$(index)] = $(value);
+            $this->$(prefix)Source[$(index)] = $(value);
         })
         $(__context_OneBytePerElement ! {
             $elementIndex = 0;
             $byteIndex = $(index) * $(__context_BytesPerElement);
             do {
-                $(vector)->$(prefix)Source[$byteIndex++] = $(value)[$elementIndex++];
+                $this->$(prefix)Source[$byteIndex++] = $(value)[$elementIndex++];
             } while ($elementIndex < $(__context_BytesPerElement));
         })
     } elseif (0 === $unassignedCount) {
         // Case 2. Append an element right after the last one.
-        $(vector)->$(prefix)Source .= $(value);
+        $this->$(prefix)Source .= $(value);
     } else {
         // Case 3. Append to a gap after the last element. Fill the gap with default values.
-        $(vector)->$(prefix)Source .= \str_repeat($(__context_DefaultValue), (int) $unassignedCount).$(value);
+        $this->$(prefix)Source .= \str_repeat($(__context_DefaultValue), (int) $unassignedCount).$(value);
     }
 }
     
 $(macro :unsafe) {
     __do_set_value(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
@@ -131,19 +123,18 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     $<Boolean>{
-        $$(expand(__do_set_value_boolean($(vector), $(prefix), $(index), $(value))));
+        $$(expand(__do_set_value_boolean($(prefix), $(index), $(value))));
     }
     $<Integer>{
-        $$(expand(__do_set_value_integer($(vector), $(prefix), $(index), $(value))));
+        $$(expand(__do_set_value_integer($(prefix), $(index), $(value))));
     }
     $<String>{
-        $$(expand(__do_set_value_string($(vector), $(prefix), $(index), $(value))));
+        $$(expand(__do_set_value_string($(prefix), $(index), $(value))));
     }
 }
 
 $(macro :unsafe) {
     __set_value(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(layer() as value)
@@ -164,18 +155,18 @@ $(macro :unsafe) {
     
     $(__context_Nullable ? {
         if (null === $(value)) {
-            $$(expand(__do_set_value_true($(vector), nullability, $(index))));
+            $$(expand(__do_set_value_true(nullability, $(index))));
         } else {
-            $$(expand(__do_set_value_false($(vector), nullability, $(index))));
+            $$(expand(__do_set_value_false(nullability, $(index))));
         }
-        $$(expand(__do_set_value($(vector), $(prefix), $(index), ($(value) ?? $[DefaultValue]))));
+        $$(expand(__do_set_value($(prefix), $(index), ($(value) ?? $[DefaultValue]))));
     });
     
     $(__context_Nullable ! {
-        $$(expand(__do_set_value($(vector), $(prefix), $(index), $(value))));
+        $$(expand(__do_set_value($(prefix), $(index), $(value))));
     });
     
-    if ($(vector)->elementCount < $(index) + 1) {
-        $(vector)->elementCount = $(index) + 1;
+    if ($this->elementCount < $(index) + 1) {
+        $this->elementCount = $(index) + 1;
     }
 }

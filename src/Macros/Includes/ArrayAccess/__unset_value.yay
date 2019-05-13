@@ -2,7 +2,6 @@
 
 $(macro :unsafe) {
     __do_unset_value_boolean(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index)
     )
@@ -16,36 +15,35 @@ $(macro :unsafe) {
     $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
     $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
 } >> {
-    if ($(vector)->elementCount > $(index)) {
+    if ($this->elementCount > $(index)) {
         $carry = "\x0";
-        $byteCount = \strlen($(vector)->$(prefix)Source) / $(__context_BytesPerElement);
+        $byteCount = \strlen($this->$(prefix)Source) / $(__context_BytesPerElement);
         for ($i = $byteCount - 1, $byteIndex = ($(index) >> 3); $i > $byteIndex; --$i) {
-            $(vector)->$(prefix)Source[$i] =
-                ($shiftOneRight[$byte = $(vector)->$(prefix)Source[$i]] | $carry);
+            $this->$(prefix)Source[$i] =
+                ($shiftOneRight[$byte = $this->$(prefix)Source[$i]] | $carry);
             $carry = ("\x1" === ($byte & "\x1") ? "\x80" : "\x0");
         }
         
         // https://graphics.stanford.edu/~seander/bithacks.html#MaskedMerge
-        $byte = $(vector)->$(prefix)Source[$i];
-        $(vector)->$(prefix)Source[$i] =
+        $byte = $this->$(prefix)Source[$i];
+        $this->$(prefix)Source[$i] =
             $byte ^ (($byte ^ ($shiftOneRight[$byte] | $carry)) & $mask[$(index) & 7]);
     }
     
-    if (0 === ($(vector)->elementCount & 7)) {
-        $(vector)->$(prefix)Source = \substr($(vector)->$(prefix)Source, 0, -1);
+    if (0 === ($this->elementCount & 7)) {
+        $this->$(prefix)Source = \substr($this->$(prefix)Source, 0, -1);
     }
 }
 
 $(macro :unsafe) {
     __do_unset_value_string(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index)
     )
     $(optional(token(';')))
 } >> {
-    $(vector)->$(prefix)Source = \substr_replace(
-        $(vector)->$(prefix)Source,
+    $this->$(prefix)Source = \substr_replace(
+        $this->$(prefix)Source,
         '',
         $(index) * $[BytesPerElement],
         $[BytesPerElement]
@@ -54,7 +52,6 @@ $(macro :unsafe) {
 
 $(macro :unsafe) {
     __unset_value(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index)
     )
@@ -329,16 +326,16 @@ $(macro :unsafe) {
         ];
     }
     
-    --$(vector)->elementCount;
+    --$this->elementCount;
     
     $(__context_Nullable ? {
-        $$(expand(__do_unset_value_boolean($(vector), nullability, $(index))));
+        $$(expand(__do_unset_value_boolean(nullability, $(index))));
     });
         
     $<Boolean>{
-        $$(expand(__do_unset_value_boolean($(vector), $(prefix), $(index))));
+        $$(expand(__do_unset_value_boolean($(prefix), $(index))));
     }
     $<!Boolean>{
-        $$(expand(__do_unset_value_string($(vector), $(prefix), $(index))));
+        $$(expand(__do_unset_value_string($(prefix), $(index))));
     }
 }

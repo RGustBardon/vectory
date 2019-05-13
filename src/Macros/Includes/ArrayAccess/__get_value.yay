@@ -2,7 +2,6 @@
 
 $(macro :unsafe) {
     __do_get_value_boolean(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
@@ -11,14 +10,13 @@ $(macro :unsafe) {
 } >> {
     $$(expand(
         $byteIndex = $(index) >> 3;
-        __do_get_value_string($(vector), $(prefix), $byteIndex, $(result))
+        __do_get_value_string($(prefix), $byteIndex, $(result))
     ))
     $(result) = ("\x0" !== ($(result) & $mask[$(index) & 7]));
 }
 
 $(macro :unsafe) {
     __do_get_value_integer(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
@@ -26,14 +24,13 @@ $(macro :unsafe) {
     $(optional(token(';')))
 } >> {
     $$(expand(
-        __do_get_value_string($(vector), $(prefix), $(index), $packedInteger);
+        __do_get_value_string($(prefix), $(index), $packedInteger);
         __unpack_integer($packedInteger, $(result));
     ))
 }
 
 $(macro :unsafe) {
     __do_get_value_string(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
@@ -56,35 +53,33 @@ $(macro :unsafe) {
     }
 } >> {
     $(__context_OneBytePerElement ? {
-        $(result) = $(vector)->$(prefix)Source[$(index)];
+        $(result) = $this->$(prefix)Source[$(index)];
     })
     $(__context_OneBytePerElement ! {
-        $(result) = \substr($(vector)->$(prefix)Source, $(index) * $(__context_BytesPerElement), $(__context_BytesPerElement));
+        $(result) = \substr($this->$(prefix)Source, $(index) * $(__context_BytesPerElement), $(__context_BytesPerElement));
     })
 }
 
 $(macro :unsafe) {
     __do_get_value(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
     )
 } >> {
     $<Boolean>{
-        $$(expand(__do_get_value_boolean($(vector), $(prefix), $(index), $(result))));
+        $$(expand(__do_get_value_boolean($(prefix), $(index), $(result))));
     }
     $<Integer>{
-        $$(expand(__do_get_value_integer($(vector), $(prefix), $(index), $(result))));
+        $$(expand(__do_get_value_integer($(prefix), $(index), $(result))));
     }
     $<String>{
-        $$(expand(__do_get_value_string($(vector), $(prefix), $(index), $(result))));
+        $$(expand(__do_get_value_string($(prefix), $(index), $(result))));
     }
 }
 
 $(macro :unsafe) {
     __get_value(
-        $(T_VARIABLE as vector),
         $(label() as prefix),
         $(T_VARIABLE as index),
         $(T_VARIABLE as result)
@@ -103,15 +98,15 @@ $(macro :unsafe) {
     }
     
     $(__context_Nullable ? {
-        $$(expand(__do_get_value_boolean($(vector), nullability, $(index), $isNull)));
+        $$(expand(__do_get_value_boolean(nullability, $(index), $isNull)));
         if ($isNull) {
             $(result) = null;
         } else {
-            $$(expand(__do_get_value($(vector), $(prefix), $(index), $(result))));
+            $$(expand(__do_get_value($(prefix), $(index), $(result))));
         }
     });
 
     $(__context_Nullable ! {
-        $$(expand(__do_get_value($(vector), $(prefix), $(index), $(result))));
+        $$(expand(__do_get_value($(prefix), $(index), $(result))));
     })
 }
