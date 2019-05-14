@@ -12,5 +12,19 @@ $(macro :unsafe) {
         $<Signed>{
             private static /* bool */ $littleEndian;
         }
+        $<!HasStaticElementLength>{
+            private /* int */ $elementLength;
+            private /* string */ $defaultValue;
+            
+            public function __construct(int $elementLength)
+            {
+                if ($elementLength <= 1) {
+                    $$(expand(__throw(\DomainException, 'Element length must be at least 2')));
+                }
+                
+                $this->defaultValue = \str_repeat("\x0", $elementLength);
+                $this->elementLength = $elementLength;
+            }
+        }
     ))
 }

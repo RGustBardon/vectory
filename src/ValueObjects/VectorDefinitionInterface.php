@@ -33,6 +33,8 @@ interface VectorDefinitionInterface
 
     public function hasBitArithmetic(): bool;
 
+    public function hasStaticElementLength(): bool;
+
     public function isNullable(): bool;
 
     public function isSigned(): bool;

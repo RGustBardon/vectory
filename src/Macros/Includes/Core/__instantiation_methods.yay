@@ -15,13 +15,13 @@ $(macro :unsafe) {
     }
     
     $<PoweredByArray>{
-        private static function getInstance(bool $filled = false): array
+        public static function getInstance(bool $filled = false): array
         {
             return $filled ? \array_fill(0, $[FilledCount], $[DefaultValue]) : [];
         }
     }
     $<PoweredByDsDeque>{
-        private static function getInstance(bool $filled = false): \Ds\Sequence
+        public static function getInstance(bool $filled = false): \Ds\Sequence
         {
             $instance = new \Ds\Deque();
             if ($filled) {
@@ -31,7 +31,7 @@ $(macro :unsafe) {
         }
     }
     $<PoweredByDsVector>{
-        private static function getInstance(bool $filled = false): \Ds\Sequence
+        public static function getInstance(bool $filled = false): \Ds\Sequence
         {
             $instance = new \Ds\Vector();
             if ($filled) {
@@ -41,7 +41,7 @@ $(macro :unsafe) {
         }
     }
     $<PoweredBySplFixedArray>{
-        private static function getInstance(bool $filled = false): \SplFixedArray
+        public static function getInstance(bool $filled = false): \SplFixedArray
         {
             $instance = new \SplFixedArray();
             if ($filled) {
@@ -55,9 +55,9 @@ $(macro :unsafe) {
         }
     }
     $<PoweredByString>{
-        private static function getInstance(bool $filled = false): \Vectory\VectorInterface
+        public static function getInstance(bool $filled = false): \Vectory\VectorInterface
         {
-            $instance = new $[Fqn]();
+            $instance = new $[Fqn]($<!HasStaticElementLength>{$[BytesPerElement]});
             if ($filled) {
                 $instance[$[FilledLastIndex]] = $[DefaultValue];
             }

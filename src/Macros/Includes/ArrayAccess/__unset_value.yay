@@ -8,16 +8,18 @@ $(macro :unsafe) {
     $(optional(token(';')))
     $(_() as __context_BytesPerElement)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    $bytesPerElement = 1;
-    if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
-        $bytesPerElement = Vectory::getBytesPerElement();
+    if ('nullability' === (string) $ast->{'prefix'} || Vectory::hasStaticElementLength()) {
+        $bytesPerElement = 1;
+        if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
+            $bytesPerElement = Vectory::getBytesPerElement();
+        }
+        $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
+        $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
     }
-    $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
-    $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
 } >> {
     if ($this->elementCount > $(index)) {
         $carry = "\x0";
-        $byteCount = \strlen($this->$(prefix)Source) / $(__context_BytesPerElement);
+        $byteCount = \strlen($this->$(prefix)Source) / $(__context_BytesPerElement ?! { $this->elementLength });
         for ($i = $byteCount - 1, $byteIndex = ($(index) >> 3); $i > $byteIndex; --$i) {
             $this->$(prefix)Source[$i] =
                 ($shiftOneRight[$byte = $this->$(prefix)Source[$i]] | $carry);

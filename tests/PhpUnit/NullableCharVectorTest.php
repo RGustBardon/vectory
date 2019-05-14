@@ -19,16 +19,26 @@ use Vectory\VectorInterface;
 /**
  * @internal
  */
-final class Char2VectorTest extends TestCase
+final class NullableCharVectorTest extends TestCase
 {
     private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
 
+    public static function getInstance(bool $filled = false): VectorInterface
+    {
+        $instance = new \Vectory\NullableCharVector();
+        if ($filled) {
+            $instance[9999] = "\0";
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         $value = '';
-        for ($i = 0; $i < 2; ++$i) {
+        for ($i = 0; $i < 1; ++$i) {
             $value .= \chr(\mt_rand(0x0, 0xff));
         }
 
@@ -39,8 +49,8 @@ final class Char2VectorTest extends TestCase
     {
         \assert(0x10ffff <= \mt_getrandmax());
         $string = '';
-        while (\strlen($string) < 2) {
-            $characterMaxLength = \min(4, 2 - \strlen($string));
+        while (\strlen($string) < 1) {
+            $characterMaxLength = \min(4, 1 - \strlen($string));
             $character = '';
             switch (\mt_rand(1, $characterMaxLength)) {
                 case 1:
@@ -82,7 +92,7 @@ final class Char2VectorTest extends TestCase
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[0] = "\0\0";
+        $vector[0] = "\0";
         $vector[-1];
     }
 
@@ -90,14 +100,14 @@ final class Char2VectorTest extends TestCase
     {
         $this->expectException(\TypeError::class);
         $vector = self::getInstance();
-        $vector['foo'] = "\0\0";
+        $vector['foo'] = "\0";
     }
 
     public function testThrowsIfIndexSetIsNegative(): void
     {
         $this->expectException(\OutOfRangeException::class);
         $vector = self::getInstance();
-        $vector[-1] = "\0\0";
+        $vector[-1] = "\0";
     }
 
     public function testThrowsIfValueSetOfInvalidType(): void
@@ -107,36 +117,29 @@ final class Char2VectorTest extends TestCase
         $vector[0] = self::INVALID_VALUE;
     }
 
-    public function testThrowsIfValueSetIsTooShort(): void
-    {
-        $this->expectException(\LengthException::class);
-        $vector = self::getInstance();
-        $vector[0] = \substr("\0\0", 0, -1);
-    }
-
     public function testThrowsIfValueSetIsTooLong(): void
     {
         $this->expectException(\LengthException::class);
         $vector = self::getInstance();
-        $vector[0] = "\0\0"."\0";
+        $vector[0] = "\0"."\0";
     }
 
     public function testArrayAccess(): void
     {
         $vector = self::getInstance();
         self::assertFalse(isset($vector[0]));
-        $vector[0] = "\0\0";
+        $vector[0] = "\0";
         self::assertTrue(isset($vector[0]));
         self::assertFalse(isset($vector[1]));
-        self::assertSame("\0\0", $vector[0]);
+        self::assertSame("\0", $vector[0]);
         $value = self::getRandomValue();
         $vector[2] = $value;
         self::assertTrue(isset($vector[0]));
         self::assertTrue(isset($vector[1]));
         self::assertTrue(isset($vector[2]));
         self::assertFalse(isset($vector[3]));
-        self::assertSame("\0\0", $vector[0]);
-        self::assertSame("\0\0", $vector[1]);
+        self::assertSame("\0", $vector[0]);
+        self::assertSame("\0", $vector[1]);
         self::assertSame($value, $vector[2]);
         do {
             $otherValue = self::getRandomValue();
@@ -146,8 +149,8 @@ final class Char2VectorTest extends TestCase
         self::assertTrue(isset($vector[1]));
         self::assertTrue(isset($vector[2]));
         self::assertFalse(isset($vector[3]));
-        self::assertSame("\0\0", $vector[0]);
-        self::assertSame("\0\0", $vector[1]);
+        self::assertSame("\0", $vector[0]);
+        self::assertSame("\0", $vector[1]);
         self::assertSame($otherValue, $vector[2]);
         $vector[0] = $value;
         unset($vector[1]);
@@ -157,8 +160,8 @@ final class Char2VectorTest extends TestCase
         self::assertSame($value, $vector[0]);
         self::assertSame($otherValue, $vector[1]);
         $vector[17] = $value;
-        self::assertSame("\0\0", $vector[15]);
-        self::assertSame("\0\0", $vector[16]);
+        self::assertSame("\0", $vector[15]);
+        self::assertSame("\0", $vector[16]);
         self::assertSame($value, $vector[17]);
         unset($vector[3]);
         unset($vector[2]);
@@ -182,7 +185,7 @@ final class Char2VectorTest extends TestCase
         self::assertTrue(isset($vector[3]));
         self::assertFalse(isset($vector[4]));
         self::assertSame($value0, $vector[0]);
-        self::assertSame("\0\0", $vector[1]);
+        self::assertSame("\0", $vector[1]);
         self::assertSame($value2, $vector[2]);
         self::assertSame($value3, $vector[3]);
     }
@@ -192,9 +195,13 @@ final class Char2VectorTest extends TestCase
      */
     public function testOffsetSetWithNullValue(): void
     {
-        $this->expectException(\TypeError::class);
         $vector = self::getInstance();
         $vector[1] = null;
+        self::assertTrue(isset($vector[0]));
+        self::assertTrue(isset($vector[1]));
+        self::assertFalse(isset($vector[2]));
+        self::assertSame("\0", $vector[0]);
+        self::assertNull($vector[1]);
     }
 
     public function testCountable(): void
@@ -211,7 +218,16 @@ final class Char2VectorTest extends TestCase
         self::assertCount(2, $vector);
         unset($vector[2]);
         self::assertCount(2, $vector);
-        $vector[2] = "\0\0";
+        $vector[2] = "\0";
+        self::assertCount(3, $vector);
+    }
+
+    public function testCountableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertCount(1, $vector);
+        $vector[2] = null;
         self::assertCount(3, $vector);
     }
 
@@ -221,7 +237,7 @@ final class Char2VectorTest extends TestCase
         self::assertSame([], \iterator_to_array($vector));
         $element = self::getRandomValue();
         $vector[1] = $element;
-        self::assertSame(["\0\0", $element], \iterator_to_array($vector));
+        self::assertSame(["\0", $element], \iterator_to_array($vector));
         unset($vector[0]);
         self::assertSame([$element], \iterator_to_array($vector));
     }
@@ -255,6 +271,15 @@ final class Char2VectorTest extends TestCase
         self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
     }
 
+    public function testIteratorAggregateWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertSame([null], \iterator_to_array($vector));
+        $vector[2] = null;
+        self::assertSame([null, "\0", null], \iterator_to_array($vector));
+    }
+
     /**
      * @depends testIteratorAggregate
      */
@@ -263,7 +288,7 @@ final class Char2VectorTest extends TestCase
         $vector = self::getInstance();
         $elements = [];
         for ($i = 0; $i < 1031; ++$i) {
-            $element = self::getRandomValue();
+            $element = \mt_rand(0, 5) > 0 ? self::getRandomValue() : null;
             $elements[] = $element;
             $vector[$i] = $element;
         }
@@ -279,14 +304,23 @@ final class Char2VectorTest extends TestCase
         foreach ($sequence as $value) {
             $vector[] = $value;
         }
-        $vector[4] = "\0\0";
-        \array_push($sequence, "\0\0", "\0\0");
+        $vector[4] = "\0";
+        \array_push($sequence, "\0", "\0");
         self::assertNativeJson($sequence, $vector);
+    }
+
+    public function testJsonSerializableWithNullValue(): void
+    {
+        $vector = self::getInstance();
+        $vector[0] = null;
+        self::assertNativeJson([null], $vector);
+        $vector[2] = null;
+        self::assertNativeJson([null, "\0", null], $vector);
     }
 
     public static function corruptedSerializationProvider(): \Generator
     {
-        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;i:[0-9]+;s:0:"";\\}\\}$)~', '-1']];
+        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";i:[0-9]+;s:0:"";\\}\\}$)~', "1:\"\0"], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;(i:[0-9]+;s:0:"";){2}\\}\\}$)~', '-1']];
     }
 
     /**
@@ -315,8 +349,8 @@ final class Char2VectorTest extends TestCase
         foreach ($sequence as $value) {
             $vector[] = $value;
         }
-        $vector[4] = "\0\0";
-        \array_push($sequence, "\0\0", "\0\0");
+        $vector[4] = "\0";
+        \array_push($sequence, "\0", "\0");
         self::assertSerialization($sequence, \serialize($vector));
     }
 
@@ -414,12 +448,16 @@ final class Char2VectorTest extends TestCase
             [[0, 1, 2], 1, 1, [0, 2]],
         ] as [$originalSequence, $firstIndex, $howMany, $expected]) {
             $batch = [$originalElements];
+            $elements = $originalElements;
+            $elements[\array_rand($elements)] = null;
+            $elements[\array_rand($elements)] = null;
+            $batch[] = $elements;
             foreach ($batch as $elements) {
                 $vector = self::getInstance();
                 $sequence = $originalSequence;
                 foreach ($sequence as $index => $key) {
                     if (self::SEQUENCE_SKIP_VALUE === $key) {
-                        $sequence[$index] = "\0\0";
+                        $sequence[$index] = "\0";
                     } else {
                         $vector[$index] = $elements[$key];
                     }
@@ -437,7 +475,7 @@ final class Char2VectorTest extends TestCase
         $expectedSequence = [];
         foreach ($expected as $key) {
             if (self::SEQUENCE_DEFAULT_VALUE === $key) {
-                $expectedSequence[] = "\0\0";
+                $expectedSequence[] = "\0";
             } else {
                 $expectedSequence[] = $elements[$key];
             }
@@ -457,7 +495,7 @@ final class Char2VectorTest extends TestCase
     {
         $this->expectException(\LengthException::class);
         $vector = self::getInstance();
-        $vector->insert(["\0\0"."\0"]);
+        $vector->insert(["\0"."\0"]);
     }
 
     public static function insertionProvider(): \Generator
@@ -518,12 +556,16 @@ final class Char2VectorTest extends TestCase
             [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2], 1, [0, 0, 1, 2, 3, 0, 1, 2, 1, 2, 3, 0, 1, 2, 3]],
         ] as [$originalSequence, $inserted, $firstIndex, $expected]) {
             $batch = [$originalElements];
+            $elements = $originalElements;
+            $elements[\array_rand($elements)] = null;
+            $elements[\array_rand($elements)] = null;
+            $batch[] = $elements;
             foreach ($batch as $elements) {
                 $vector = self::getInstance();
                 $sequence = $originalSequence;
                 foreach ($sequence as $index => $key) {
                     if (self::SEQUENCE_SKIP_VALUE === $key) {
-                        $sequence[$index] = "\0\0";
+                        $sequence[$index] = "\0";
                     } else {
                         $vector[$index] = $elements[$key];
                     }
@@ -544,7 +586,7 @@ final class Char2VectorTest extends TestCase
         $expectedSequence = [];
         foreach ($expected as $key) {
             if (self::SEQUENCE_DEFAULT_VALUE === $key) {
-                $expectedSequence[] = "\0\0";
+                $expectedSequence[] = "\0";
             } else {
                 $expectedSequence[] = $elements[$key];
             }
@@ -556,16 +598,6 @@ final class Char2VectorTest extends TestCase
         })();
         $vector->insert($useGenerator ? $generator : \iterator_to_array($generator), $firstIndex);
         self::assertSequence($expectedSequence, $vector);
-    }
-
-    private static function getInstance(bool $filled = false): VectorInterface
-    {
-        $instance = new \Vectory\Char2Vector();
-        if ($filled) {
-            $instance[9999] = "\0\0";
-        }
-
-        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void
@@ -624,6 +656,6 @@ final class Char2VectorTest extends TestCase
 
     private static function unserializeVector(string $serialized)
     {
-        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\Char2Vector', '\\')]]);
+        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableCharVector', '\\')]]);
     }
 }

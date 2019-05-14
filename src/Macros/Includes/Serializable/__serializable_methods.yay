@@ -23,6 +23,7 @@ $(macro :unsafe) {
                 \pack('S', 1) === \pack('v', 1),
             })
             $this->elementCount,
+            $<!HasStaticElementLength>{ $this->elementLength, }
             $this->primarySource,
             $<Nullable>{ $this->nullabilitySource, }
         ]);
@@ -51,6 +52,7 @@ $(macro :unsafe) {
             'integer',
             $( __context_AffectedByEndianness ? { 'boolean', })
             'integer',
+            $<!HasStaticElementLength>{ 'integer', }
             'string',
             $<Nullable>{ 'string', }
         ];
@@ -71,6 +73,7 @@ $(macro :unsafe) {
             $version,
             $( __context_AffectedByEndianness ? { $littleEndian, })
             $elementCount,
+            $<!HasStaticElementLength>{ $elementLength, }
             $primarySource,
             $<Nullable>{ $nullabilitySource, }
         ] = $newValues;
@@ -109,11 +112,16 @@ $(macro :unsafe) {
             }
         })
         
-        $<Boolean>{
-            $expectedLength = (($elementCount + 7) >> 3);
+        $<HasStaticElementLength>{
+            $<Boolean>{
+                $expectedLength = (($elementCount + 7) >> 3);
+            }
+            $<!Boolean>{
+                $expectedLength = $elementCount * $[BytesPerElement];
+            }
         }
-        $<!Boolean>{
-            $expectedLength = $elementCount * $[BytesPerElement];
+        $<!HasStaticElementLength>{
+            $expectedLength = $elementCount * $elementLength;
         }
         
         if (\strlen($primarySource) !== $expectedLength) {
@@ -144,6 +152,10 @@ $(macro :unsafe) {
         }
 
         $this->elementCount = $elementCount;
+        $<!HasStaticElementLength>{
+            $this->elementLength = $elementLength;
+            $this->defaultValue = \str_repeat("\x0", $elementLength);
+        }
         $this->primarySource = $primarySource;
         $<Nullable>{
             $this->nullabilitySource = $nullabilitySource;

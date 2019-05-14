@@ -177,6 +177,16 @@ final class Int32VectorBench
         \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Int32Vector', '\\')]]);
     }
 
+    public static function getInstance(bool $filled = false): \Vectory\VectorInterface
+    {
+        $instance = new \Vectory\Int32Vector();
+        if ($filled) {
+            $instance[9999] = 0;
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         $positive = 0 === \mt_rand(0, 1);
@@ -240,15 +250,5 @@ final class Int32VectorBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): \Vectory\VectorInterface
-    {
-        $instance = new \Vectory\Int32Vector();
-        if ($filled) {
-            $instance[9999] = 0;
-        }
-
-        return $instance;
     }
 }

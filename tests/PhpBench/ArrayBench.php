@@ -68,7 +68,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\0\0";
     }
 
     /**
@@ -76,7 +76,7 @@ final class ArrayBench
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = "\0\0";
     }
 
     /**
@@ -140,7 +140,7 @@ final class ArrayBench
      */
     public function benchInsertUnshifting(): void
     {
-        \array_unshift($this->instanceForInsertUnshifting, false);
+        \array_unshift($this->instanceForInsertUnshifting, "\0\0");
     }
 
     /**
@@ -176,19 +176,24 @@ final class ArrayBench
         \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => false]);
     }
 
+    public static function getInstance(bool $filled = false): array
+    {
+        return $filled ? \array_fill(0, 10000, "\0\0") : [];
+    }
+
     public static function getRandomValue()
     {
         return [false, true][\mt_rand(0, 1)];
         $positive = 0 === \mt_rand(0, 1);
         $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < null; ++$i) {
+        for ($i = 1; $i < 2; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
         }
         $value = \hexdec($value);
 
         return $positive ? $value : -$value;
         $value = '';
-        for ($i = 0; $i < null; ++$i) {
+        for ($i = 0; $i < 2; ++$i) {
             $value .= \chr(\mt_rand(0x0, 0xff));
         }
 
@@ -198,7 +203,7 @@ final class ArrayBench
     public static function getRandomSignedInteger(bool $negative): int
     {
         $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < null; ++$i) {
+        for ($i = 1; $i < 2; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
         }
         $value = \hexdec($value);
@@ -211,8 +216,8 @@ final class ArrayBench
     {
         \assert(0x10ffff <= \mt_getrandmax());
         $string = '';
-        while (\strlen($string) < null) {
-            $characterMaxLength = \min(4, null - \strlen($string));
+        while (\strlen($string) < 2) {
+            $characterMaxLength = \min(4, 2 - \strlen($string));
             $character = '';
             switch (\mt_rand(1, $characterMaxLength)) {
                 case 1:
@@ -257,7 +262,7 @@ final class ArrayBench
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 100 / 2, false);
+        $this->batchForInsert = \array_fill(0, 100 / 2, "\0\0");
         $this->instanceForInsertAtHead = self::getInstance();
         $this->instanceForInsertAtTail = self::getInstance();
         $this->instanceForInsertUnshifting = self::getInstance();
@@ -277,10 +282,5 @@ final class ArrayBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): array
-    {
-        return $filled ? \array_fill(0, 10000, false) : [];
     }
 }

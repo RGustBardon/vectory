@@ -177,6 +177,16 @@ final class Uint48VectorBench
         \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Uint48Vector', '\\')]]);
     }
 
+    public static function getInstance(bool $filled = false): \Vectory\VectorInterface
+    {
+        $instance = new \Vectory\Uint48Vector();
+        if ($filled) {
+            $instance[9999] = 0;
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         $value = \dechex(\mt_rand(0x0, 0xff));
@@ -226,15 +236,5 @@ final class Uint48VectorBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): \Vectory\VectorInterface
-    {
-        $instance = new \Vectory\Uint48Vector();
-        if ($filled) {
-            $instance[9999] = 0;
-        }
-
-        return $instance;
     }
 }

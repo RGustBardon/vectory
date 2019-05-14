@@ -22,7 +22,8 @@ namespace Vectory\ValueObjects;
     private const NAME_TOKEN_BOOLEAN = 'Bool';
     private const NAME_TOKEN_SIGNED_INTEGER = 'Int';
     private const NAME_TOKEN_UNSIGNED_INTEGER = 'Uint';
-    private const NAME_TOKEN_STRING = 'Char';
+    private const NAME_TOKEN_CHAR = 'Char';
+    private const NAME_TOKEN_STRING = 'String';
     private const NAME_TOKEN_SUFFIX = 'Vector';
 
     private const IMPLEMENTATION_ID_TO_CLASS = [
@@ -51,6 +52,7 @@ namespace Vectory\ValueObjects;
     private /* ?int */ $maximumValue;
     private /* string */ $className;
     private /* ?string */ $fullyQualifiedClassName;
+    private /* bool */ $staticElementLength;
 
     public function __construct(
         string $implementationId,
@@ -95,6 +97,11 @@ namespace Vectory\ValueObjects;
     public function hasBitArithmetic(): bool
     {
         return $this->bitArithmetic;
+    }
+
+    public function hasStaticElementLength(): bool
+    {
+        return $this->staticElementLength;
     }
 
     public function isNullable(): bool
@@ -171,7 +178,7 @@ namespace Vectory\ValueObjects;
 
                 break;
             case self::TYPE_STRING:
-                \assert($this->bytesPerElement > 0);
+                \assert(\in_array($this->bytesPerElement, [null, 1], true));
                 \assert(null === $this->signed);
 
                 break;
@@ -189,10 +196,12 @@ namespace Vectory\ValueObjects;
             $this->maximumValue = \PHP_INT_MAX;
             $this->className = self::IMPLEMENTATION_ID_TO_CLASS[$this->implementationId];
             $this->fullyQualifiedClassName = self::IMPLEMENTATION_ID_TO_FQN[$this->implementationId];
+            $this->staticElementLength = false;
 
             return;
         }
 
+        $this->staticElementLength = true;
         $this->bitArithmetic = $this->nullable || $this->isBoolean();
         $this->className = '';
         if ($this->nullable) {
@@ -216,8 +225,14 @@ namespace Vectory\ValueObjects;
             }
             $this->className .= 8 * $this->bytesPerElement;
         } elseif ($this->isString()) {
-            $this->defaultValue = \str_repeat("\x0", $this->bytesPerElement);
-            $this->className .= self::NAME_TOKEN_STRING.$this->bytesPerElement;
+            if (null === $this->bytesPerElement) {
+                $this->defaultValue = '';
+                $this->className .= self::NAME_TOKEN_STRING;
+                $this->staticElementLength = false;
+            } else {
+                $this->defaultValue = "\x0";
+                $this->className .= self::NAME_TOKEN_CHAR;
+            }
         }
 
         $this->className .= self::NAME_TOKEN_SUFFIX;

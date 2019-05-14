@@ -177,6 +177,16 @@ final class NullableBoolVectorBench
         \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\NullableBoolVector', '\\')]]);
     }
 
+    public static function getInstance(bool $filled = false): \Vectory\VectorInterface
+    {
+        $instance = new \Vectory\NullableBoolVector();
+        if ($filled) {
+            $instance[9999] = false;
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         return [false, true][\mt_rand(0, 1)];
@@ -221,15 +231,5 @@ final class NullableBoolVectorBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): \Vectory\VectorInterface
-    {
-        $instance = new \Vectory\NullableBoolVector();
-        if ($filled) {
-            $instance[9999] = false;
-        }
-
-        return $instance;
     }
 }

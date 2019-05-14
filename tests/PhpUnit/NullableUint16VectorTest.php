@@ -25,6 +25,16 @@ final class NullableUint16VectorTest extends TestCase
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = '0';
 
+    public static function getInstance(bool $filled = false): VectorInterface
+    {
+        $instance = new \Vectory\NullableUint16Vector();
+        if ($filled) {
+            $instance[9999] = 0;
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         $value = \dechex(\mt_rand(0x0, 0xff));
@@ -587,16 +597,6 @@ final class NullableUint16VectorTest extends TestCase
         })();
         $vector->insert($useGenerator ? $generator : \iterator_to_array($generator), $firstIndex);
         self::assertSequence($expectedSequence, $vector);
-    }
-
-    private static function getInstance(bool $filled = false): VectorInterface
-    {
-        $instance = new \Vectory\NullableUint16Vector();
-        if ($filled) {
-            $instance[9999] = 0;
-        }
-
-        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void

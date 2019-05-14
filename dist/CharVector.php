@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-class Char4Vector implements VectorInterface
+class CharVector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private const SERIALIZATION_FORMAT_VERSION = 1;
@@ -31,7 +31,7 @@ class Char4Vector implements VectorInterface
                 $property = new \ReflectionProperty($this, $sourcePrefix.'Source');
                 $property->setAccessible(true);
                 $source = $property->getValue($this);
-                $bytesPerElement = 4 ?? 1;
+                $bytesPerElement = 1 ?? 1;
                 $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
                 \assert(\is_iterable($elements));
                 foreach ($elements as $index => $element) {
@@ -69,7 +69,7 @@ class Char4Vector implements VectorInterface
             throw new \OutOfRangeException(self::EXCEPTION_PREFIX.'Index out of range: '.$index.', expected 0 <= x <= '.($this->elementCount - 1));
         }
 
-        return \substr($this->primarySource, $index * 4, 4);
+        return $this->primarySource[$index];
     }
 
     public function offsetSet($index, $value)
@@ -84,23 +84,19 @@ class Char4Vector implements VectorInterface
         if (!\is_string($value)) {
             throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', '', \gettype($value)));
         }
-        if (4 !== \strlen($value)) {
-            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 4, \strlen($value)));
+        if (1 !== \strlen($value)) {
+            throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 1, \strlen($value)));
         }
-        $unassignedCount = $index - \strlen($this->primarySource) / 4;
+        $unassignedCount = $index - \strlen($this->primarySource) / 1;
         if ($unassignedCount < 0) {
             // Case 1. Overwrite an existing item.
-            $elementIndex = 0;
-            $byteIndex = $index * 4;
-            do {
-                $this->primarySource[$byteIndex++] = $value[$elementIndex++];
-            } while ($elementIndex < 4);
+            $this->primarySource[$index] = $value;
         } elseif (0 === $unassignedCount) {
             // Case 2. Append an element right after the last one.
             $this->primarySource .= $value;
         } else {
             // Case 3. Append to a gap after the last element. Fill the gap with default values.
-            $this->primarySource .= \str_repeat("\0\0\0\0", (int) $unassignedCount).$value;
+            $this->primarySource .= \str_repeat("\0", (int) $unassignedCount).$value;
         }
         if ($this->elementCount < $index + 1) {
             $this->elementCount = $index + 1;
@@ -111,7 +107,7 @@ class Char4Vector implements VectorInterface
     {
         if (\is_int($index) && $index >= 0 && $index < $this->elementCount) {
             --$this->elementCount;
-            $this->primarySource = \substr_replace($this->primarySource, '', $index * 4, 4);
+            $this->primarySource = \substr_replace($this->primarySource, '', $index * 1, 1);
         }
     }
 
@@ -124,9 +120,8 @@ class Char4Vector implements VectorInterface
     {
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
-        $batchSize = 256 * 4;
-        for ($index = 0; $index < $elementCount; $index += 256) {
-            yield from \array_combine(\range($index, \min($elementCount, $index + 256) - 1), (array) \str_split(\substr($primarySource, $index * 4, $batchSize), 4));
+        for ($i = 0; $i < $elementCount; ++$i) {
+            (yield $primarySource[$i]);
         }
     }
 
@@ -138,9 +133,8 @@ class Char4Vector implements VectorInterface
         $jsonData = [];
         $elementCount = $this->elementCount;
         $primarySource = $this->primarySource;
-        $batchSize = 256 * 4;
-        for ($index = 0; $index < $elementCount; $index += 256) {
-            \array_push($jsonData, ...(array) \str_split(\substr($primarySource, $index * 4, $batchSize), 4));
+        for ($i = 0; $i < $elementCount; ++$i) {
+            $jsonData[] = $primarySource[$i];
         }
 
         return $jsonData;
@@ -157,7 +151,7 @@ class Char4Vector implements VectorInterface
         \set_error_handler(static function (int $errno, string $errstr) use (&$errorMessage): void {
             $errorMessage = $errstr;
         });
-        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\Char4Vector', '\\')]]);
+        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\CharVector', '\\')]]);
         \restore_error_handler();
         if (false === $newValues) {
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
@@ -179,7 +173,7 @@ class Char4Vector implements VectorInterface
 
             throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        $expectedLength = $elementCount * 4;
+        $expectedLength = $elementCount * 1;
         if (\strlen($primarySource) !== $expectedLength) {
             $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($primarySource));
 
@@ -212,14 +206,14 @@ class Char4Vector implements VectorInterface
     public function insert(iterable $elements, int $firstIndex = -1): void
     {
         // Prepare a substring to insert.
-        $defaultValue = "\0\0\0\0";
+        $defaultValue = "\0";
         $substringToInsert = '';
         foreach ($elements as $element) {
             if (!\is_string($element)) {
                 throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', '', \gettype($element)));
             }
-            if (4 !== \strlen($element)) {
-                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 4, \strlen($element)));
+            if (1 !== \strlen($element)) {
+                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 1, \strlen($element)));
             }
             $substringToInsert .= $element;
         }
@@ -231,12 +225,12 @@ class Char4Vector implements VectorInterface
     {
         if ($howMany >= $elementCount - $firstIndex) {
             if ($primarySource) {
-                $this->primarySource = \substr($this->primarySource, 0, $firstIndex * 4);
+                $this->primarySource = \substr($this->primarySource, 0, $firstIndex * 1);
                 $this->elementCount = $firstIndex;
             }
         } else {
             if ($primarySource) {
-                $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * 4, $howMany * 4);
+                $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * 1, $howMany * 1);
                 $this->elementCount -= $howMany;
             }
         }
@@ -244,12 +238,12 @@ class Char4Vector implements VectorInterface
 
     private function insertBytes(string $substringToInsert, int $firstIndex): void
     {
-        $defaultValue = "\0\0\0\0";
+        $defaultValue = "\0";
         if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
             // Insert the elements.
-            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 4;
+            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 1;
             $this->primarySource .= \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_LEFT);
-            $this->elementCount += $padLength / 4;
+            $this->elementCount += $padLength / 1;
         } else {
             $originalFirstIndex = $firstIndex;
             // Calculate the positive index corresponding to the negative one.
@@ -261,16 +255,16 @@ class Char4Vector implements VectorInterface
                 }
             }
             // Resize the bytemap if the negative first element index is greater than the new element count.
-            $insertedElementCount = (int) (\strlen($substringToInsert) / 4);
+            $insertedElementCount = (int) (\strlen($substringToInsert) / 1);
             $newElementCount = $this->elementCount + $insertedElementCount;
             if (-$originalFirstIndex > $newElementCount) {
                 $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
-                $padLength = ($overflow + $insertedElementCount) * 4;
+                $padLength = ($overflow + $insertedElementCount) * 1;
                 $substringToInsert = \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_RIGHT);
             }
             // Insert the elements.
-            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 4, 0);
-            $this->elementCount += (int) (\strlen($substringToInsert) / 4);
+            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 1, 0);
+            $this->elementCount += (int) (\strlen($substringToInsert) / 1);
         }
     }
 }

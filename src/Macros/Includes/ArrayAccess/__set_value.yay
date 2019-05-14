@@ -75,24 +75,26 @@ $(macro :unsafe) {
     $(_() as __context_OneBytePerElement)
     $(_() as __context_DefaultValue)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    $bytesPerElement = 1;
-    if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
-        $bytesPerElement = Vectory::getBytesPerElement();
-    }
-    $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
-    $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
-    
-    if (1 === $bytesPerElement) {
-        $append = new \Yay\Ast('__context_OneBytePerElement');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
-    }
+    if ('nullability' === (string) $ast->{'prefix'} || Vectory::hasStaticElementLength()) {
+        $bytesPerElement = 1;
+        if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
+            $bytesPerElement = Vectory::getBytesPerElement();
+        }
+        $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
+        $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
+        
+        if (1 === $bytesPerElement) {
+            $append = new \Yay\Ast('__context_OneBytePerElement');
+            $append->push(new \Yay\Ast());
+            $ast->append($append);
+        }
 
-    $defaultValue = \str_repeat("\0", $bytesPerElement);
-    $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, '\''.$defaultValue.'\'');
-    $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
+        $defaultValue = \str_repeat("\0", $bytesPerElement);
+        $token = new \Yay\Token(\T_CONSTANT_ENCAPSED_STRING, '\''.$defaultValue.'\'');
+        $ast->append(new \Yay\Ast('__context_DefaultValue', $token));
+    }
 } >> {
-    $unassignedCount = $(index) - \strlen($this->$(prefix)Source) / $(__context_BytesPerElement);
+    $unassignedCount = $(index) - \strlen($this->$(prefix)Source) / $(__context_BytesPerElement ?! { $this->elementLength });
     if ($unassignedCount < 0) {
         // Case 1. Overwrite an existing item.
         $(__context_OneBytePerElement ? {
@@ -100,17 +102,20 @@ $(macro :unsafe) {
         })
         $(__context_OneBytePerElement ! {
             $elementIndex = 0;
-            $byteIndex = $(index) * $(__context_BytesPerElement);
+            $byteIndex = $(index) * $(__context_BytesPerElement ?! { $this->elementLength });
             do {
                 $this->$(prefix)Source[$byteIndex++] = $(value)[$elementIndex++];
-            } while ($elementIndex < $(__context_BytesPerElement));
+            } while ($elementIndex < $(__context_BytesPerElement ?! { $this->elementLength }));
         })
     } elseif (0 === $unassignedCount) {
         // Case 2. Append an element right after the last one.
         $this->$(prefix)Source .= $(value);
     } else {
         // Case 3. Append to a gap after the last element. Fill the gap with default values.
-        $this->$(prefix)Source .= \str_repeat($(__context_DefaultValue), (int) $unassignedCount).$(value);
+        $this->$(prefix)Source .= \str_repeat(
+            $(__context_DefaultValue ?! { $this->defaultValue }),
+            (int) $unassignedCount
+        ).$(value);
     }
 }
     

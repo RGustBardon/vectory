@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-class NullableChar1Vector implements VectorInterface
+class NullableCharVector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private const SERIALIZATION_FORMAT_VERSION = 1;
@@ -248,7 +248,7 @@ class NullableChar1Vector implements VectorInterface
         \set_error_handler(static function (int $errno, string $errstr) use (&$errorMessage): void {
             $errorMessage = $errstr;
         });
-        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar1Vector', '\\')]]);
+        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableCharVector', '\\')]]);
         \restore_error_handler();
         if (false === $newValues) {
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));

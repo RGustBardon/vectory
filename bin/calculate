@@ -18,16 +18,16 @@ declare(strict_types=1);
 
 \ini_set('memory_limit', '-1');
 
-if (4 !== $GLOBALS['argc'] || \array_intersect(['-h', '--help'], $GLOBALS['argv'])) {
+if (3 !== $GLOBALS['argc'] || \array_intersect(['-h', '--help'], $GLOBALS['argv'])) {
     \fprintf(
         STDERR,
-        'usage: %s [data-structure-id] [benchmark-id] [how-many]'.\PHP_EOL,
+        'usage: %s [benchmark-id] [how-many]'.\PHP_EOL,
         \basename(__FILE__)
     );
     exit(2);
 }
 
-$calculate = static function (string $dataStructureId, string $benchmark, string $howMany): void {
+$calculate = static function (string $benchmark, string $howMany): void {
     if (!\preg_match('~^(0|[1-9][0-9]*)$~', $howMany)) {
         \fwrite(STDERR, 'Invalid number of elements.'.\PHP_EOL);
         exit(1);
@@ -41,38 +41,8 @@ $calculate = static function (string $dataStructureId, string $benchmark, string
     }
 
     require_once __DIR__.'/../Tests/PhpBench/'.$benchmark.'.php';
-    $benchmark = '\\Vectory\\Tests\\PhpBench\\'.$benchmark;
-    
-    switch ($dataStructureId) {
-        case 'array':
-            $dataStructure = [];
-            break;
-    
-        case \Ds\Deque::class:
-            $dataStructure = new \Ds\Deque();
-            break;
-            
-        case \Ds\Vector::class:
-            $dataStructure = new \Ds\Vector();
-            break;
-        
-        case \SplFixedArray::class:
-            $dataStructure = new \SplFixedArray();
-            break;
-            
-        default:
-            $path = __DIR__.'/../dist/'.$dataStructureId.'.php';
-            if (!\preg_match('~^[\\\\A-z0-9]+$~', $dataStructureId) || !\file_exists($path)) {
-                \fwrite(STDERR, 'Invalid data structure id.'.\PHP_EOL);
-                exit(1);
-            }
-            
-            require_once __DIR__.'/../dist/VectorInterface.php';
-            require_once __DIR__.'/../dist/'.$dataStructureId.'.php';
-            $class = '\\Vectory\\'.$dataStructureId;
-            $dataStructure = new $class();
-            break;
-    }
+    $benchmarkClass = '\\Vectory\\Tests\\PhpBench\\'.$benchmark;
+    $dataStructure = $benchmarkClass::getInstance();
     
     \mt_srand(0);
     $memoryAllocationGroups = [];
@@ -85,21 +55,21 @@ $calculate = static function (string $dataStructureId, string $benchmark, string
         $memoryUsageBeforeLoop = \memory_get_usage();
         
         while (\memory_get_usage() === $memoryUsageBeforeLoop) {
-            $value = $benchmark::getRandomValue();
-            switch ($dataStructureId) {
-                case 'array':
+            $value = $benchmarkClass::getRandomValue();
+            switch ($benchmark) {
+                case 'ArrayBench':
                     $dataStructure[] = $value;
                     break;
                     
-                case \Ds\Deque::class;
-                $dataStructure->push($value);
-                break;
+                case 'DsDequeBench':
+                    $dataStructure->push($value);
+                    break;
                 
-                case \Ds\Vector::class:
+                case 'DsVectorBench':
                     $dataStructure->push($value);
                     break;
                     
-                case \SplFixedArray::class:
+                case 'SplFixedArrayBench':
                     $dataStructure->setSize(\count($dataStructure) + 1);
                     $dataStructure[\count($dataStructure) - 1] = $value;
                     break;

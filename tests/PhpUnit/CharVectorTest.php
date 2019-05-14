@@ -19,11 +19,21 @@ use Vectory\VectorInterface;
 /**
  * @internal
  */
-final class NullableChar1VectorTest extends TestCase
+final class CharVectorTest extends TestCase
 {
     private const SEQUENCE_DEFAULT_VALUE = 'DefaultValue';
     private const SEQUENCE_SKIP_VALUE = 'SkipValue';
     private const INVALID_VALUE = 0;
+
+    public static function getInstance(bool $filled = false): VectorInterface
+    {
+        $instance = new \Vectory\CharVector();
+        if ($filled) {
+            $instance[9999] = "\0";
+        }
+
+        return $instance;
+    }
 
     public static function getRandomValue()
     {
@@ -185,13 +195,9 @@ final class NullableChar1VectorTest extends TestCase
      */
     public function testOffsetSetWithNullValue(): void
     {
+        $this->expectException(\TypeError::class);
         $vector = self::getInstance();
         $vector[1] = null;
-        self::assertTrue(isset($vector[0]));
-        self::assertTrue(isset($vector[1]));
-        self::assertFalse(isset($vector[2]));
-        self::assertSame("\0", $vector[0]);
-        self::assertNull($vector[1]);
     }
 
     public function testCountable(): void
@@ -209,15 +215,6 @@ final class NullableChar1VectorTest extends TestCase
         unset($vector[2]);
         self::assertCount(2, $vector);
         $vector[2] = "\0";
-        self::assertCount(3, $vector);
-    }
-
-    public function testCountableWithNullValue(): void
-    {
-        $vector = self::getInstance();
-        $vector[0] = null;
-        self::assertCount(1, $vector);
-        $vector[2] = null;
         self::assertCount(3, $vector);
     }
 
@@ -261,15 +258,6 @@ final class NullableChar1VectorTest extends TestCase
         self::assertSame([[[0, $elements[1]], [1, $elements[2]], [2, $elements[1]]], [0, $elements[1]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [1, $elements[2]], [[0, $elements[1]], [1, $elements[2]], [2, $elements[0]], [3, $elements[2]]], [2, $elements[1]]], $iterations);
     }
 
-    public function testIteratorAggregateWithNullValue(): void
-    {
-        $vector = self::getInstance();
-        $vector[0] = null;
-        self::assertSame([null], \iterator_to_array($vector));
-        $vector[2] = null;
-        self::assertSame([null, "\0", null], \iterator_to_array($vector));
-    }
-
     /**
      * @depends testIteratorAggregate
      */
@@ -278,7 +266,7 @@ final class NullableChar1VectorTest extends TestCase
         $vector = self::getInstance();
         $elements = [];
         for ($i = 0; $i < 1031; ++$i) {
-            $element = \mt_rand(0, 5) > 0 ? self::getRandomValue() : null;
+            $element = self::getRandomValue();
             $elements[] = $element;
             $vector[$i] = $element;
         }
@@ -299,18 +287,9 @@ final class NullableChar1VectorTest extends TestCase
         self::assertNativeJson($sequence, $vector);
     }
 
-    public function testJsonSerializableWithNullValue(): void
-    {
-        $vector = self::getInstance();
-        $vector[0] = null;
-        self::assertNativeJson([null], $vector);
-        $vector[2] = null;
-        self::assertNativeJson([null, "\0", null], $vector);
-    }
-
     public static function corruptedSerializationProvider(): \Generator
     {
-        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";i:[0-9]+;s:0:"";\\}\\}$)~', "1:\"\0"], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;(i:[0-9]+;s:0:"";){2}\\}\\}$)~', '-1']];
+        yield from [[\UnexpectedValueException::class, '~(?<=\\{)a(?=:)~', 'x'], [\TypeError::class, '~(?<=\\{i:0;)i(?=:[0-9]+)~', 'b'], [\UnexpectedValueException::class, '~(?<=\\{i:0;i:)[0-9]+~', '-1'], [\LengthException::class, '~(?<=s:)0:"(?=";\\}\\}$)~', "1:\"\0"], [\DomainException::class, '~(?<=i:)0(?=;i:[0-9]+;s:0:"";\\}\\}$)~', '-1']];
     }
 
     /**
@@ -438,10 +417,6 @@ final class NullableChar1VectorTest extends TestCase
             [[0, 1, 2], 1, 1, [0, 2]],
         ] as [$originalSequence, $firstIndex, $howMany, $expected]) {
             $batch = [$originalElements];
-            $elements = $originalElements;
-            $elements[\array_rand($elements)] = null;
-            $elements[\array_rand($elements)] = null;
-            $batch[] = $elements;
             foreach ($batch as $elements) {
                 $vector = self::getInstance();
                 $sequence = $originalSequence;
@@ -546,10 +521,6 @@ final class NullableChar1VectorTest extends TestCase
             [[0, 1, 2, 3, 0, 1, 2, 3], [0, 1, 2, 3, 0, 1, 2], 1, [0, 0, 1, 2, 3, 0, 1, 2, 1, 2, 3, 0, 1, 2, 3]],
         ] as [$originalSequence, $inserted, $firstIndex, $expected]) {
             $batch = [$originalElements];
-            $elements = $originalElements;
-            $elements[\array_rand($elements)] = null;
-            $elements[\array_rand($elements)] = null;
-            $batch[] = $elements;
             foreach ($batch as $elements) {
                 $vector = self::getInstance();
                 $sequence = $originalSequence;
@@ -588,16 +559,6 @@ final class NullableChar1VectorTest extends TestCase
         })();
         $vector->insert($useGenerator ? $generator : \iterator_to_array($generator), $firstIndex);
         self::assertSequence($expectedSequence, $vector);
-    }
-
-    private static function getInstance(bool $filled = false): VectorInterface
-    {
-        $instance = new \Vectory\NullableChar1Vector();
-        if ($filled) {
-            $instance[9999] = "\0";
-        }
-
-        return $instance;
     }
 
     private static function assertSequence(array $sequence, VectorInterface $vector): void
@@ -656,6 +617,6 @@ final class NullableChar1VectorTest extends TestCase
 
     private static function unserializeVector(string $serialized)
     {
-        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar1Vector', '\\')]]);
+        return \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\CharVector', '\\')]]);
     }
 }

@@ -69,7 +69,7 @@ final class SplFixedArrayBench
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = false;
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\0\0";
     }
 
     /**
@@ -78,7 +78,7 @@ final class SplFixedArrayBench
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
         $this->instanceForArrayAccessOffsetSetPushingWithoutGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap + 1);
-        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap++] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithoutGap++] = "\0\0";
     }
 
     /**
@@ -88,7 +88,7 @@ final class SplFixedArrayBench
     {
         $this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100;
         $this->instanceForArrayAccessOffsetSetPushingWithGap->setSize($this->lastIndexOfArrayAccessOffsetSetPushingWithGap + 1);
-        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap] = false;
+        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap] = "\0\0";
     }
 
     /**
@@ -155,7 +155,7 @@ final class SplFixedArrayBench
     public function benchInsertUnshifting(): void
     {
         $elements = $this->instanceForInsertUnshifting->toArray();
-        \array_unshift($elements, false);
+        \array_unshift($elements, "\0\0");
         $this->instanceForInsertUnshifting = \SplFixedArray::fromArray($elements, false);
     }
 
@@ -192,19 +192,32 @@ final class SplFixedArrayBench
         \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('SplFixedArray', '\\')]]);
     }
 
+    public static function getInstance(bool $filled = false): \SplFixedArray
+    {
+        $instance = new \SplFixedArray();
+        if ($filled) {
+            $instance->setSize(10000);
+            for ($i = 0; $i < 10000; ++$i) {
+                $instance[$i] = false;
+            }
+        }
+
+        return $instance;
+    }
+
     public static function getRandomValue()
     {
         return [false, true][\mt_rand(0, 1)];
         $positive = 0 === \mt_rand(0, 1);
         $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < null; ++$i) {
+        for ($i = 1; $i < 2; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
         }
         $value = \hexdec($value);
 
         return $positive ? $value : -$value;
         $value = '';
-        for ($i = 0; $i < null; ++$i) {
+        for ($i = 0; $i < 2; ++$i) {
             $value .= \chr(\mt_rand(0x0, 0xff));
         }
 
@@ -214,7 +227,7 @@ final class SplFixedArrayBench
     public static function getRandomSignedInteger(bool $negative): int
     {
         $value = \dechex(\mt_rand(0x0, 0x7f));
-        for ($i = 1; $i < null; ++$i) {
+        for ($i = 1; $i < 2; ++$i) {
             $value .= \str_pad(\dechex(\mt_rand(0x0, 0xff)), 2, '0', \STR_PAD_LEFT);
         }
         $value = \hexdec($value);
@@ -227,8 +240,8 @@ final class SplFixedArrayBench
     {
         \assert(0x10ffff <= \mt_getrandmax());
         $string = '';
-        while (\strlen($string) < null) {
-            $characterMaxLength = \min(4, null - \strlen($string));
+        while (\strlen($string) < 2) {
+            $characterMaxLength = \min(4, 2 - \strlen($string));
             $character = '';
             switch (\mt_rand(1, $characterMaxLength)) {
                 case 1:
@@ -273,7 +286,7 @@ final class SplFixedArrayBench
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 100 / 2, false);
+        $this->batchForInsert = \array_fill(0, 100 / 2, "\0\0");
         $this->instanceForInsertAtHead = self::getInstance();
         $this->instanceForInsertAtTail = self::getInstance();
         $this->instanceForInsertUnshifting = self::getInstance();
@@ -293,18 +306,5 @@ final class SplFixedArrayBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): \SplFixedArray
-    {
-        $instance = new \SplFixedArray();
-        if ($filled) {
-            $instance->setSize(10000);
-            for ($i = 0; $i < 10000; ++$i) {
-                $instance[$i] = false;
-            }
-        }
-
-        return $instance;
     }
 }

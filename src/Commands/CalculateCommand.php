@@ -45,17 +45,16 @@ final class CalculateCommand extends Command
         foreach ($this->vectorDefinitionGenerator->generate() as $vectorDefinition) {
             /** @var Vectory\ValueObjects\VectorDefinitionInterface $vectorDefinition */
             $dataStructures = [
-                'array',
-                \Ds\Deque::class,
-                \Ds\Vector::class,
-                \SplFixedArray::class,
+                'Array',
+                'DsDeque',
+                'DsVector',
+                'SplFixedArray',
                 $vectorDefinition->getClassName(),
             ];
             foreach ($dataStructures as $dataStructureId) {
                 $command = [
                     __DIR__.'/../../bin/calculate',
-                    $dataStructureId,
-                    $vectorDefinition->getClassName().'Bench',
+                    $dataStructureId.'Bench',
                     1,
                 ];
                 $process = new Process($command);
@@ -64,8 +63,10 @@ final class CalculateCommand extends Command
                 if (!$process->isSuccessful()) {
                     throw new \RuntimeException(\trim($process->getErrorOutput()));
                 }
-                if (0 === \strpos($dataStructureId, 'Ds\\')) {
+                if (0 === \strpos($dataStructureId, 'Ds')) {
                     $dataStructureId .= \extension_loaded('ds') ? ' (extension)' : ' (polyfill)';
+                } elseif (false !== \strpos($dataStructureId, 'StringVector')) {
+                    $dataStructureId .= ' (element length: 2)';
                 }
                 $output->writeln(\sprintf('%6.3F %s', \trim($process->getOutput()), $dataStructureId));
             }

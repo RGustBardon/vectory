@@ -39,24 +39,30 @@ $(macro :unsafe) {
     $(_() as __context_BytesPerElement)
     $(_() as __context_OneBytePerElement)
 } >> function (\Yay\Ast $ast, \Yay\TokenStream $ts, \Yay\Index $start, \Yay\Index $end, \Yay\Engine $engine) {
-    $bytesPerElement = 1;
-    if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
-        $bytesPerElement = Vectory::getBytesPerElement();
-    }
-    $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
-    $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
-    
-    if (1 === $bytesPerElement) {
-        $append = new \Yay\Ast('__context_OneBytePerElement');
-        $append->push(new \Yay\Ast());
-        $ast->append($append);
+    if ('nullability' === (string) $ast->{'prefix'} || Vectory::hasStaticElementLength()) {
+        $bytesPerElement = 1;
+        if ('nullability' !== (string) $ast->{'prefix'} && !Vectory::isBoolean()) {
+            $bytesPerElement = Vectory::getBytesPerElement();
+        }
+        $token = new \Yay\Token(\T_LNUMBER, (string) $bytesPerElement);
+        $ast->append(new \Yay\Ast('__context_BytesPerElement', $token));
+
+        if (1 === $bytesPerElement) {
+            $append = new \Yay\Ast('__context_OneBytePerElement');
+            $append->push(new \Yay\Ast());
+            $ast->append($append);
+        }
     }
 } >> {
     $(__context_OneBytePerElement ? {
         $(result) = $this->$(prefix)Source[$(index)];
     })
     $(__context_OneBytePerElement ! {
-        $(result) = \substr($this->$(prefix)Source, $(index) * $(__context_BytesPerElement), $(__context_BytesPerElement));
+        $(result) = \substr(
+            $this->$(prefix)Source,
+            $(index) * $(__context_BytesPerElement ?! { $this->elementLength }),
+            $(__context_BytesPerElement ?! { $this->elementLength })
+        );
     })
 }
 

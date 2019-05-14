@@ -50,6 +50,8 @@ final class BuildCommand extends Command
     private const PATH_FORMAT_PHPUNIT = self::DIR_PHPUNIT.'/%sTest'.self::FILE_EXTENSION_PHP;
     private const PATH_FORMAT_PHPBENCH = self::DIR_PHPBENCH.'/%sBench'.self::FILE_EXTENSION_PHP;
 
+    private const TEST_ELEMENT_LENGTH = 2;
+
     private const PHP_PREAMBLE = "<?php\n";
     private const PHP_PREAMBLE_REGEX = '~^<\\?php\\s+~';
 
@@ -215,7 +217,7 @@ YAY;
                 || VectorDefinitionInterface::IMPLEMENTATION_STRING === $vectorDefinition->getImplementationId()
             ) {
                 $concatenatedMacros =
-                $this->concatenateMacros($vectorDefinition, $mainMacro);
+                    $this->concatenateMacros($vectorDefinition, $mainMacro);
                 $targetPath = \sprintf($pathFormat, $target);
 
                 $this->logger->debug('Expanding to '.$target);
@@ -247,7 +249,19 @@ YAY;
         $fqn = $vectorDefinition->getFullyQualifiedClassName();
         $concatenatedMacros = [\sprintf(self::MACRO_FORMAT_CONTEXT, 'Fqn', $fqn)];
         foreach ($vectorDefinition->export() as $name => $value) {
-            if (\is_string($value)) {
+            if ('bytesPerElement' === $name && !$vectorDefinition->hasStaticElementLength()) {
+                if (self::MAIN_MACRO_DIST === $mainMacro) {
+                    $encodedValue = '($this->elementLength)';
+                } else {
+                    $encodedValue = self::TEST_ELEMENT_LENGTH;
+                }
+            } elseif ('defaultValue' === $name && !$vectorDefinition->hasStaticElementLength()) {
+                if (self::MAIN_MACRO_DIST === $mainMacro) {
+                    $encodedValue = '($this->defaultValue)';
+                } else {
+                    $encodedValue = \sprintf('"%s"', \str_repeat('\\x0', self::TEST_ELEMENT_LENGTH));
+                }
+            } elseif (\is_string($value)) {
                 $encodedValue = '';
                 for ($i = 0; $i < \strlen($value); ++$i) {
                     $chr = $value[$i];
@@ -269,6 +283,7 @@ YAY;
         $flags = [
             'HasBitArithmetic' => $vectorDefinition->hasBitArithmetic(),
             'HasMinimumMaximum' => $vectorDefinition->isInteger() && $vectorDefinition->getBytesPerElement() < 8,
+            'HasStaticElementLength' => $vectorDefinition->hasStaticElementLength(),
             'Nullable' => $vectorDefinition->isNullable(),
             'Signed' => $vectorDefinition->isInteger() && $vectorDefinition->isSigned(),
             'Boolean' => $vectorDefinition->isBoolean(),
@@ -284,7 +299,9 @@ YAY;
         ];
 
         for ($i = 1; $i <= 8; ++$i) {
-            if ($vectorDefinition->isBoolean()) {
+            if (!$vectorDefinition->hasStaticElementLength()) {
+                $flags['Takes'.$i] = false;
+            } elseif ($vectorDefinition->isBoolean()) {
                 $flags['Takes'.$i] = 1 === $i;
             } else {
                 $flags['Takes'.$i] =

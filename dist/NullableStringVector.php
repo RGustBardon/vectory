@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Vectory;
 
-class NullableChar3Vector implements VectorInterface
+class NullableStringVector implements VectorInterface
 {
     private const EXCEPTION_PREFIX = 'Vectory: ';
     private const SERIALIZATION_FORMAT_VERSION = 1;
@@ -21,6 +21,17 @@ class NullableChar3Vector implements VectorInterface
     private $elementCount = 0;
     private $primarySource = '';
     private $nullabilitySource = '';
+    private $elementLength;
+    private $defaultValue;
+
+    public function __construct(int $elementLength)
+    {
+        if ($elementLength <= 1) {
+            throw new \DomainException(self::EXCEPTION_PREFIX.'Element length must be at least 2');
+        }
+        $this->defaultValue = \str_repeat("\0", $elementLength);
+        $this->elementLength = $elementLength;
+    }
 
     public function __debugInfo(): array
     {
@@ -33,7 +44,7 @@ class NullableChar3Vector implements VectorInterface
                 $property = new \ReflectionProperty($this, $sourcePrefix.'Source');
                 $property->setAccessible(true);
                 $source = $property->getValue($this);
-                $bytesPerElement = 3 ?? 1;
+                $bytesPerElement = $this->elementLength ?? 1;
                 $elements = \str_split(\bin2hex($source), $bytesPerElement * 2);
                 \assert(\is_iterable($elements));
                 foreach ($elements as $index => $element) {
@@ -77,7 +88,7 @@ class NullableChar3Vector implements VectorInterface
         if ($isNull) {
             $value = null;
         } else {
-            $value = \substr($this->primarySource, $index * 3, 3);
+            $value = \substr($this->primarySource, $index * $this->elementLength, $this->elementLength);
         }
 
         return $value;
@@ -96,8 +107,8 @@ class NullableChar3Vector implements VectorInterface
             if (!\is_string($value)) {
                 throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', ' or null', \gettype($value)));
             }
-            if (3 !== \strlen($value)) {
-                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 3, \strlen($value)));
+            if (\strlen($value) !== $this->elementLength) {
+                throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', $this->elementLength, \strlen($value)));
             }
         }
         static $originalMask = ["\1", "\2", "\4", "\10", "\20", ' ', '@', "\200"];
@@ -129,20 +140,20 @@ class NullableChar3Vector implements VectorInterface
                 $this->nullabilitySource .= \str_repeat("\0", (int) $unassignedCount).(($this->nullabilitySource[$byteIndex] ?? "\0") & $invertedMask[$index & 7]);
             }
         }
-        $unassignedCount = $index - \strlen($this->primarySource) / 3;
+        $unassignedCount = $index - \strlen($this->primarySource) / $this->elementLength;
         if ($unassignedCount < 0) {
             // Case 1. Overwrite an existing item.
             $elementIndex = 0;
-            $byteIndex = $index * 3;
+            $byteIndex = $index * $this->elementLength;
             do {
-                $this->primarySource[$byteIndex++] = ($value ?? "\0\0\0")[$elementIndex++];
-            } while ($elementIndex < 3);
+                $this->primarySource[$byteIndex++] = ($value ?? $this->defaultValue)[$elementIndex++];
+            } while ($elementIndex < $this->elementLength);
         } elseif (0 === $unassignedCount) {
             // Case 2. Append an element right after the last one.
-            $this->primarySource .= $value ?? "\0\0\0";
+            $this->primarySource .= $value ?? $this->defaultValue;
         } else {
             // Case 3. Append to a gap after the last element. Fill the gap with default values.
-            $this->primarySource .= \str_repeat("\0\0\0", (int) $unassignedCount).($value ?? "\0\0\0");
+            $this->primarySource .= \str_repeat($this->defaultValue, (int) $unassignedCount).($value ?? $this->defaultValue);
         }
         if ($this->elementCount < $index + 1) {
             $this->elementCount = $index + 1;
@@ -169,7 +180,7 @@ class NullableChar3Vector implements VectorInterface
             if (0 === ($this->elementCount & 7)) {
                 $this->nullabilitySource = \substr($this->nullabilitySource, 0, -1);
             }
-            $this->primarySource = \substr_replace($this->primarySource, '', $index * 3, 3);
+            $this->primarySource = \substr_replace($this->primarySource, '', $index * $this->elementLength, $this->elementLength);
         }
     }
 
@@ -187,7 +198,7 @@ class NullableChar3Vector implements VectorInterface
         for ($index = 0, $lastIndex = $elementCount & ~7; $index < $lastIndex;) {
             $batchSize = \min(256, $lastIndex - $index);
             $nullabilityBatch = \substr($nullabilitySource, $index >> 3, $batchSize >> 3);
-            $primaryBatch = \str_split(\substr($primarySource, $index * 3, $batchSize * 3), 3);
+            $primaryBatch = \str_split(\substr($primarySource, $index * $this->elementLength, $batchSize * $this->elementLength), $this->elementLength);
             for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
                 $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
                 (yield "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null);
@@ -203,7 +214,7 @@ class NullableChar3Vector implements VectorInterface
         }
         for (; $index < $elementCount; ++$index) {
             if ("\0" === ($nullabilitySource[$index >> 3] & $mask[$index & 7])) {
-                (yield \substr($primarySource, $index * 3, 3));
+                (yield \substr($primarySource, $index * $this->elementLength, $this->elementLength));
             } else {
                 (yield null);
             }
@@ -223,7 +234,7 @@ class NullableChar3Vector implements VectorInterface
         for ($index = 0, $lastIndex = $elementCount & ~7; $index < $lastIndex;) {
             $batchSize = \min(256, $lastIndex - $index);
             $nullabilityBatch = \substr($nullabilitySource, $index >> 3, $batchSize >> 3);
-            $primaryBatch = \str_split(\substr($primarySource, $index * 3, $batchSize * 3), 3);
+            $primaryBatch = \str_split(\substr($primarySource, $index * $this->elementLength, $batchSize * $this->elementLength), $this->elementLength);
             for ($batchIndex = 0; $batchIndex < $batchSize; $batchIndex += 8) {
                 $nullabilityByte = $nullabilityBatch[$batchIndex >> 3];
                 \array_push($jsonData, "\0" === ($nullabilityByte & "\1") ? $primaryBatch[$batchIndex] : null, "\0" === ($nullabilityByte & "\2") ? $primaryBatch[$batchIndex + 1] : null, "\0" === ($nullabilityByte & "\4") ? $primaryBatch[$batchIndex + 2] : null, "\0" === ($nullabilityByte & "\10") ? $primaryBatch[$batchIndex + 3] : null, "\0" === ($nullabilityByte & "\20") ? $primaryBatch[$batchIndex + 4] : null, "\0" === ($nullabilityByte & ' ') ? $primaryBatch[$batchIndex + 5] : null, "\0" === ($nullabilityByte & '@') ? $primaryBatch[$batchIndex + 6] : null, "\0" === ($nullabilityByte & "\200") ? $primaryBatch[$batchIndex + 7] : null);
@@ -232,7 +243,7 @@ class NullableChar3Vector implements VectorInterface
         }
         for (; $index < $elementCount; ++$index) {
             if ("\0" === ($nullabilitySource[$index >> 3] & $mask[$index & 7])) {
-                $jsonData[] = \substr($primarySource, $index * 3, 3);
+                $jsonData[] = \substr($primarySource, $index * $this->elementLength, $this->elementLength);
             } else {
                 $jsonData[] = null;
             }
@@ -243,7 +254,7 @@ class NullableChar3Vector implements VectorInterface
 
     public function serialize(): string
     {
-        return \serialize([self::SERIALIZATION_FORMAT_VERSION, $this->elementCount, $this->primarySource, $this->nullabilitySource]);
+        return \serialize([self::SERIALIZATION_FORMAT_VERSION, $this->elementCount, $this->elementLength, $this->primarySource, $this->nullabilitySource]);
     }
 
     public function unserialize($serialized)
@@ -252,18 +263,18 @@ class NullableChar3Vector implements VectorInterface
         \set_error_handler(static function (int $errno, string $errstr) use (&$errorMessage): void {
             $errorMessage = $errstr;
         });
-        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableChar3Vector', '\\')]]);
+        $newValues = \unserialize($serialized, ['allowed_classes' => [\ltrim('\\Vectory\\NullableStringVector', '\\')]]);
         \restore_error_handler();
         if (false === $newValues) {
             throw new \UnexpectedValueException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        $expectedTypes = ['integer', 'integer', 'string', 'string'];
+        $expectedTypes = ['integer', 'integer', 'integer', 'string', 'string'];
         if (!\is_array($newValues) || \array_keys($newValues) !== \array_keys($expectedTypes) || \array_map('gettype', $newValues) !== $expectedTypes) {
             $errorMessage = 'Expected an array of '.\implode(', ', $expectedTypes);
 
             throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        [$version, $elementCount, $primarySource, $nullabilitySource] = $newValues;
+        [$version, $elementCount, $elementLength, $primarySource, $nullabilitySource] = $newValues;
         if (!\in_array($version, self::SUPPORTED_SERIALIZATION_FORMAT_VERSIONS, true)) {
             $errorMessage = 'Unsupported version: '.$version;
 
@@ -274,7 +285,7 @@ class NullableChar3Vector implements VectorInterface
 
             throw new \DomainException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
-        $expectedLength = $elementCount * 3;
+        $expectedLength = $elementCount * $elementLength;
         if (\strlen($primarySource) !== $expectedLength) {
             $errorMessage = \sprintf('Unexpected length of the primary source: expected %d bytes, found %d instead', $expectedLength, \strlen($primarySource));
 
@@ -287,6 +298,8 @@ class NullableChar3Vector implements VectorInterface
             throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Failed to unserialize (%s)', $errorMessage));
         }
         $this->elementCount = $elementCount;
+        $this->elementLength = $elementLength;
+        $this->defaultValue = \str_repeat("\0", $elementLength);
         $this->primarySource = $primarySource;
         $this->nullabilitySource = $nullabilitySource;
     }
@@ -315,7 +328,7 @@ class NullableChar3Vector implements VectorInterface
     public function insert(iterable $elements, int $firstIndex = -1): void
     {
         // Prepare a substring to insert.
-        $defaultValue = "\0\0\0";
+        $defaultValue = $this->defaultValue;
         $substringToInsert = '';
         $nullabilitySubstring = '';
         $nullabilityByte = 0;
@@ -328,8 +341,8 @@ class NullableChar3Vector implements VectorInterface
                 if (!\is_string($element)) {
                     throw new \TypeError(self::EXCEPTION_PREFIX.\sprintf('Value must be of type %s%s, %s given', 'string', ' or null', \gettype($element)));
                 }
-                if (3 !== \strlen($element)) {
-                    throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', 3, \strlen($element)));
+                if (\strlen($element) !== $this->elementLength) {
+                    throw new \LengthException(self::EXCEPTION_PREFIX.\sprintf('Value must be exactly %d bytes, %d given', $this->elementLength, \strlen($element)));
                 }
                 $substringToInsert .= $element;
             }
@@ -437,14 +450,14 @@ class NullableChar3Vector implements VectorInterface
     {
         if ($howMany >= $elementCount - $firstIndex) {
             if ($primarySource) {
-                $this->primarySource = \substr($this->primarySource, 0, $firstIndex * 3);
+                $this->primarySource = \substr($this->primarySource, 0, $firstIndex * $this->elementLength);
                 $this->elementCount = $firstIndex;
             } else {
                 $this->nullabilitySource = \substr($this->nullabilitySource, 0, $firstIndex);
             }
         } else {
             if ($primarySource) {
-                $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * 3, $howMany * 3);
+                $this->primarySource = \substr_replace($this->primarySource, '', $firstIndex * $this->elementLength, $howMany * $this->elementLength);
                 $this->elementCount -= $howMany;
             } else {
                 $this->nullabilitySource = \substr_replace($this->nullabilitySource, '', $firstIndex, $howMany);
@@ -615,12 +628,12 @@ class NullableChar3Vector implements VectorInterface
 
     private function insertBytes(string $substringToInsert, int $firstIndex): void
     {
-        $defaultValue = "\0\0\0";
+        $defaultValue = $this->defaultValue;
         if (-1 === $firstIndex || $firstIndex > $this->elementCount - 1) {
             // Insert the elements.
-            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * 3;
+            $padLength = \strlen($substringToInsert) + \max(0, $firstIndex - $this->elementCount) * $this->elementLength;
             $this->primarySource .= \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_LEFT);
-            $this->elementCount += $padLength / 3;
+            $this->elementCount += $padLength / $this->elementLength;
         } else {
             $originalFirstIndex = $firstIndex;
             // Calculate the positive index corresponding to the negative one.
@@ -632,16 +645,16 @@ class NullableChar3Vector implements VectorInterface
                 }
             }
             // Resize the bytemap if the negative first element index is greater than the new element count.
-            $insertedElementCount = (int) (\strlen($substringToInsert) / 3);
+            $insertedElementCount = (int) (\strlen($substringToInsert) / $this->elementLength);
             $newElementCount = $this->elementCount + $insertedElementCount;
             if (-$originalFirstIndex > $newElementCount) {
                 $overflow = -$originalFirstIndex - $newElementCount - ($insertedElementCount > 0 ? 0 : 1);
-                $padLength = ($overflow + $insertedElementCount) * 3;
+                $padLength = ($overflow + $insertedElementCount) * $this->elementLength;
                 $substringToInsert = \str_pad($substringToInsert, (int) $padLength, $defaultValue, \STR_PAD_RIGHT);
             }
             // Insert the elements.
-            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * 3, 0);
-            $this->elementCount += (int) (\strlen($substringToInsert) / 3);
+            $this->primarySource = \substr_replace($this->primarySource, $substringToInsert, $firstIndex * $this->elementLength, 0);
+            $this->elementCount += (int) (\strlen($substringToInsert) / $this->elementLength);
         }
     }
 }

@@ -19,7 +19,7 @@ require_once __DIR__.'/../../vendor/autoload.php';
  *
  * @internal
  */
-final class Char2VectorBench
+final class CharVectorBench
 {
     private const INVALID_VALUE = 0;
     private $instanceForArrayAccessOffsetGetRandomAccess;
@@ -69,7 +69,7 @@ final class Char2VectorBench
      */
     public function benchArrayAccessOffsetSetOverwriting(): void
     {
-        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\0\0";
+        $this->instanceForArrayAccessOffsetSetOverwriting[\mt_rand(0, 9999)] = "\0";
     }
 
     /**
@@ -77,7 +77,7 @@ final class Char2VectorBench
      */
     public function benchArrayAccessOffsetSetPushingWithoutGap(): void
     {
-        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = "\0\0";
+        $this->instanceForArrayAccessOffsetSetPushingWithoutGap[] = "\0";
     }
 
     /**
@@ -85,7 +85,7 @@ final class Char2VectorBench
      */
     public function benchArrayAccessOffsetSetPushingWithGap(): void
     {
-        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = "\0\0";
+        $this->instanceForArrayAccessOffsetSetPushingWithGap[$this->lastIndexOfArrayAccessOffsetSetPushingWithGap += 100] = "\0";
     }
 
     /**
@@ -141,7 +141,7 @@ final class Char2VectorBench
      */
     public function benchInsertUnshifting(): void
     {
-        $this->instanceForInsertUnshifting->insert(["\0\0"], 0);
+        $this->instanceForInsertUnshifting->insert(["\0"], 0);
     }
 
     /**
@@ -174,13 +174,23 @@ final class Char2VectorBench
      */
     public function benchSerializableUnserialize(): void
     {
-        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\Char2Vector', '\\')]]);
+        \unserialize($this->serializedInstanceForSerializableUnserialize, ['allowed_classes' => [\ltrim('\\Vectory\\CharVector', '\\')]]);
+    }
+
+    public static function getInstance(bool $filled = false): \Vectory\VectorInterface
+    {
+        $instance = new \Vectory\CharVector();
+        if ($filled) {
+            $instance[9999] = "\0";
+        }
+
+        return $instance;
     }
 
     public static function getRandomValue()
     {
         $value = '';
-        for ($i = 0; $i < 2; ++$i) {
+        for ($i = 0; $i < 1; ++$i) {
             $value .= \chr(\mt_rand(0x0, 0xff));
         }
 
@@ -191,8 +201,8 @@ final class Char2VectorBench
     {
         \assert(0x10ffff <= \mt_getrandmax());
         $string = '';
-        while (\strlen($string) < 2) {
-            $characterMaxLength = \min(4, 2 - \strlen($string));
+        while (\strlen($string) < 1) {
+            $characterMaxLength = \min(4, 1 - \strlen($string));
             $character = '';
             switch (\mt_rand(1, $characterMaxLength)) {
                 case 1:
@@ -237,7 +247,7 @@ final class Char2VectorBench
 
     private function setUpInsertBenchmark(): void
     {
-        $this->batchForInsert = \array_fill(0, 100 / 2, "\0\0");
+        $this->batchForInsert = \array_fill(0, 100 / 2, "\0");
         $this->instanceForInsertAtHead = self::getInstance();
         $this->instanceForInsertAtTail = self::getInstance();
         $this->instanceForInsertUnshifting = self::getInstance();
@@ -257,15 +267,5 @@ final class Char2VectorBench
     {
         $this->instanceForSerializableSerialize = self::getInstance(true);
         $this->serializedInstanceForSerializableUnserialize = \serialize(self::getInstance(true));
-    }
-
-    private static function getInstance(bool $filled = false): \Vectory\VectorInterface
-    {
-        $instance = new \Vectory\Char2Vector();
-        if ($filled) {
-            $instance[9999] = "\0\0";
-        }
-
-        return $instance;
     }
 }

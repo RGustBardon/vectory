@@ -60,7 +60,7 @@ use Vectory\ValueObjects\VectorDefinitionInterface;
                 VectorDefinitionInterface::TYPE_INTEGER
             );
 
-            for ($bytesPerElement = 1; $bytesPerElement <= 4; ++$bytesPerElement) {
+            foreach ([1, null] as $bytesPerElement) {
                 yield $this->vectorDefinitionFactory->create(
                     VectorDefinitionInterface::IMPLEMENTATION_STRING,
                     $bytesPerElement,
